@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320" role="img" aria-label="Terminal by RePrime">
+  <title>RePrime Terminal</title>
+  <desc>The Terminal wordmark in Cinzel SemiBold, gold #FFCC33 on navy #0E3470, framed by tapered horizontal rules with by RePrime attribution beneath in EB Garamond italic.</desc>
+  <defs>
+    <linearGradient id="ruleFade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FFCC33" stop-opacity="0"/>
+      <stop offset="6%" stop-color="#FFCC33" stop-opacity="1"/>
+      <stop offset="94%" stop-color="#FFCC33" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#FFCC33" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="320" fill="#0E3470"/>
+  <rect x="90" y="86" width="620" height="2" fill="url(#ruleFade)"/>
+  <text x="400" y="196" text-anchor="middle" font-family="Cinzel, 'Trajan Pro', Georgia, serif" font-weight="600" font-size="100" letter-spacing="12" fill="#FFCC33">TERMINAL</text>
+  <rect x="90" y="220" width="620" height="2" fill="url(#ruleFade)"/>
+  <text x="400" y="262" text-anchor="middle" font-family="'EB Garamond', Garamond, Georgia, serif" font-style="italic" font-size="27" letter-spacing="1.4" fill="#FFCC33" opacity="0.9">by RePrime</text>
+</svg>

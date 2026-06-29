@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Terminal by RePrime">
+  <title>RePrime Terminal — Square Medallion</title>
+  <desc>Circular medallion format. Navy field, gold tapered rules above and below TERMINAL wordmark in Cinzel, by RePrime attribution beneath.</desc>
+  <defs>
+    <linearGradient id="ruleFadeSq" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#FFCC33" stop-opacity="0"/>
+      <stop offset="6%" stop-color="#FFCC33" stop-opacity="1"/>
+      <stop offset="94%" stop-color="#FFCC33" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#FFCC33" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" fill="#0E3470"/>
+  <circle cx="512" cy="512" r="496" fill="none" stroke="#FFCC33" stroke-width="1.5" opacity="0.55"/>
+  <rect x="170" y="430" width="684" height="2.5" fill="url(#ruleFadeSq)"/>
+  <text x="512" y="556" text-anchor="middle" font-family="Cinzel, 'Trajan Pro', Georgia, serif" font-weight="600" font-size="112" letter-spacing="13.5" fill="#FFCC33">TERMINAL</text>
+  <rect x="170" y="586" width="684" height="2.5" fill="url(#ruleFadeSq)"/>
+  <text x="512" y="638" text-anchor="middle" font-family="'EB Garamond', Garamond, Georgia, serif" font-style="italic" font-size="32" letter-spacing="1.6" fill="#FFCC33" opacity="0.9">by RePrime</text>
+</svg>

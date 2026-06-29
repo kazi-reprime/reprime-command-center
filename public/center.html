@@ -1,0 +1,1007 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Invitaciones — Centro de comunicación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Heebo:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F8;--card:#fff;--ink:#13203a;--mut:#5b6b80;--dim:#8a99ad;--line:#e6ebf3;
+    --wa:#0D9488;--wa-bg:#E6F6F2;--email:#2563EB;--email-bg:#E8EFFC;--both:#7C3AED;--both-bg:#F0EAFB;
+    --us-bg:#F1F5F9;--us-tx:#334155;--us-ac:#64748B;
+    --last-bg:#FDECEC;--last-tx:#991B1B;--last-ac:#DC2626;
+    --within-bg:#E5EEFB;--within-tx:#1E40AF;--within-ac:#2563EB;
+    --silent-bg:#FBF1DC;--silent-tx:#92400E;--silent-ac:#D97706;
+    --next-bg:#DEF7E6;--next-tx:#166534;--next-ac:#16A34A;
+    --owe-bg:#FCE7F3;--owe-tx:#9D174D;--owe-ac:#DB2777;
+    --fu-bg:#EAF1FB;--fu-tx:#1E3A6B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:Inter,system-ui,sans-serif;color:var(--ink);background:var(--bg);height:100vh;overflow:hidden;display:flex;flex-direction:column}
+  .he{font-family:Heebo,Inter,sans-serif;direction:rtl;text-align:right;unicode-bidi:isolate}
+  button{font-family:inherit;cursor:pointer}
+
+  /* top bar */
+  .top{display:flex;align-items:center;gap:14px;padding:11px 18px;background:#0F172A;color:#fff;flex-shrink:0}
+  .top .ttl{font-weight:800;font-size:16px;letter-spacing:.3px;white-space:nowrap}
+  .langtabs{display:flex;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:9px;padding:3px;gap:3px}
+  .langtabs button{font-size:13.5px;font-weight:800;color:#cbd5e1;background:transparent;border:none;border-radius:7px;padding:6px 15px}
+  .langtabs button.on{background:#FFCC33;color:#241a00}
+  .stats{display:flex;gap:7px;flex-wrap:wrap;font-size:12.5px}
+  .stat{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:7px;padding:4px 9px;color:#cbd5e1;font-family:inherit;font-size:12.5px}
+  .stat.act{cursor:pointer}
+  .stat.act:hover{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.3)}
+  .stat .addmini{margin-left:5px;font-weight:900;color:#FFCC33}
+  .stat .auto{margin-left:5px;font-weight:800;color:#f9a8d4;font-size:11px}
+  .stat b{color:#fff;font-weight:800}
+  .stat.owe{background:rgba(219,39,119,.18);border-color:rgba(219,39,119,.4);color:#f9a8d4}
+  .stat.book{background:rgba(16,163,74,.16);border-color:rgba(16,163,74,.4);color:#86efac}
+  /* Expanded status-row tag colors (soft tints on the dark bar) + active filter outline. */
+  .stat.t-pink{background:rgba(219,39,119,.16);border-color:rgba(219,39,119,.34);color:#f9a8d4}
+  .stat.t-green{background:rgba(16,163,74,.16);border-color:rgba(16,163,74,.34);color:#86efac}
+  .stat.t-red{background:rgba(220,38,38,.16);border-color:rgba(220,38,38,.34);color:#fca5a5}
+  .stat.t-redm{background:rgba(127,29,29,.22);border-color:rgba(127,29,29,.45);color:#fda4a4}
+  .stat.t-amber{background:rgba(217,119,6,.16);border-color:rgba(217,119,6,.34);color:#fcd34d}
+  .stat.t-gold{background:rgba(255,204,51,.18);border-color:rgba(255,204,51,.42);color:#FFCC33}
+  .stat.t-blue{background:rgba(37,99,235,.16);border-color:rgba(37,99,235,.34);color:#93c5fd}
+  .stat.t-violet{background:rgba(124,58,237,.16);border-color:rgba(124,58,237,.34);color:#c4b5fd}
+  .stat.t-gray{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.14);color:#cbd5e1}
+  .stat.sel{outline:2px solid #FFCC33;outline-offset:1px}
+  .top .sp{flex:1}
+  .tbtn{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:6px 11px;color:#e2e8f0;font-size:13px;font-weight:600}
+  .tbtn input{background:transparent;border:none;outline:none;color:#fff;font-family:inherit;font-size:13px;width:88px}
+  .tbtn input::placeholder{color:#94a3b8}
+
+  /* body */
+  .body{flex:1;display:flex;min-height:0;gap:10px;padding:10px;overflow-x:auto}
+  .colbox{flex:1;min-width:248px;display:flex;flex-direction:column;background:var(--card);border:2px solid var(--line);border-radius:14px;overflow:hidden}
+  .colbox.wa{border-color:var(--wa)} .colbox.email{border-color:var(--email)} .colbox.both{border-color:var(--both)}
+  .cap{display:flex;align-items:center;gap:8px;padding:10px 12px;color:#fff;flex-shrink:0}
+  .colbox.wa .cap{background:var(--wa)} .colbox.email .cap{background:var(--email)} .colbox.both .cap{background:var(--both)}
+  .cap b{font-weight:800;font-size:15px;letter-spacing:.2px}
+  .cap .n{opacity:.9;font-size:12.5px;font-weight:700}
+
+  .filters{margin:9px;border:1px solid var(--line);border-radius:11px;padding:9px;flex-shrink:0}
+  .filters .lab{font-size:11px;color:var(--dim);font-weight:700;margin-bottom:7px}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border:1px solid transparent;border-radius:999px;padding:4px 9px;font-size:12px;font-weight:700;display:inline-flex;gap:5px;align-items:center}
+  .chip .c{font-weight:900;font-size:11px;opacity:.85}
+  .chip.sel{outline:2px solid currentColor;outline-offset:1px}
+  .chip[data-b=last]{background:var(--last-bg);color:var(--last-tx)}
+  .chip[data-b=within]{background:var(--within-bg);color:var(--within-tx)}
+  .chip[data-b=silent]{background:var(--silent-bg);color:var(--silent-tx)}
+  .chip[data-b=next]{background:var(--next-bg);color:var(--next-tx)}
+  .chip[data-b=owe]{background:var(--owe-bg);color:var(--owe-tx)}
+  .chip[data-b=mtg]{background:var(--next-bg);color:var(--next-tx)}
+  .chip[data-b=cold]{background:#EEF1F5;color:#475569}
+  .mtg{margin-left:7px;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:800;vertical-align:middle}
+  .mtg.ok{background:#dcfce7;color:#166534}
+  .mtg.no{background:#fee2e2;color:#991B1B}
+  .mtg.unv{background:#fef3c7;color:#92400e}
+  .chip[data-b=rem]{background:#F3ECFB;color:#6D28D9}
+  .addq{margin-top:9px;width:100%;border:none;background:var(--ink);color:#fff;border-radius:8px;padding:8px;font-size:13px;font-weight:800;display:inline-flex;gap:6px;align-items:center;justify-content:center}
+
+  .scroll{flex:1;overflow-y:auto;min-height:0;padding:0 9px 10px;display:flex;flex-direction:column;gap:10px}
+  .scroll::-webkit-scrollbar{width:8px}.scroll::-webkit-scrollbar-thumb{background:#d2dbe6;border-radius:8px}
+  .card{flex:0 0 auto;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#fff}
+  .nm{text-align:center;font-weight:800;font-size:15.5px;padding:8px;border-bottom:1px solid var(--line)}
+  .fu{display:flex;justify-content:space-between;padding:7px 11px;background:var(--fu-bg);color:var(--fu-tx);font-size:13px;font-weight:600}
+  .fu .d{font-weight:900}
+  .chain{padding:8px 9px;display:flex;flex-direction:column;gap:7px}
+  .cm{border-radius:8px;padding:6px 9px;background:#fff;color:#111;border:1px solid #e7e7e7}
+  /* Bubble color = WHO, never channel (Gideon): cream for them, green for us, regardless of WhatsApp/email. Channel shows only on the vtag chip. */
+  .cm.them,.cm.them.email{background:#FBF4E9;color:#3a2e16;border:1px solid #EADBC4}
+  .cm.us.email{background:#d9fdd3;color:#0b3d0b;border:1px solid #c5e8ba}
+  .cm .h{font-size:9.5px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;margin-bottom:2px;opacity:.85}
+  .vtag{font-size:9px;font-weight:800;letter-spacing:.03em;padding:1px 6px;border-radius:6px;margin-left:6px;vertical-align:middle}
+  .vtag.wa{background:#d9fdd3;color:#0b6b2e} .vtag.email{background:#dbeafe;color:#1e40af}
+  .cm .x{font-size:13px;line-height:1.45}
+  .cm .tr{font-size:11px;margin-top:3px;opacity:.85;direction:ltr;text-align:left}
+  .cm.us{background:#d9fdd3;color:#0b3d0b;border:1px solid #c5e8ba} .cm.last{background:var(--last-bg);color:var(--last-tx)}
+  /* Editable draft boxes: show she can type here. */
+  .qsend .sb[contenteditable="true"]{outline:none;cursor:text;min-height:1.4em}
+  .qsend .sb[contenteditable="true"]:focus{box-shadow:inset 0 0 0 2px #93c5fd;border-radius:6px}
+  /* Empty-state hint: if Nora couldn't suggest anything, show her she can still type. */
+  .qsend .sb[contenteditable="true"]:empty::before{content:attr(data-placeholder);color:#9ca3af;font-style:italic}
+  .cm.within{background:var(--within-bg);color:var(--within-tx)} .cm.silent{background:var(--silent-bg);color:var(--silent-tx)}
+  .cm.next{background:var(--next-bg);color:var(--next-tx)} .cm.owe{background:var(--owe-bg);color:var(--owe-tx)}
+  .approvals .qcap{background:#7a1f6b}
+  .apbody{flex:1;overflow-y:auto;min-height:0;padding:10px;display:flex;flex-direction:column;gap:10px}
+  .apcard{flex:0 0 auto;border:1px solid #e7d2e4;border-radius:11px;background:#fff;padding:10px}
+  .apnm{font-weight:800;font-size:14px}
+  .apsub{font-size:11px;color:#9a4f8e;margin:2px 0 7px}
+  .apes{font-size:12px;color:#555;background:#faf3f8;border-radius:7px;padding:6px 8px;margin-bottom:6px}
+  .aphe{font-size:14px;color:#111;background:#d9fdd3;border:1px solid #c5e8ba;border-radius:7px;padding:7px 9px;direction:rtl;text-align:right}
+  .aprow{display:flex;gap:8px;margin-top:9px}
+  .apok{flex:1;background:#16a34a;color:#fff;border:0;border-radius:8px;padding:9px;font-weight:700;cursor:pointer}
+  .apno{background:#fff;color:#b42318;border:1px solid #f0c8c2;border-radius:8px;padding:9px 12px;font-weight:700;cursor:pointer}
+  .cfoot{display:flex;justify-content:flex-end;padding:0 9px 9px}
+  .qadd{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:7px;padding:4px 10px;font-size:12px;font-weight:700;display:inline-flex;gap:5px;align-items:center}
+  .more{text-align:center;color:var(--dim);font-size:11.5px;padding:3px}
+
+  /* queue / chat panel */
+  .queue{width:380px;flex-shrink:0;display:flex;flex-direction:column;background:#fff;border:2px solid #0F172A;border-radius:14px;overflow:hidden}
+  .qcap{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#0F172A;color:#fff;flex-shrink:0}
+  .qcap b{font-weight:800;font-size:15px;flex:1}
+  .qcap .pos{font-size:12px;opacity:.85;font-weight:700}
+  /* Layout flip (Gideon): controls pinned on TOP, history scrolls BELOW, up-arrows between. */
+  .qbody{flex:1;overflow-y:auto;min-height:0;display:flex;flex-direction:column}
+  .qhist{min-height:150px;border-top:1px solid var(--line)}
+  .qup{display:flex;align-items:center;justify-content:center;gap:10px;color:#94a3b8;font-size:11px;font-weight:800;letter-spacing:.12em;padding:7px;background:#F8FAFC;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  /* Both-card strip: last WhatsApp + last email side-by-side (Gideon D). */
+  .bothstrip{margin:0 13px 6px;border:1px solid var(--line);border-radius:9px;padding:8px;background:#FAFBFD}
+  .preftag{font-size:11px;font-weight:800;color:#92400E;background:#FBF1DC;border-radius:6px;padding:3px 8px;display:inline-block;margin-bottom:6px}
+  .bsrow{display:flex;gap:8px}
+  .bscol{flex:1;min-width:0;border:1px solid var(--line);border-radius:7px;padding:6px 8px;background:#fff}
+  .bshd{font-size:10px;font-weight:900;letter-spacing:.04em;margin-bottom:3px}
+  .bshd.wa{color:var(--wa)} .bshd.email{color:var(--email)}
+  .bsmsg{font-size:11.5px;line-height:1.35;color:var(--ink);word-break:break-word}
+  .bssent{font-size:10px;color:var(--dim);margin-top:4px;font-weight:700}
+  .qwho{padding:10px 13px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .qwho .av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:13px}
+  .qwho b{font-size:17px;font-weight:800;display:block}
+  .qwho .ch{font-size:12px;font-weight:700}
+  .qsec{padding:10px 13px;border-bottom:1px solid var(--line)}
+  .qsec .lbl{font-size:11px;font-weight:800;letter-spacing:.05em;color:var(--dim);text-transform:uppercase;margin-bottom:7px}
+  .nora{margin:10px 13px;padding:10px 12px;background:#FFFDF5;border:1px solid #FFCC3366;border-left:4px solid #FFCC33;border-radius:9px}
+  .nora .lbl{font-size:11px;font-weight:800;color:var(--mut);letter-spacing:.05em;margin-bottom:6px}
+  /* All four boxes equal width (Gideon E): stack the two tone options full-width like the two draft boxes. */
+  .tones{display:flex;flex-direction:column;gap:7px}
+  .tone{min-width:0;border:1px solid var(--line);border-radius:9px;padding:8px 9px;background:#fff;text-align:left}
+  .tone.sel{border-color:#0F172A;box-shadow:0 0 0 1px #0F172A}
+  .tone .tn{font-weight:800;font-size:12.5px}
+  .tone .tx{font-size:12px;color:var(--mut);margin-top:2px;line-height:1.4}
+  .qsend{margin:6px 13px 4px;padding:10px 12px;border:2px solid var(--wa);border-radius:10px}
+  .qsend .sl{font-size:11px;font-weight:800;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+  .qsend .sb{font-size:15px;line-height:1.5}
+  .qinsert{padding:8px 13px;border-top:1px solid var(--line)}
+  .qinsert .il{font-size:10.5px;font-weight:800;letter-spacing:.05em;color:var(--dim);text-transform:uppercase;margin-bottom:6px}
+  .qinsert .row{display:flex;gap:6px;flex-wrap:wrap}
+  .ins{border:1px solid #c7d6ec;background:#EEF4FE;color:#1E40AF;border-radius:8px;padding:6px 10px;font-size:12.5px;font-weight:700;display:inline-flex;gap:5px;align-items:center}
+  .ins:hover{background:#E0EAFB}
+  .ins.invite{background:#FFF6DE;border-color:#f0d8a0;color:#92400E}
+  .qoutcome{padding:8px 13px;border-top:1px solid var(--line);display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  .qoutcome .ol{font-size:10.5px;font-weight:800;letter-spacing:.05em;color:var(--dim);text-transform:uppercase;margin-right:2px}
+  .oc{border:1px solid var(--line);background:#fff;border-radius:8px;padding:5px 10px;font-size:12.5px;font-weight:700}
+  .oc.booked{color:#166534;border-color:#bbe8c8} .oc.no{color:#991B1B;border-color:#f3c4c4} .oc.remind{color:#6D28D9;border-color:#dac8f5}
+  .qact{display:flex;gap:7px;align-items:center;flex-wrap:wrap;padding:10px 13px;border-top:1px solid var(--line);flex-shrink:0}
+  .qb{border:1px solid var(--line);background:#F8FAFC;color:var(--ink);border-radius:9px;padding:9px 13px;font-size:14px;font-weight:800;display:inline-flex;gap:5px;align-items:center}
+  .qb.send{background:#16A34A;border-color:#16A34A;color:#fff} .qb.snooze{background:#fff7e0;border-color:#f0d8a0;color:#92400E}
+  .qb.next{margin-left:auto;background:#FFCC33;border-color:#FFCC33;color:#3a2c00}
+  .qempty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--dim);text-align:center;padding:24px}
+  .qempty .big{font-size:20px;font-weight:800;color:var(--mut);margin-bottom:6px}
+
+  .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0F172A;color:#fff;font-size:14px;font-weight:700;padding:11px 18px;border-radius:10px;box-shadow:0 8px 26px rgba(0,0,0,.3);opacity:0;transition:opacity .2s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1}
+</style></head>
+<body>
+  <div class="top">
+    <span class="ttl">Invitaciones</span>
+    <div class="langtabs" id="langtabs"><button data-l="es" class="on">Español</button><button data-l="en">English</button></div>
+    <div class="stats" id="stats"></div>
+    <span class="sp"></span>
+    <span class="tbtn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2.4"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg><input id="search" placeholder=""></span>
+    <span class="tbtn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2.2"><path d="M12 16V4M6 10l6-6 6 6M4 20h16"/></svg><span id="uploadLbl"></span></span>
+    <button class="tbtn" id="auditBtn" style="display:none;background:#7c2d12;border-color:#9a3412;color:#fed7aa"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fed7aa" stroke-width="2.4"><path d="M12 9v4M12 17h.01M10.29 3.86l-8.18 14.14A2 2 0 003.85 21h16.3a2 2 0 001.74-3l-8.18-14.14a2 2 0 00-3.42 0z"/></svg> <span id="auditLbl">Auditoría</span> <span id="auditCnt" style="font-weight:900"></span></button>
+  </div>
+  <div id="auditModal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.75);z-index:50;align-items:flex-start;justify-content:center;padding:50px 20px;overflow:auto"><div style="background:#fff;border-radius:14px;max-width:780px;width:100%;padding:22px 24px;box-shadow:0 30px 60px rgba(0,0,0,.4)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px"><div><div style="font-weight:900;font-size:18px" id="auditTtl">Auditoría de emails</div><div style="color:#475569;font-size:13px;margin-top:4px" id="auditSub">El email no coincide con el nombre del contacto. Corrija o confirme.</div></div><button id="auditCls" style="border:none;background:#f1f5f9;border-radius:8px;padding:7px 11px;font-weight:800;cursor:pointer">✕</button></div>
+    <div id="auditList" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div></div>
+
+  <div class="body">
+    <div class="colbox wa" data-ch="wa" id="col-wa"></div>
+    <div class="colbox email" data-ch="email" id="col-email"></div>
+    <div class="colbox both" data-ch="both" id="col-both"></div>
+    <div class="queue" id="queue"></div>
+    <div class="queue approvals" id="col-approvals" style="display:none"></div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+<script>
+  var L={
+    es:{ title:'Invitaciones', search:'buscar nombre', upload:'Subir', stats:{inv:'Invitados',rep:'Respondieron',owe:'Nos deben',book:'Agendados',out:'Fuera'},
+      wa:'Solo WhatsApp', email:'Solo Email', both:'WhatsApp + Email',
+      pick:'Elige un grupo y agrégalo a la cola', addq:'Agregar a la cola',
+      f:{last:'Última semana',within:'Esta semana',silent:'En silencio',next:'Próxima semana',owe:'Nos deben',mtg:'Reunión',cold:'Sin interés',rem:'Recordatorio +1 mes'},
+      fu:{silent:'Seguir si no responde',reply:'Responder — contestaron',mtg:'Reunión agendada'},
+      us:'nosotros',them:'ellos', queue:'Cola — una por una', empty:'Cola vacía', emptySub:'Agrega gente desde las columnas.',
+      nora:'Nora — elige un tono', friendly:'Amistoso', prof:'Profesional', sendsTo:'Se envía a aprobación · ',
+      send:'Enviar a aprobación', snooze:'Posponer', skip:'Saltar', next:'Siguiente', more:'más · desliza', tr:'es',
+      insLbl:'Adjuntar al mensaje', ins:{invite:'Invitación Terminal',video:'Video',book:'Agendar Zoom',link:'Enlace Terminal'},
+      ocLbl:'Resultado', oc:{booked:'Agendó',no:'No interesado',remind:'Recordar +1 mes'},
+      inserted:'Adjuntado', outBooked:'Marcado: agendó',outNo:'Marcado: no interesado',outRem:'Recordatorio +1 mes' },
+    en:{ title:'Invitations', search:'search name', upload:'Upload', stats:{inv:'Invited',rep:'Replied',owe:'We owe',book:'Booked',out:'Out'},
+      wa:'WhatsApp only', email:'Email only', both:'WhatsApp + Email',
+      pick:'Pick a group, then add to the queue', addq:'Add to queue',
+      f:{last:'Last week',within:'This week',silent:'Silent',next:'Next week',owe:'We owe',mtg:'Meeting',cold:'Not interested',rem:'Reminder +1 mo'},
+      fu:{silent:'Follow up if silent',reply:'Reply — they answered',mtg:'Meeting booked'},
+      us:'us',them:'them', queue:'Queue — one by one', empty:'Queue empty', emptySub:'Add people from the columns.',
+      nora:'Nora — pick a tone', friendly:'Friendly', prof:'Professional', sendsTo:'Sends to · ',
+      send:'Send', snooze:'Snooze', skip:'Skip', next:'Next', more:'more · scroll', tr:'en',
+      insLbl:'Attach to the message', ins:{invite:'Terminal invitation',video:'Video',book:'Book Zoom',link:'Terminal link'},
+      ocLbl:'Outcome', oc:{booked:'Booked',no:'Not interested',remind:'Remind +1 mo'},
+      inserted:'Attached', outBooked:'Marked: booked',outNo:'Marked: not interested',outRem:'Reminder +1 mo' }
+  };
+  var FILTER_KEYS=['last','within','silent','next','owe','mtg','cold','rem'];
+  var CHMETA={wa:{ac:'#0D9488'},email:{ac:'#2563EB'},both:{ac:'#7C3AED'}};
+  // Top status row (Gideon G): every pipeline state at a glance, each clickable to
+  // filter ALL columns to that bucket. Counts computed live from window.PEOPLE.
+  var STATUS_TAGS=[
+    {k:'noreply',       es:'Sin respuesta', en:'No reply',       cls:'t-gray'},
+    {k:'replied',       es:'Respondieron',  en:'Replied',        cls:'t-blue'},
+    {k:'weowe',         es:'Nos deben',     en:'We owe',         cls:'t-pink'},
+    {k:'theyowe',       es:'Les toca',      en:'They owe',       cls:'t-amber'},
+    {k:'booked',        es:'Agendados',     en:'Booked',         cls:'t-green'},
+    {k:'attended',      es:'Asistió',       en:'Attended',       cls:'t-green'},
+    {k:'noshow',        es:'No vino',       en:'No-show',        cls:'t-red'},
+    {k:'committed',     es:'Comprometido',  en:'Committed',      cls:'t-gold'},
+    {k:'notinterested', es:'No interesado', en:'Not interested', cls:'t-redm'},
+    {k:'duetoday',      es:'Para hoy',      en:'Due today',      cls:'t-blue'},
+    {k:'snoozed',       es:'Pospuesto',     en:'Snoozed',        cls:'t-violet'},
+    {k:'priority',      es:'Prioridad',     en:'Priority',       cls:'t-amber'},
+    {k:'nocontact',     es:'Sin contacto',  en:'No contact',     cls:'t-gray'}
+  ];
+  function statusKeys(p){
+    var k=[];
+    if(!p._reachable) k.push('nocontact');
+    if(p._meeting==='attended') k.push('attended');
+    if(p._meeting==='no_show') k.push('noshow');
+    if(p.booked) k.push('booked');
+    if(p._outcome==='committed') k.push('committed');
+    if(p.bucket==='cold'||p._stage==='declined'||p._outcome==='no') k.push('notinterested');
+    if(p._awaiting) k.push('weowe');
+    if(!p._awaiting && p._lastFrom==='us' && (p._stage==='replied'||p._stage==='sent')) k.push('theyowe');
+    if(p._stage==='replied') k.push('replied');
+    if((p._stage==='sent'||p._stage==='unknown') && !p._awaiting && p._lastFrom!=='us') k.push('noreply');
+    if(p._due) k.push('duetoday');
+    if(p._snoozed) k.push('snoozed');
+    if(p._priority) k.push('priority');
+    return k;
+  }
+
+  function P(name,channel,bucket,fu,fuDate,chain,opts){return Object.assign({name:name,channel:channel,bucket:bucket,fu:fu,fuDate:fuDate,chain:chain,queued:false},opts||{});}
+  // chain comment: {who:'us'|'them', b:bucket(for them), date, he, es, en}
+  var PEOPLE=[];
+
+  // Anyone we owe a reply goes to the queue automatically — they live ONLY there until answered.
+  PEOPLE.forEach(function(p){ if(p.bucket==='owe') p.queued=true; });
+  function repliedPeople(){ return PEOPLE.filter(function(p){ return !p.queued && !p.booked && p.chain[0] && p.chain[0].who==='them'; }); }
+
+  var state={lang:'es', filter:{wa:null,email:null,both:null}, statusFilter:null, qi:0, tone:'friendly', q:''};
+  function l(){return L[state.lang];}
+  function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show')},1600);}
+  function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  function countBy(ch,b){return PEOPLE.filter(function(p){return p.channel===ch&&p.bucket===b&&!p.queued;}).length;}
+  function chipsFor(ch){
+    return FILTER_KEYS.map(function(b){
+      var n=countBy(ch,b); if(!n) return '';
+      var sel=state.filter[ch]===b?' sel':'';
+      return '<button class="chip'+sel+'" data-b="'+b+'" data-ch="'+ch+'">'+esc(l().f[b])+' <span class="c">'+n+'</span></button>';
+    }).join('');
+  }
+  function cmHTML(c){
+    var cls=(c.who==='us'?'us':'them')+(c.via==='email'?' email':'');
+    var head=(c.who==='us'?l().us:l().them)+' · '+c.date;
+    // SPANISH side (secretary): a Hebrew message shows its SPANISH as the main text
+    // (Hebrew kept tiny below); English stays English.
+    // ENGLISH side (Gideon/Shirel): show the ORIGINAL untouched — Hebrew or English,
+    // no translation (they read both).
+    var es=state.lang==='es';
+    // Secretary (es): ALWAYS prefer the Spanish text — never fall back to Hebrew
+    // when Spanish exists. English content stays English. Gideon/Shirel (en): original.
+    var primary = es ? (c.es || c.he || c.en || '') : (c.he || c.en || c.es || '');
+    // Voice note with no usable transcript yet → a clear localized label instead
+    // of a bare mic glyph, so the ▶ player below still has a caption.
+    if(c.audio && (primary===''||primary==='🎤')) primary='🎤 '+(es?'Mensaje de voz':'Voice message');
+    var heMain = !es && !!c.he;
+    var main = '<div class="x'+(heMain?' he':'')+'">'+esc(primary)+'</div>';
+    // The actual voice memo — a play button to listen, separate from the transcript.
+    var audio = c.audio ? '<audio class="vn" controls preload="none" src="'+esc(c.audio)+'" style="width:100%;max-width:280px;height:34px;margin:5px 0 1px;display:block"></audio>' : '';
+    var tr = (es && c.he && primary!==c.he) ? '<div class="tr he">'+esc(c.he)+'</div>' : '';
+    var vtag=c.via?'<span class="vtag '+c.via+'">'+(c.via==='email'?'📧 Email':'WhatsApp')+'</span>':'';
+    return '<div class="cm '+cls+'"><div class="h">'+esc(head)+vtag+'</div>'+main+audio+tr+'</div>';
+  }
+  // BOTH-card (Gideon D): for a contact we have on WhatsApp AND email, show the
+  // last message on EACH channel side-by-side, which channel they usually reply on,
+  // and when we last sent on each — so the secretary never double-sends.
+  function bothSummary(p){
+    var ch=p.chain||[], lastWA=null,lastEmail=null,themWA=0,themEmail=0,lastUsWA=null,lastUsEmail=null;
+    ch.forEach(function(c){
+      if(c.via==='wa'){ lastWA=c; if(c.who==='them')themWA++; if(c.who==='us')lastUsWA=c; }
+      else if(c.via==='email'){ lastEmail=c; if(c.who==='them')themEmail++; if(c.who==='us')lastUsEmail=c; }
+    });
+    return {lastWA:lastWA,lastEmail:lastEmail,lastUsWA:lastUsWA,lastUsEmail:lastUsEmail,prefer:(themWA===themEmail?'':(themWA>themEmail?'wa':'email'))};
+  }
+  function fmtBoth(c,es){
+    if(!c) return '<span style="opacity:.55">'+esc(es?'sin mensajes aún':'no messages yet')+'</span>';
+    var who=(c.who==='us'?(es?'nosotros':'us'):(es?'ellos':'them'));
+    var t=(es?(c.es||c.he||c.en):(c.he||c.en||c.es))||''; if(t.length>64)t=t.slice(0,64).trim()+'…';
+    return '<b>'+esc(who)+'</b> · '+esc(c.date||'')+'<br>'+esc(t);
+  }
+  function renderBothStrip(p){
+    var es=state.lang==='es', s=bothSummary(p);
+    var pref=s.prefer==='wa'?(es?'Suele responder por WhatsApp':'Usually replies on WhatsApp'):s.prefer==='email'?(es?'Suele responder por Email':'Usually replies on Email'):'';
+    var sentWA=s.lastUsWA?((es?'WhatsApp enviado':'WhatsApp sent')+' · '+esc(s.lastUsWA.date||'')):'';
+    var sentEm=s.lastUsEmail?((es?'Email enviado':'Email sent')+' · '+esc(s.lastUsEmail.date||'')):'';
+    return '<div class="bothstrip">'+(pref?'<div class="preftag">⭐ '+esc(pref)+'</div>':'')+
+      '<div class="bsrow">'+
+        '<div class="bscol"><div class="bshd wa">WhatsApp</div><div class="bsmsg">'+fmtBoth(s.lastWA,es)+'</div>'+(sentWA?'<div class="bssent">'+sentWA+'</div>':'')+'</div>'+
+        '<div class="bscol"><div class="bshd email">Email</div><div class="bsmsg">'+fmtBoth(s.lastEmail,es)+'</div>'+(sentEm?'<div class="bssent">'+sentEm+'</div>':'')+'</div>'+
+      '</div></div>';
+  }
+  // Did the booked meeting actually happen? (set by the meeting-verify cron)
+  function mtgBadge(s){
+    var es=state.lang==='es';
+    if(s==='attended') return '<span class="mtg ok">✓ '+(es?'Asistió':'Met')+'</span>';
+    if(s==='no_show')  return '<span class="mtg no">⚠ '+(es?'No vino':'No-show')+'</span>';
+    if(s==='unverifiable') return '<span class="mtg unv">⚠ '+(es?'Verificar':'Check')+'</span>';
+    return '';  // not yet checked — no badge
+  }
+  function cardHTML(p,i){
+    // Column cards = a quick READABLE summary, not the whole thread dumped.
+    // Show the last 3 messages (whoever spoke last) + the follow-up note.
+    // Never a bare name: if nothing yet, say so plainly.
+    var tail=(p.chain||[]).slice(-2);
+    var body = tail.length
+      ? tail.map(cmHTML).join('')
+      : '<div class="cm within"><div class="x">'+esc(state.lang==='es'?'Invitación enviada — esperando respuesta':'Invitation sent — awaiting reply')+'</div></div>';
+    var mtg=p.booked?mtgBadge(p.meetingStatus):'';
+    return '<div class="card" data-i="'+i+'">'+
+      '<div class="nm">'+esc(p.name)+mtg+'</div>'+
+      '<div class="fu"><span>'+esc(l().fu[p.fu])+'</span><span class="d">'+esc(p.fuDate)+'</span></div>'+
+      '<div class="chain">'+body+'</div>'+
+    '</div>';
+  }
+  function renderColumn(ch){
+    var people=PEOPLE.map(function(p,i){return {p:p,i:i};}).filter(function(o){
+      if(o.p.channel!==ch||o.p.queued) return false;
+      if(state.statusFilter&&statusKeys(o.p).indexOf(state.statusFilter)<0) return false;
+      if(state.filter[ch]&&o.p.bucket!==state.filter[ch]) return false;
+      if(state.q&&o.p.name.toLowerCase().indexOf(state.q)<0) return false;
+      return true;
+    });
+    var total=PEOPLE.filter(function(p){return p.channel===ch&&!p.queued;}).length;
+    var addqN = state.filter[ch]?people.length:total;
+    var cards=people.map(function(o){return cardHTML(o.p,o.i);}).join('') || '<div class="more">—</div>';
+    return ''+
+      '<div class="cap"><b>'+esc(l()[ch])+'</b><span class="n">'+total+'</span></div>'+
+      '<div class="filters"><div class="lab">'+esc(l().pick)+'</div><div class="chips">'+chipsFor(ch)+'</div>'+
+        '<button class="addq" data-addq="'+ch+'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6"><path d="M12 5v14M5 12h14"/></svg> '+esc(l().addq)+' ('+addqN+')</button></div>'+
+      '<div class="scroll">'+cards+'</div>';
+  }
+
+  function renderQueue(){
+    var q=PEOPLE.map(function(p,i){return {p:p,i:i};}).filter(function(o){return o.p.queued;});
+    var el=document.getElementById('queue');
+    if(!q.length){ el.innerHTML='<div class="qcap"><b>'+esc(l().queue)+'</b></div><div class="qempty"><div class="big">✓ '+esc(l().empty)+'</div><div>'+esc(l().emptySub)+'</div></div>'; return; }
+    if(state.qi>=q.length) state.qi=q.length-1;
+    var o=q[state.qi], p=o.p;
+    var ch=CHMETA[p.channel].ac, chLabel=l()[p.channel];
+    var draftEs={es:'Perfecto. Le agendo el jueves a las 10:00 y le envío el enlace ahora.',en:'Perfect. Booking thursday at 10:00 and sending the link now.'}[state.lang];
+    var draftHe='מצוין. קבעתי ליום חמישי בעשר ושולח עכשיו את הלינק.';
+    // Record voice is only for ENGLISH threads — the secretary can't speak Hebrew,
+    // so Hebrew replies stay typed (Spanish → translated). English (or no inbound
+    // yet) → recording allowed.
+    var _lastThem=null;(p.chain||[]).forEach(function(c){if(c.who==='them')_lastThem=c;});
+    var canRecord=!(_lastThem&&_lastThem.he);
+    el.innerHTML=
+      '<div class="qcap"><b>'+esc(l().queue)+'</b><span class="pos">'+(state.qi+1)+' / '+q.length+'</span></div>'+
+      '<div class="qbody">'+
+        '<div class="qwho"><span class="av" style="background:'+ch+'">'+esc(p.name.slice(0,2).toUpperCase())+'</span>'+
+          '<span style="flex:1;min-width:0"><b>'+esc(p.name)+'</b><span class="ch" style="color:'+ch+'">'+esc(chLabel)+(p.channel==='both'?'':'')+'</span></span></div>'+
+        (p.channel==='both'?renderBothStrip(p):'')+
+        '<div class="nora"><div class="lbl">'+esc(l().nora)+'</div><div class="tones">'+
+          '<button class="tone'+(state.tone==='friendly'?' sel':'')+'" data-tone="friendly"><div class="tn">'+esc(l().friendly)+'</div><div class="tx">'+(state.lang==='es'?'“claro, le agendo con gusto…”':'“sure, happy to book you…”')+'</div></button>'+
+          '<button class="tone'+(state.tone==='prof'?' sel':'')+'" data-tone="prof"><div class="tn">'+esc(l().prof)+'</div><div class="tx">'+(state.lang==='es'?'más corto y formal':'shorter, formal')+'</div></button>'+
+        '</div></div>'+
+        '<div class="qsend"><div class="sl">'+esc(l().sendsTo)+esc(chLabel)+'</div><div class="sb" contenteditable="true" spellcheck="true" data-sb="es" data-placeholder="'+esc(state.lang==='es'?'Nora no sugirió nada — escribe tu respuesta aquí':'Nora had nothing to suggest — type your reply')+'">'+esc(draftEs)+'</div>'+
+          '<div class="sl" style="margin-top:8px">'+esc(state.lang==='es'?('Se envía así · '+(state._outLang==='en'?'inglés':state._outLang==='es'?'español':'hebreo')):('Sends as · '+(state._outLang==='en'?'English':state._outLang==='es'?'Spanish':'Hebrew')))+'</div><div class="sb '+(state._outLang||'he')+'" contenteditable="true" spellcheck="true" data-sb="he" data-placeholder="'+esc(state._outLang==='en'?'Type your reply here':(state.lang==='es'?'Escribe la versión que se envía':'הקלד את התשובה'))+'">'+esc(draftHe)+'</div></div>'+
+        '<div class="qinsert"><div class="il">'+esc(l().insLbl)+'</div><div class="row">'+
+          '<button class="ins invite" data-ins="invite">✉ '+esc(l().ins.invite)+'</button>'+
+          '<button class="ins" data-ins="video">▶ '+esc(l().ins.video)+'</button>'+
+          '<button class="ins" data-ins="book">📅 '+esc(l().ins.book)+'</button>'+
+          '<button class="ins" data-ins="link">🔗 '+esc(l().ins.link)+'</button>'+
+        '</div></div>'+
+        '<div class="qoutcome"><span class="ol">'+esc(l().ocLbl)+'</span>'+
+          '<button class="oc booked" data-oc="booked">✓ '+esc(l().oc.booked)+'</button>'+
+          '<button class="oc no" data-oc="no">✕ '+esc(l().oc.no)+'</button>'+
+          '<button class="oc remind" data-oc="remind1w">⏳ '+esc(state.lang==='es'?'Recordar +1 sem':'Remind +1 wk')+'</button>'+
+          '<button class="oc remind" data-oc="remind">⏳ '+esc(l().oc.remind)+'</button>'+
+        '</div>'+
+        '<div class="qmedia" style="display:flex;gap:8px;padding:6px 13px">'+
+          '<button class="qb attach" data-media="attach">📎 '+esc(state.lang==='es'?'Adjuntar archivo':'Attach file')+'</button>'+
+          (canRecord?('<button class="qb rec" data-media="rec">🎤 '+esc(state.lang==='es'?'Grabar voz':'Record voice')+'</button>'):'')+
+          '<input type="file" id="mediaFile" style="display:none">'+
+        '</div>'+
+        '<div class="qact">'+
+          '<button class="qb send" data-q="send">➤ '+esc(l().send)+'</button>'+
+          '<button class="qb snooze" data-q="snooze">⏰ '+esc(l().snooze)+'</button>'+
+          '<button class="qb" data-q="skip">'+esc(l().skip)+'</button>'+
+          '<button class="qb" data-q="clear">🧹 '+esc(state.lang==='es'?'Limpiar':'Clear')+'</button>'+
+          '<button class="qb next" data-q="next">'+esc(l().next)+' →</button>'+
+        '</div>'+
+        '<div class="qup">↑ ↑ ↑ &nbsp;'+esc(state.lang==='es'?'HISTORIAL ABAJO':'HISTORY BELOW')+'</div>'+
+        '<div class="qsec qhist"><div class="lbl">'+esc(state.lang==='es'?'Historial':'History')+'</div><div class="chain">'+p.chain.map(cmHTML).join('')+'</div></div>'+
+      '</div>';
+  }
+
+  function renderStats(){
+    // Every pipeline state at a glance, computed from the live people so the
+    // counts EXACTLY match what each tag filters to. Click a tag → all columns
+    // filter to that bucket; click again (or "Invited") → clear.
+    var P=window.PEOPLE||[];
+    var es=state.lang==='es';
+    var cnt={}; P.forEach(function(p){ statusKeys(p).forEach(function(k){ cnt[k]=(cnt[k]||0)+1; }); });
+    var html='<button class="stat'+(state.statusFilter?'':' sel')+'" data-status="">'+(es?'Invitados':'Invited')+' <b>'+P.length+'</b></button>';
+    STATUS_TAGS.forEach(function(t){
+      var sel=state.statusFilter===t.k?' sel':'';
+      html+='<button class="stat act '+t.cls+sel+'" data-status="'+t.k+'">'+(es?t.es:t.en)+' <b>'+(cnt[t.k]||0)+'</b></button>';
+    });
+    document.getElementById('stats').innerHTML=html;
+  }
+
+  function renderAll(){
+    document.querySelectorAll('.langtabs button').forEach(function(b){b.classList.toggle('on',b.dataset.l===state.lang);});
+    document.getElementById('search').placeholder=l().search;
+    document.getElementById('uploadLbl').textContent=l().upload;
+    document.documentElement.lang=state.lang;
+    renderStats();
+    document.getElementById('col-wa').innerHTML=renderColumn('wa');
+    document.getElementById('col-email').innerHTML=renderColumn('email');
+    document.getElementById('col-both').innerHTML=renderColumn('both');
+    renderQueue();
+    if(window.renderApprovals)window.renderApprovals();
+    bind();
+  }
+  function bind(){
+    document.querySelectorAll('.chip').forEach(function(c){c.onclick=function(e){e.stopPropagation();var ch=this.dataset.ch,b=this.dataset.b;state.filter[ch]=state.filter[ch]===b?null:b;renderAll();};});
+    document.querySelectorAll('[data-status]').forEach(function(b){b.onclick=function(){var s=this.dataset.status;state.statusFilter=(s===''?null:(state.statusFilter===s?null:s));renderAll();};});
+    document.querySelectorAll('[data-addq]').forEach(function(b){b.onclick=function(){var ch=this.dataset.addq;var sel=state.filter[ch];var grp=PEOPLE.filter(function(p){return p.channel===ch&&!p.queued&&(!sel||p.bucket===sel);});grp.forEach(function(p){p.queued=true;});toast((state.lang==='es'?'Agregados ':'Added ')+grp.length+(state.lang==='es'?' a la cola':' to queue'));renderAll();};});
+    document.querySelectorAll('[data-cat]').forEach(function(b){b.onclick=function(){var cat=this.dataset.cat,grp=[];if(cat==='rep')grp=repliedPeople();else if(cat==='book')grp=PEOPLE.filter(function(p){return !p.queued&&p.booked;});if(!grp.length){toast(state.lang==='es'?'Nada para agregar':'Nothing to add');return;}grp.forEach(function(p){p.queued=true;});toast((state.lang==='es'?'Agregados ':'Added ')+grp.length+(state.lang==='es'?' a la cola':' to queue'));renderAll();};});
+    document.querySelectorAll('.tone').forEach(function(t){t.onclick=function(){state.tone=this.dataset.tone;renderQueue();bindQueue();};});
+    bindQueue();
+  }
+  function bindQueue(){
+    document.querySelectorAll('[data-q]').forEach(function(b){b.onclick=function(){
+      var a=this.dataset.q, q=PEOPLE.filter(function(p){return p.queued;}), o=q[state.qi]; if(!o&&a!=='next')return;
+      if(a==='send'){o.queued=false;o.bucket='within';o.fu='silent';toast(state.lang==='es'?'Enviado · vuelve a su columna':'Sent · back to its column');renderAll();}
+      else if(a==='snooze'){o.queued=false;o.bucket='silent';toast(state.lang==='es'?'Pospuesto → archivo':'Snoozed → archive');renderAll();}
+      else if(a==='skip'){state.qi=Math.min(q.length-1,state.qi+1);renderQueue();bindQueue();}
+      else if(a==='clear'){ try{ state._draft={shown:'',he:'',es:''}; document.querySelectorAll('.qsend .sb').forEach(function(b){b.textContent='';}); var f=document.querySelector('.qsend .sb'); if(f)f.focus(); }catch(e){} toast(state.lang==='es'?'Limpiado — escribe tu mensaje':'Cleared — type your reply'); }
+      else if(a==='next'){state.qi=Math.min(q.length-1,state.qi+1);renderQueue();bindQueue();}
+    };});
+    document.querySelectorAll('[data-ins]').forEach(function(b){b.onclick=function(){toast(l().inserted+': '+l().ins[this.dataset.ins]);};});
+    document.querySelectorAll('[data-oc]').forEach(function(b){b.onclick=function(){var q=PEOPLE.filter(function(p){return p.queued;}),o=q[state.qi];if(!o)return;o.queued=false;var oc=this.dataset.oc;if(oc==='booked'){o.booked=true;o.bucket='mtg';toast(l().outBooked);}else if(oc==='no'){o.bucket='cold';toast(l().outNo);}else{o.bucket='rem';toast(l().outRem);}renderAll();};});
+    document.querySelectorAll('.tone').forEach(function(t){t.onclick=function(){state.tone=this.dataset.tone;renderQueue();bindQueue();};});
+  }
+
+  document.querySelectorAll('.langtabs button').forEach(function(b){b.onclick=function(){state.lang=this.dataset.l;renderAll();};});
+  document.getElementById('search').addEventListener('input',function(){state.q=this.value.trim().toLowerCase();renderAll();});
+  renderAll();
+</script>
+<script>
+/* LIVE WIRING — fills your design with the real roster + sends through the backend */
+(function(){
+  var PASS=new URLSearchParams(location.search).get('p')||localStorage.getItem('center_pass');
+  if(!PASS){PASS=window.prompt('Password');}
+  if(PASS) localStorage.setItem('center_pass',PASS);
+  function H(){return {'Content-Type':'application/json','x-center-pass':PASS};}
+  function bucketOf(c){ if(c.awaitingUs)return 'owe'; if(c.stage==='booked')return 'mtg'; if(c.stage==='declined')return 'cold'; if(c.snoozed)return 'rem'; if(c.stage==='replied')return 'within'; return 'silent'; }
+  function mapContact(c){
+    var channel=(c.phone&&c.email)?'both':(c.phone?'wa':'email');
+    var b=bucketOf(c), who=c.lastFrom==='us'?'us':'them', raw=(c.lastReply||'').trim();
+    // Only a REAL message counts — must contain letters (Hebrew or Latin). A bare
+    // phone number / digits is not a message, so it must never show as the preview.
+    var msg=/[A-Za-z֐-׿]/.test(raw)?raw:'';
+    var snip=msg.length>120?msg.slice(0,120).trim()+'…':msg;            // card = quick summary, not the whole message
+    var he=/[֐-׿]/.test(snip)?snip:'';
+    // Prefer the stored multi-message thread (last several, both directions) so
+    // every card shows the back-and-forth, not just one line. Fall back to the
+    // single last message, then to the invitation-sent line.
+    var tj=null; if(c.threadJson){ try{ tj=JSON.parse(c.threadJson); }catch(e){} }
+    var anchor={who:'us',b:undefined,date:'',he:'',es:'Invitación Terminal enviada',en:'Terminal invitation sent'};
+    var chain;
+    if(tj&&tj.length){
+      chain=tj.slice(-40).map(function(m){var t=(m.text||'').trim();return {who:(m.who==='us'?'us':'them'),b:(m.who==='us'?undefined:b),date:m.date||'',he:/[֐-׿]/.test(t)?t:'',es:(m.es||t),en:t,via:m.via,audio:m.audio};});
+      chain.unshift(anchor);
+    } else if(snip){
+      chain=[anchor,{who:who,b:(who==='them'?b:undefined),date:'',he:he,es:(c.lastReplyEs||snip),en:snip}];
+    } else {
+      chain=[{who:'us',b:undefined,date:'',he:'',es:'Invitación Terminal enviada — esperando respuesta',en:'Terminal invitation sent — awaiting reply'}];
+    }
+    return {name:c.name,channel:channel,bucket:b,fu:(c.awaitingUs?'reply':(b==='mtg'?'mtg':'silent')),fuDate:(c.remindAt?new Date(c.remindAt).toLocaleDateString():''),chain:chain,booked:c.stage==='booked',meetingStatus:c.meetingStatus||'',queued:!!c.awaitingUs,_phone:c.phone,_email:c.email,_inviteUrl:c.inviteUrl||'',_row:c.row,_acct:'305',_stage:c.stage,_awaiting:!!c.awaitingUs,_lastFrom:c.lastFrom||'',_reachable:!!(c.phone||c.email),_due:!!c.due,_snoozed:!!c.snoozed,_outcome:c.outcome||'',_opened:!!c.opened,_watched:!!c.watched,_note:c.followupNote||''};
+  }
+  // --- real-time inbound detection + chime -------------------------------
+  // Track who is awaiting our reply + the text of their last inbound message,
+  // so a fresh poll can tell when someone NEW just landed (WhatsApp OR email,
+  // both flow through /track). _seen is null until the first load completes,
+  // which guards the chime from firing on the very first paint.
+  var _seen=null;
+  function keyOf(c){ return (c.phone||'')+'|'+(c.email||''); }
+  function snapshot(contacts){
+    var m={};
+    (contacts||[]).forEach(function(c){ if(c.awaitingUs){ m[keyOf(c)]={name:c.name,last:(c.lastReply||'')}; } });
+    return m;
+  }
+  function chime(){
+    try{
+      var AC=window.AudioContext||window.webkitAudioContext; if(!AC)return;
+      window._ac=window._ac||new AC(); var ac=window._ac;
+      if(ac.state==='suspended'){ try{ac.resume();}catch(e){} }
+      [0,0.16].forEach(function(off){
+        var o=ac.createOscillator(), g=ac.createGain(), t=ac.currentTime+off;
+        o.type='sine'; o.frequency.value=880;
+        g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.18,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+0.13);
+        o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t+0.14);
+      });
+    }catch(e){}
+  }
+  function detectNew(contacts){
+    var now=snapshot(contacts);
+    if(_seen===null){ _seen=now; return; }          // first load — never chime
+    var fresh=null;
+    for(var k in now){
+      if(!_seen[k] || _seen[k].last!==now[k].last){ fresh=now[k]; break; }
+    }
+    _seen=now;
+    if(fresh){
+      chime();
+      toast&&toast((state.lang==='es'?'Nueva respuesta de ':'New reply from ')+fresh.name);
+    }
+  }
+  function pkey(p){ return (p._phone||'')+'|'+(p._email||'')+'|'+(p.name||''); }
+  // Non-destructive refresh: update the peripheral (stats + columns + bell +
+  // approvals) but DON'T rebuild the open queue card — tearing it down every
+  // 20s is what made it "jump in and out" and flashed the Spanish away.
+  function refreshLive(){
+    renderStats();
+    document.getElementById('col-wa').innerHTML=renderColumn('wa');
+    document.getElementById('col-email').innerHTML=renderColumn('email');
+    document.getElementById('col-both').innerHTML=renderColumn('both');
+    if(window.renderApprovals)window.renderApprovals();
+    bind();
+    var q=PEOPLE.filter(function(p){return p.queued;});
+    if(!q.length || !state._draftFor){ renderQueue(); }   // only when nothing is being worked
+  }
+  window.loadLive=function(){
+    return fetch('/api/center/track',{headers:{'x-center-pass':PASS}}).then(function(r){return r.json();}).then(function(j){
+      if(!j||!j.contacts){toast&&toast('Load failed');return;}
+      window._track=j;                               // live numbers for renderStats
+      detectNew(j.contacts);                          // chime + toast on new inbound
+      var fresh=j.contacts.map(mapContact);
+      // Carry over in-progress state so the refresh doesn't re-pull history or
+      // wipe the loaded Spanish draft on the card she's working.
+      var prev={}; (window.PEOPLE||[]).forEach(function(p){prev[pkey(p)]=p;});
+      fresh.forEach(function(p){ var o=prev[pkey(p)]; if(o){ p.queued=o.queued; if(o._histLoaded){ p.chain=o.chain; p._histLoaded=true; } } });
+      window.PEOPLE=fresh;
+      refreshLive();
+    }).catch(function(){toast&&toast('Load failed');});
+  };
+  function pickSug(){ var i=(state.tone==='prof'&&state._sugs&&state._sugs[1])?1:0; return state._sugs?state._sugs[i]:null; }
+  function paintDraft(){
+    // Show each tone option's REAL Spanish text on its button so the Spanish
+    // secretary can read + choose between the two suggestions (not just a label).
+    if(state._sugs){
+      var tns=document.querySelectorAll('.tone .tn'), txs=document.querySelectorAll('.tone .tx');
+      for(var i=0;i<2;i++){ var s=state._sugs[i]; if(!s)continue;
+        if(tns[i])tns[i].textContent=(state.lang==='es'?s.label_es:(s.label_en||s.label_es))||(i?l().prof:l().friendly);
+        var t=(state.lang==='es'?(s.reply_es||''):(s.reply_he||'')); if(t.length>110)t=t.slice(0,110).trim()+'…';
+        if(txs[i])txs[i].textContent=t;
+      }
+    }
+    if(!state._draft)return; var sb=document.querySelectorAll('.qsend .sb');
+    // Top box = secretary's language. Bottom = the outgoing message that sends.
+    // SKIP the write if she's actively typing in that box (preserves her caret +
+    // any manual edits she's making). She edits → state._draft updates via the
+    // input handler in bindQueue → next repaint reads back her own text.
+    var topText=(state.lang==='es'?(state._draft.es||state._draft.shown||''):(state._draft.he||''));
+    var botText=state._draft.he||'';
+    if(sb[0] && document.activeElement!==sb[0] && sb[0].textContent!==topText) sb[0].textContent=topText;
+    if(sb[1] && document.activeElement!==sb[1] && sb[1].textContent!==botText) sb[1].textContent=botText; }
+  function loadDraft(o){
+    var thread=(o.chain||[]).map(function(c){return (c.who==='us'?'US: ':'THEM: ')+(c.he||c.en||c.es);}).join('\n');
+    // The message we reply to = the investor's MOST RECENT message (last 'them'
+    // in the thread), NOT chain[0] — chain[0] is the oldest entry (the invitation
+    // anchor). Passing the anchor as "latest" is why Nora often had nothing to say.
+    var latest='';
+    for(var _i=(o.chain||[]).length-1;_i>=0;_i--){var _c=o.chain[_i];if(_c&&_c.who==='them'&&(_c.he||_c.en||_c.es)){latest=(_c.he||_c.en||_c.es||'');break;}}
+    if(!latest){var _last=(o.chain||[])[(o.chain||[]).length-1];latest=_last?(_last.he||_last.en||_last.es||''):'';}
+    fetch('/api/center/translate',{method:'POST',headers:H(),body:JSON.stringify({action:'analyze',thread:thread||latest,latest:latest,bookLink:(o._inviteUrl||'')})})
+      .then(function(r){return r.json();}).then(function(a){
+        if(!a||!a.suggestions||!a.suggestions.length)return; state._sugs=a.suggestions;
+        // Trust CONTENT over the model's lang claim. If the outgoing reply has
+        // no Hebrew characters, it is not Hebrew — regardless of what a.lang says.
+        // Avoids the "Sends as · HEBREO" label appearing on an English reply.
+        var sample=(a.suggestions[0]&&a.suggestions[0].reply_he)||'';
+        var hasHe=/[֐-׿]/.test(sample);
+        state._outLang = hasHe ? 'he' : (a.lang==='en'||/[A-Za-z]/.test(sample) ? 'en' : 'he');
+        var s=pickSug(); if(!s)return;
+        state._draft={shown:(state.lang==='es'?s.reply_es:s.reply_he),he:s.reply_he,es:s.reply_es};
+        var cur=PEOPLE.filter(function(p){return p.queued;})[state.qi];
+        if(cur&&cur.name===o.name) paintDraft();
+      }).catch(function(){});
+  }
+  function loadHistory(o){
+    var qs=new URLSearchParams({phone:o._phone||'',email:o._email||''});
+    fetch('/api/center/history?'+qs,{headers:{'x-center-pass':PASS}}).then(function(r){return r.json();}).then(function(h){
+      if(h&&h.found&&h.chain&&h.chain.length){
+        // Never let a rate-limited, inbound-only live pull clobber the stored
+        // two-sided thread. Only replace if the live result actually has OUR
+        // side too (or what we have now has no thread yet).
+        var liveHasUs=h.chain.some(function(c){return c.who==='us';});
+        var haveUs=(o.chain||[]).some(function(c){return c.who==='us';});
+        if(liveHasUs || !haveUs || (o.chain||[]).length<=2){
+          o.chain=h.chain.map(function(c){return {who:c.who,b:(c.who==='them'?o.bucket:undefined),date:c.date,he:c.he,es:c.es,en:c.en,via:c.via,audio:c.audio};});
+          var cur=PEOPLE.filter(function(p){return p.queued;})[state.qi];
+          // Thread just got fuller — re-run Nora so she suggests off the COMPLETE
+          // conversation, not the thin version loaded at card-open.
+          if(cur&&cur.name===o.name){loadDraft(o);renderQueue();bindQueue();}
+        }
+      }
+    }).catch(function(){});
+  }
+  // ── Voice record + file attach (composer) ───────────────────────────────────
+  var _mrec=null,_mchunks=[];
+  // WhatsApp play-inline voice notes need ogg/mp3, but browsers record mp4/webm.
+  // Convert the recording to mp3 in the browser (lamejs) so it sends as a real,
+  // playable voice note — not a downloadable file.
+  function loadLame(){return new Promise(function(res,rej){if(window.lamejs)return res();var s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js';s.onload=function(){res();};s.onerror=function(){rej();};document.head.appendChild(s);});}
+  function blobToMp3(blob){
+    return loadLame().then(function(){return blob.arrayBuffer();}).then(function(ab){
+      var AC=window.AudioContext||window.webkitAudioContext;var ac=new AC();
+      return ac.decodeAudioData(ab).then(function(b){try{ac.close();}catch(e){}return b;});
+    }).then(function(audioBuf){
+      var sr=audioBuf.sampleRate,ch0=audioBuf.getChannelData(0),n=ch0.length;
+      var pcm=new Int16Array(n);for(var i=0;i<n;i++){var s=Math.max(-1,Math.min(1,ch0[i]));pcm[i]=s<0?s*0x8000:s*0x7FFF;}
+      var enc=new lamejs.Mp3Encoder(1,sr,64),out=[],blk=1152;
+      for(var j=0;j<pcm.length;j+=blk){var c=enc.encodeBuffer(pcm.subarray(j,j+blk));if(c.length)out.push(new Int8Array(c));}
+      var end=enc.flush();if(end.length)out.push(new Int8Array(end));
+      return new Blob(out,{type:'audio/mpeg'});
+    });
+  }
+  function sendMedia(file,kind){
+    var q=PEOPLE.filter(function(p){return p.queued;}),o=q[state.qi];if(!o)return;
+    var fd=new FormData();
+    fd.append('file',file,file.name||(kind==='voice'?'voice.m4a':'file'));
+    fd.append('kind',kind);
+    fd.append('channel',o._phone?'whatsapp':'email');
+    fd.append('phone',o._phone||'');fd.append('email',o._email||'');fd.append('account',o._acct||'305');
+    fd.append('text',(state._draft&&state._draft.he)||'');
+    toast(state.lang==='es'?'Enviando…':'Sending…');
+    fetch('/api/center/reply-media',{method:'POST',headers:{'x-center-pass':PASS},body:fd})
+      .then(function(r){return r.json();}).then(function(res){
+        if(res&&res.ok){o.queued=false;o.bucket='within';o.fu='silent';state._draftFor=null;toast(state.lang==='es'?'Enviado ✓':'Sent ✓');renderAll();}
+        else toast((state.lang==='es'?'Error: ':'Failed: ')+((res&&res.error)||''));
+      }).catch(function(){toast(state.lang==='es'?'Error al enviar':'Send failed');});
+  }
+  function toggleRecord(btn){
+    if(_mrec&&_mrec.state==='recording'){_mrec.stop();return;}
+    if(!navigator.mediaDevices||!window.MediaRecorder){toast('No mic');return;}
+    navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+      var mt=['audio/mp4','audio/webm;codecs=opus','audio/webm'].filter(function(t){return MediaRecorder.isTypeSupported(t);})[0]||'';
+      _mchunks=[];_mrec=mt?new MediaRecorder(stream,{mimeType:mt}):new MediaRecorder(stream);
+      _mrec.ondataavailable=function(e){if(e.data&&e.data.size)_mchunks.push(e.data);};
+      _mrec.onstop=function(){
+        stream.getTracks().forEach(function(t){t.stop();});
+        var type=(_mchunks[0]&&_mchunks[0].type)||mt||'audio/webm';
+        var blob=new Blob(_mchunks,{type:type});
+        toast(state.lang==='es'?'Procesando voz…':'Processing…');
+        blobToMp3(blob).then(function(mp3){
+          sendMedia(new File([mp3],'voice.mp3',{type:'audio/mpeg'}),'voice');
+        }).catch(function(){
+          // Conversion failed → send original (will arrive as an audio file).
+          var ext=type.indexOf('mp4')>=0?'m4a':(type.indexOf('webm')>=0?'webm':'m4a');
+          sendMedia(new File([blob],'voice.'+ext,{type:type}),'voice');
+        });
+      };
+      _mrec.start();
+      btn.textContent='■ '+(state.lang==='es'?'Detener y enviar':'Stop & send');btn.style.background='#c0392b';btn.style.color='#fff';
+    }).catch(function(){toast(state.lang==='es'?'Micrófono bloqueado':'Mic blocked');});
+  }
+  // Pull the contact's TRUE thread from WhatsApp (Timelines) the moment the card
+  // opens, then refresh — so whatever the secretary looks at is live reality, not
+  // our cached copy. Falls back to the cached history if reconcile fails.
+  function reconcileThenLoad(o){
+    if(!o._row){loadHistory(o);return;}
+    fetch('/api/center/reconcile',{method:'POST',headers:H(),body:JSON.stringify({source_row:o._row})})
+      .then(function(r){return r.json();}).then(function(){ if(window.loadLive)window.loadLive(); loadHistory(o); })
+      .catch(function(){loadHistory(o);});
+  }
+  var _rq=window.renderQueue;
+  window.renderQueue=function(){ _rq(); var q=PEOPLE.filter(function(p){return p.queued;}),o=q[state.qi]; if(!o)return; if(!o._histLoaded){o._histLoaded=true;reconcileThenLoad(o);} if(state._draftFor!==o.name){state._draftFor=o.name;state._draft=null;state._sugs=null;loadDraft(o);} paintDraft(); };
+  var _bq=window.bindQueue;
+  window.bindQueue=function(){
+    _bq();
+    // IN-PLACE switch: flip the .sel highlight + repaint the draft bubble. Do
+    // NOT renderQueue() here — that rebuilds the whole queue HTML and snaps the
+    // scroll back to the top, which is jarring while she's reading the history.
+    document.querySelectorAll('.tone').forEach(function(t){t.onclick=function(){
+      state.tone=this.dataset.tone;
+      var s=pickSug();
+      if(s)state._draft={shown:(state.lang==='es'?s.reply_es:s.reply_he),he:s.reply_he,es:s.reply_es};
+      document.querySelectorAll('.tone').forEach(function(el){el.classList.toggle('sel', el.dataset.tone===state.tone);});
+      paintDraft();
+    };});
+    // EDITABLE draft boxes — she can tweak the AI suggestion before sending.
+    // Bottom (data-sb="he") is what actually goes out. Top is her own view.
+    // On English threads the two are identical; edits on either sync to both
+    // so she never sees a mismatch between what she typed and what we'd send.
+    document.querySelectorAll('.qsend .sb').forEach(function(box){
+      box.oninput=function(){
+        if(!state._draft) return;
+        var txt=this.textContent;
+        var which=this.dataset.sb;
+        if(which==='he'){ state._draft.he=txt; if(state._outLang==='en') state._draft.es=txt; }
+        else { state._draft.es=txt; if(state._outLang==='en') state._draft.he=txt; }
+        if(state._outLang==='en'){
+          // Mirror the OTHER box's visible text — but only if it isn't focused,
+          // so we never yank the caret out from under her.
+          document.querySelectorAll('.qsend .sb').forEach(function(o){
+            if(o!==box && document.activeElement!==o && o.textContent!==txt) o.textContent=txt;
+          });
+        }
+      };
+    });
+    var sb=document.querySelector('[data-q="send"]');
+    if(sb) sb.onclick=function(){
+      var q=PEOPLE.filter(function(p){return p.queued;}),o=q[state.qi];if(!o)return;
+      var text=(state._draft&&state._draft.he)||''; var es=(state._draft&&state._draft.es)||'';
+      if(!text){toast(state.lang==='es'?'Un momento — preparando':'One moment — drafting');return;}
+      // Route by the OUTGOING language, not the view: a HEBREW reply (her Spanish →
+      // translated) goes to the approval queue so Gideon/Shirel check the Hebrew.
+      // Anything English (typed or recorded) sends DIRECTLY — no queue.
+      if(/[֐-׿]/.test(text)){
+        // Hebrew reply → approval queue (reversible; the Hebrew quality is reviewed).
+        // No confirm popup.
+        this.textContent='…';
+        fetch('/api/center/approval',{method:'POST',headers:H(),body:JSON.stringify({action:'create',source_row:o._row,contact_name:o.name,channel:(o._phone?'whatsapp':'email'),draft_es:es,draft_he:text})})
+          .then(function(r){return r.json();}).then(function(res){ if(res&&res.ok){o.queued=false;state._draftFor=null;toast('Enviado a aprobación');renderAll();}else toast('Error'); }).catch(function(){toast('Error');});
+      } else {
+        // English side sends directly — clicking Send IS the decision, no extra gate (Gideon).
+        this.textContent='…';
+        fetch('/api/center/reply',{method:'POST',headers:H(),body:JSON.stringify({channel:(o._phone?'whatsapp':'email'),phone:o._phone,email:o._email,account:o._acct,text:text})})
+          .then(function(r){return r.json();}).then(function(res){ if(res&&res.ok){o.queued=false;o.bucket='within';o.fu='silent';state._draftFor=null;toast('Sent');renderAll();}else toast('Send failed'); }).catch(function(){toast('Send failed');});
+      }
+    };
+    var sn=document.querySelector('[data-q="snooze"]');
+    if(sn) sn.onclick=function(){var q=PEOPLE.filter(function(p){return p.queued;}),o=q[state.qi];if(!o)return;fetch('/api/center/remind',{method:'POST',headers:H(),body:JSON.stringify({row:o._row,days:7})});o.queued=false;o.bucket='silent';state._draftFor=null;toast(state.lang==='es'?'Pospuesto':'Snoozed');renderAll();};
+    document.querySelectorAll('[data-oc]').forEach(function(b){b.onclick=function(){
+      var q=PEOPLE.filter(function(p){return p.queued;}),o=q[state.qi];if(!o)return;var oc=this.dataset.oc;
+      if(oc==='remind'||oc==='remind1w') fetch('/api/center/remind',{method:'POST',headers:H(),body:JSON.stringify({row:o._row,days:(oc==='remind1w'?7:30)})});
+      else fetch('/api/center/outcome',{method:'POST',headers:H(),body:JSON.stringify({row:o._row,outcome:oc})});
+      o.queued=false;o.bucket=(oc==='booked'?'mtg':oc==='no'?'cold':'rem');if(oc==='booked')o.booked=true;state._draftFor=null;
+      toast(oc==='booked'?l().outBooked:oc==='no'?l().outNo:(state.lang==='es'?'Recordatorio guardado':'Reminder set'));renderAll();
+    };});
+    document.querySelectorAll('[data-ins]').forEach(function(b){b.onclick=function(){
+      var kind=this.dataset.ins;
+      var q=PEOPLE.filter(function(p){return p.queued;}),o=q[state.qi];
+      // Invitation / Terminal link / Book Zoom ALL = this contact's own minted
+      // /invite/<uuid> (it IS the personal booking link). Generic scheduler only
+      // if this contact has no minted link. Video = the explainer.
+      var minted=(o&&(o._inviteUrl||o._invite||o.mintedUrl))||'';
+      var SCHED='https://scheduler.zoom.us/gideon-gratsiani/schedule-with-gideon-czf4njv8';
+      var url = kind==='video' ? 'https://youtu.be/1tFycgsst1c'
+              : (kind==='invite'||kind==='link'||kind==='book') ? (minted||SCHED)
+              : '';
+      if(!url){toast(state.lang==='es'?'Sin enlace':'No link');return;}
+      if(!state._draft) state._draft={shown:'',he:'',es:''};
+      // IDEMPOTENT: never append a link already in the draft (Nora may have added
+      // the Zoom link, or the button got tapped twice) — that produced the doubled,
+      // broken URL. Put it on its own line so links never mash together.
+      if((state._draft.he||'').indexOf(url)>=0){toast(state.lang==='es'?'Ya está en el mensaje':'Already in the message');return;}
+      var add=function(s){return ((s||'').replace(/\s+$/,'')+'\n'+url).trim();};
+      state._draft.he=add(state._draft.he); state._draft.es=add(state._draft.es); state._draft.shown=add(state._draft.shown);
+      paintDraft();
+      toast(l().inserted+': '+l().ins[kind]);
+    };});
+    // Attach file (both sides) + Record voice (English threads only)
+    var af=document.querySelector('[data-media="attach"]'),fi=document.getElementById('mediaFile');
+    if(af&&fi){af.onclick=function(){fi.value='';fi.click();};fi.onchange=function(){var f=fi.files&&fi.files[0];if(f)sendMedia(f,'file');};}
+    var rb=document.querySelector('[data-media="rec"]');
+    if(rb)rb.onclick=function(){toggleRecord(rb);};
+  };
+  // ── EMAIL AUDIT (secretary inline-fix) ───────────────────────────────────
+  // The Ilit/Doron class of bug: a roster row whose email is somebody else's
+  // address. Shows a top-bar warning button with a count; clicking opens a
+  // modal listing every flagged row. Secretary either types the correct email
+  // (Fix) or confirms the existing one is right (Verified). HIGH rows block
+  // outbound sends + bookings until cleared (server-side guards).
+  // Email Audit panel KILLED per Gideon 2026-06-25. Its naive name-vs-email
+  // string match flagged addresses he had already verified (Ofer→obtmanagement,
+  // Doron→da-tax, Uri→mermelstei, etc.) — pure noise that created the
+  // "going in circles" feeling. Button stays permanently hidden. Contact-data
+  // verification is done against roster / live-WhatsApp ground truth, not a string match.
+  function renderAudit(){
+    var btn=document.getElementById('auditBtn'); if(btn)btn.style.display='none';
+  }
+  function openAudit(){
+    var rows=window._auditRows||[]; var list=document.getElementById('auditList'); if(!list)return;
+    var es=state.lang==='es';
+    document.getElementById('auditTtl').textContent=es?'Auditoría de emails':'Email Audit';
+    document.getElementById('auditSub').textContent=es?'El email no coincide con el nombre del contacto. Corrija o confirme.':'The email doesn’t match the contact name. Fix or verify.';
+    if(!rows.length){list.innerHTML='<div style="padding:18px;color:#475569">'+(es?'Nada pendiente.':'Nothing pending.')+'</div>';document.getElementById('auditModal').style.display='flex';return;}
+    list.innerHTML=rows.map(function(r){
+      var sev=r.email_audit_flag==='high'?'#b91c1c':'#b45309';
+      var sevBg=r.email_audit_flag==='high'?'#fee2e2':'#fef3c7';
+      var sevLbl=r.email_audit_flag==='high'?(es?'BLOQUEADO':'BLOCKED'):(es?'Revisar':'Review');
+      return '<div style="border:1px solid #e2e8f0;border-radius:11px;padding:13px 15px;background:#fff">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div style="font-weight:800;font-size:14.5px">'+esc(r.name||'')+'</div><span style="background:'+sevBg+';color:'+sev+';font-weight:900;font-size:11px;padding:3px 8px;border-radius:999px">'+sevLbl+'</span></div>'+
+        '<div style="color:#64748b;font-size:12.5px;margin-top:4px">'+esc(r.email_audit_note||'')+'</div>'+
+        '<div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">'+
+          '<div style="font-size:12px;color:#475569;font-weight:700;width:55px">'+(es?'Ahora':'Current')+':</div><div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:#0f172a;background:#f1f5f9;padding:5px 9px;border-radius:6px;flex:1;min-width:0;overflow-x:auto">'+esc(r.email||'')+'</div></div>'+
+        '<div style="display:flex;gap:8px;margin-top:7px;align-items:center;flex-wrap:wrap">'+
+          '<div style="font-size:12px;color:#475569;font-weight:700;width:55px">'+(es?'Correcto':'Correct')+':</div>'+
+          '<input data-em="'+r.source_row+'" placeholder="'+(es?'nuevo@correo.com':'new@email.com')+'" style="flex:1;min-width:200px;border:1px solid #cbd5e1;border-radius:7px;padding:7px 9px;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace">'+
+          '<button data-fix="'+r.source_row+'" style="border:none;background:#0F172A;color:#fff;border-radius:8px;padding:7px 13px;font-weight:800;cursor:pointer;font-size:12.5px">'+(es?'Guardar':'Fix')+'</button>'+
+          '<button data-ok="'+r.source_row+'" style="border:1px solid #cbd5e1;background:#fff;color:#0F172A;border-radius:8px;padding:7px 13px;font-weight:700;cursor:pointer;font-size:12.5px">'+(es?'Verificado':'Verified')+'</button>'+
+        '</div></div>';
+    }).join('');
+    document.getElementById('auditModal').style.display='flex';
+    list.querySelectorAll('[data-fix]').forEach(function(b){b.onclick=function(){var sr=this.dataset.fix;var inp=list.querySelector('input[data-em="'+sr+'"]');var v=(inp&&inp.value||'').trim();if(!v||v.indexOf('@')<0){inp&&inp.focus();return;}this.textContent='…';fetch('/api/center/email-audit',{method:'POST',headers:H(),body:JSON.stringify({source_row:Number(sr),action:'fix',new_email:v})}).then(function(r){return r.json();}).then(function(res){if(res&&res.ok){toast(es?'Corregido':'Fixed');renderAudit();openAudit();}else{toast((res&&res.error)||'Error');}});};});
+    list.querySelectorAll('[data-ok]').forEach(function(b){b.onclick=function(){var sr=this.dataset.ok;if(!window.confirm(es?'¿Confirmas que el email actual es correcto?':'Confirm the current email is correct?'))return;this.textContent='…';fetch('/api/center/email-audit',{method:'POST',headers:H(),body:JSON.stringify({source_row:Number(sr),action:'clear'})}).then(function(r){return r.json();}).then(function(res){if(res&&res.ok){toast(es?'Verificado':'Verified');renderAudit();openAudit();}});};});
+  }
+  // 5th panel — ENGLISH-ONLY Approvals. Shows the Spanish secretary's
+  // Hebrew<->Spanish drafts waiting for approval; hidden entirely when empty or
+  // when viewing in Spanish. Approve = send + vanish.
+  window.renderApprovals=function(){
+    var box=document.getElementById('col-approvals'); if(!box)return;
+    if(state.lang!=='en'){ box.style.display='none'; box.innerHTML=''; return; }
+    fetch('/api/center/approval',{headers:{'x-center-pass':PASS}}).then(function(r){return r.json();}).then(function(j){
+      var items=(j&&j.approvals)||[];
+      if(!items.length){ box.style.display='none'; box.innerHTML=''; return; }
+      box.style.display='';
+      box.innerHTML='<div class="qcap"><b>Approvals</b><span class="pos">'+items.length+'</span></div>'+
+        '<div class="apbody">'+items.map(function(a){
+          return '<div class="apcard"><div class="apnm">'+esc(a.contact_name||'')+' · '+esc(a.channel||'')+'</div>'+
+            '<div class="apsub">Worked by the Spanish version — your approval to send</div>'+
+            (a.draft_es?'<div class="apes">'+esc(a.draft_es)+'</div>':'')+
+            '<div class="aphe">'+esc(a.draft_he||'')+'</div>'+
+            '<div class="aprow"><button class="apok" data-ap="'+esc(a.id)+'" data-name="'+esc(a.contact_name||'')+'" data-ch="'+esc(a.channel||'')+'">✓ Approve &amp; send</button>'+
+            '<button class="apno" data-apx="'+esc(a.id)+'">✕ Reject</button></div></div>';
+        }).join('')+'</div>';
+      box.querySelectorAll('[data-ap]').forEach(function(b){b.onclick=function(){var id=this.dataset.ap;this.textContent='…';fetch('/api/center/approval',{method:'POST',headers:H(),body:JSON.stringify({action:'approve',id:id})}).then(function(r){return r.json();}).then(function(res){toast(res&&res.ok?'Sent':('Failed'+(res&&res.error?': '+res.error:'')));window.renderApprovals();}).catch(function(){toast('Failed');});};});
+      box.querySelectorAll('[data-apx]').forEach(function(b){b.onclick=function(){var id=this.dataset.apx;fetch('/api/center/approval',{method:'POST',headers:H(),body:JSON.stringify({action:'reject',id:id})}).then(function(){window.renderApprovals();});};});
+    }).catch(function(){});
+  };
+  // --- Excel / CSV upload -------------------------------------------------
+  // The top-bar Upload button opens a hidden file picker, parses CSV inline or
+  // .xlsx via SheetJS (loaded once on demand), maps columns by header in any
+  // order, POSTs {rows} to /api/center/upload, then refreshes the board.
+  function loadSheetJS(){
+    return new Promise(function(res,rej){
+      if(window.XLSX)return res(window.XLSX);
+      if(window._xlsxLoading)return window._xlsxLoading.then(res,rej);
+      window._xlsxLoading=new Promise(function(r,j){
+        var s=document.createElement('script');
+        s.src='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
+        s.onload=function(){r(window.XLSX);}; s.onerror=function(){j(new Error('sheetjs'));};
+        document.head.appendChild(s);
+      });
+      window._xlsxLoading.then(res,rej);
+    });
+  }
+  function normKey(s){ return String(s==null?'':s).toLowerCase().replace(/[^a-z]/g,''); }
+  function rowsFromAOA(aoa){
+    if(!aoa||!aoa.length)return [];
+    var header=aoa[0].map(normKey), idx={name:-1,phone:-1,email:-1};
+    header.forEach(function(h,i){
+      if(idx.name<0 && (h==='name'||h==='nombre'||h==='fullname'||h==='contacto'))idx.name=i;
+      if(idx.phone<0 && (h==='phone'||h==='whatsapp'||h==='telefono'||h==='tel'||h==='mobile'||h==='celular'||h==='movil'))idx.phone=i;
+      if(idx.email<0 && (h==='email'||h==='correo'||h==='mail'||h==='ecorreo'))idx.email=i;
+    });
+    var out=[];
+    for(var r=1;r<aoa.length;r++){
+      var row=aoa[r]||[];
+      var name=idx.name>=0?String(row[idx.name]==null?'':row[idx.name]).trim():'';
+      var phone=idx.phone>=0?String(row[idx.phone]==null?'':row[idx.phone]).trim():'';
+      var email=idx.email>=0?String(row[idx.email]==null?'':row[idx.email]).trim():'';
+      if(name||phone||email)out.push({name:name,phone:phone,email:email});
+    }
+    return out;
+  }
+  function parseCSV(text){
+    var lines=text.replace(/\r\n?/g,'\n').split('\n').filter(function(x){return x.length;});
+    return lines.map(function(line){
+      var cells=[],cur='',q=false;
+      for(var i=0;i<line.length;i++){var ch=line[i];
+        if(q){ if(ch==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; } else cur+=ch; }
+        else { if(ch==='"')q=true; else if(ch===','){cells.push(cur);cur='';} else cur+=ch; }
+      }
+      cells.push(cur); return cells;
+    });
+  }
+  function dupPanel(names){
+    var old=document.getElementById('dupPanel'); if(old)old.remove();
+    if(!names||!names.length)return;
+    var d=document.createElement('div'); d.id='dupPanel';
+    d.style.cssText='position:fixed;top:58px;right:14px;max-width:320px;max-height:50vh;overflow:auto;background:#fff;border:1px solid #f0c8c2;border-left:4px solid #DC2626;border-radius:10px;box-shadow:0 8px 26px rgba(0,0,0,.25);padding:11px 13px;z-index:60;font-family:Inter,sans-serif';
+    d.innerHTML='<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px"><b style="color:#991B1B;font-size:13px;flex:1">'+(state.lang==='es'?'Duplicados (omitidos)':'Duplicates (skipped)')+'</b><button id="dupX" style="border:none;background:transparent;color:#991B1B;font-weight:900;font-size:15px;cursor:pointer">✕</button></div>'+
+      names.map(function(n){return '<div style="color:#DC2626;font-size:12.5px;padding:2px 0">'+esc(n)+'</div>';}).join('');
+    document.body.appendChild(d);
+    document.getElementById('dupX').onclick=function(){d.remove();};
+  }
+  function submitRows(rows){
+    if(!rows.length){toast&&toast(state.lang==='es'?'Sin filas':'No rows');return;}
+    fetch('/api/center/upload',{method:'POST',headers:H(),body:JSON.stringify({rows:rows})})
+      .then(function(r){return r.json();}).then(function(res){
+        var added=(res&&(res.added!=null?res.added:res.inserted))||0;
+        var dups=(res&&(res.duplicates||res.dupes))||[];
+        var dupN=Array.isArray(dups)?dups.length:(res&&res.duplicateCount)||0;
+        toast&&toast((state.lang==='es'?'Agregados ':'Added ')+added+' · '+dupN+(state.lang==='es'?' duplicados':' duplicates'));
+        if(Array.isArray(dups)&&dups.length){ dupPanel(dups.map(function(d){return typeof d==='string'?d:(d&&d.name)||'';}).filter(Boolean)); }
+        loadLive(); renderAll();
+      }).catch(function(){toast&&toast(state.lang==='es'?'Error al subir':'Upload failed');});
+  }
+  function handleFile(file){
+    if(!file)return;
+    var isCsv=/\.csv$/i.test(file.name);
+    if(isCsv){
+      var fr=new FileReader();
+      fr.onload=function(){ submitRows(rowsFromAOA(parseCSV(String(fr.result)))); };
+      fr.readAsText(file);
+    } else {
+      loadSheetJS().then(function(XLSX){
+        var fr=new FileReader();
+        fr.onload=function(){
+          var wb=XLSX.read(new Uint8Array(fr.result),{type:'array'});
+          var ws=wb.Sheets[wb.SheetNames[0]];
+          var aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:false});
+          submitRows(rowsFromAOA(aoa));
+        };
+        fr.readAsArrayBuffer(file);
+      }).catch(function(){toast&&toast(state.lang==='es'?'No se pudo cargar el lector':'Could not load reader');});
+    }
+  }
+  (function wireUpload(){
+    if(document.getElementById('uploadFile'))return;            // idempotent
+    var inp=document.createElement('input');
+    inp.type='file'; inp.id='uploadFile'; inp.accept='.csv,.xlsx,.xls'; inp.style.display='none';
+    document.body.appendChild(inp);
+    inp.onchange=function(){ var f=inp.files&&inp.files[0]; inp.value=''; handleFile(f); };
+    var btn=document.getElementById('uploadLbl');
+    var clicker=(btn&&btn.closest)?btn.closest('.tbtn'):btn;
+    if(clicker)clicker.style.cursor='pointer';
+    if(clicker)clicker.onclick=function(){ inp.click(); };
+  })();
+
+  window.PEOPLE=[]; loadLive();
+  // Fallback poll only — Realtime (below) delivers replies instantly. Kept slow
+  // as a safety net so a dropped socket can't strand the board.
+  setInterval(loadLive,30000);
+  setInterval(function(){ if(window.renderApprovals)window.renderApprovals(); },60000);
+
+  // ── Instant push + bell ──────────────────────────────────────────────────
+  // The WhatsApp webhook and the email watcher write the contact board the
+  // moment a message lands; Supabase Realtime pushes that change to THIS screen
+  // immediately — the board refreshes and detectNew() rings the bell. No more
+  // constant searching; the second something comes in for one of our people it
+  // surfaces here.
+  (function realtime(){
+    var SB_URL='https://yrnujfhzmoasodawqfri.supabase.co';
+    var SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlybnVqZmh6bW9hc29kYXdxZnJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0Mjg0NDMsImV4cCI6MjA5MzAwNDQ0M30.WTYWgfHVVNniCcSQALpjNw7hXKQbbkqNCzB0JvRRY70';
+    function start(){
+      try{
+        var c=window.supabase.createClient(SB_URL,SB_ANON);
+        var t=null;
+        c.channel('roster-board')
+         .on('postgres_changes',{event:'*',schema:'public',table:'roster'},function(){
+           clearTimeout(t); t=setTimeout(function(){ loadLive(); }, 600);
+         })
+         .subscribe();
+        window._rtOn=true;
+      }catch(e){}
+    }
+    if(window.supabase&&window.supabase.createClient){ start(); }
+    else{ var s=document.createElement('script'); s.src='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'; s.onload=start; s.onerror=function(){}; document.head.appendChild(s); }
+  })();
+  // Email-audit top-bar warning button — opens the inline-fix modal.
+  (function wireAudit(){
+    var btn=document.getElementById('auditBtn'); if(btn)btn.onclick=function(){openAudit();};
+    var cls=document.getElementById('auditCls'); if(cls)cls.onclick=function(){document.getElementById('auditModal').style.display='none';};
+    var modal=document.getElementById('auditModal'); if(modal)modal.onclick=function(e){if(e.target===modal)modal.style.display='none';};
+    renderAudit(); setInterval(renderAudit, 60000);
+  })();
+})();
+</script>
+</body></html>

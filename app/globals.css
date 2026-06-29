@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+
+  /* RePrime brand — Imperial Gold migration (May 3, 2026).
+     One gold #FFCC33, one navy #0E3470. Hierarchy via opacity, never via new hex.
+     JS source of truth: lib/design-tokens.ts                                  */
+  --rp-font-body: var(--font-lexend), 'Lexend', 'Poppins', system-ui,
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+
+  --rp-navy: #0E3470;
+  --rp-gold: #FFCC33;                              /* Imperial Gold */
+  --rp-gold-lite: #FFCC33;                         /* alias — opacity at call site */
+  --rp-blue: #1D5FB8;
+  --rp-teal: #009080;
+  --rp-green: #00A980;
+  --rp-red: #FF7474;
+  --rp-black: #000000;
+  --rp-white: #FFFFFF;
+
+  /* Navy surface elevation — derived from #0E3470 via opacity, no new navy hex */
+  --rp-surface: rgba(14, 52, 112, 0.85);           /* was #0A1F44 */
+  --rp-navy-deep: rgba(14, 52, 112, 0.85);         /* was #0A1F44 */
+  --rp-border: rgba(14, 52, 112, 0.70);            /* was #1A3560 */
+
+  /* Personal/718 panel — warm earth tones, intentional UX differentiation, untouched */
+  --personal-bg: #FAFAF9;
+  --personal-surface: #F2F0EC;
+  --personal-border: #E5E2DB;
+  --personal-text: #1F1D1A;
+  --personal-accent: #6B7C5C;
+  --personal-muted: #8A8680;
+  --personal-warm: #C4B99A;
+
+  --rp-gold-soft: #FFCC33;                         /* alias */
+  --rp-cream: #F4EEE0;                             /* aligned to TerminalLogo CREAM */
+  --surface-elevated: #FFFFFF;
+  --surface-divider: #E5E2DB;
+  --text-muted: #8A8680;
+
+  --status-success: #00A980;
+  --status-warning: #FFCC33;
+  --status-error: #FF7474;
+
+  /* ── Meaning-based palette (May 5, 2026) ─────────────────────────────────
+     Each color carries ONE meaning across the dashboard. The legend bar at
+     the top of the screen shows what each color means so Gideon can learn
+     the system at a glance instead of memorizing component-by-component.
+     Use these tokens, not raw hex, for any new colored UI.                  */
+  --c-channel-305:    #F0B400;   /* RePrime business — Quo */
+  --c-channel-718:    #25D366;   /* Personal WhatsApp / OK / Sent */
+  --c-channel-imsg:   #0A84FF;   /* iMessage */
+  --c-channel-sms:    #FF9500;   /* SMS fallback */
+  --c-investor:       #FFCC33;   /* Investor — gold star (same as brand) */
+  --c-live-now:       #A855F7;   /* In progress / live now / streaming */
+  --c-fail:           #EF4444;   /* Failed / Blocked / Critical */
+  --c-warn:           #F59E0B;   /* Expiring / heads-up */
+  --c-meeting:        #FFCC33;   /* Calendar / Terminal meetings */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: var(--rp-font-body);
+}
+
+[lang="he"], [dir="rtl"] { direction: rtl; }
+
+/* InvestorProfile — readable notes textarea (faint gold on navy) */
+.rp-investor-notes::placeholder {
+  color: rgba(255, 204, 51, 0.4);
+  font-style: italic;
+}

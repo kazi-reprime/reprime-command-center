@@ -1,0 +1,55 @@
+# Default: keep the dashboard out of search engine indexes.
+# (The dashboard is auth-gated by middleware anyway, so search engines
+# can't crawl most of it — this just makes it explicit.)
+User-agent: *
+Disallow: /
+
+# Public invite pages must be crawlable by social-network preview bots
+# so messaging apps can fetch the OG card. Facebook's debugger
+# explicitly requires facebookexternalhit to be allowlisted in
+# robots.txt, otherwise it 403s the URL.
+User-agent: facebookexternalhit
+Allow: /invite/
+Disallow: /
+
+User-agent: Facebot
+Allow: /invite/
+Disallow: /
+
+User-agent: WhatsApp
+Allow: /invite/
+Disallow: /
+
+User-agent: Twitterbot
+Allow: /invite/
+Disallow: /
+
+User-agent: LinkedInBot
+Allow: /invite/
+Disallow: /
+
+User-agent: TelegramBot
+Allow: /invite/
+Disallow: /
+
+User-agent: Slackbot
+Allow: /invite/
+Disallow: /
+
+User-agent: Slackbot-LinkExpanding
+Allow: /invite/
+Disallow: /
+
+User-agent: Discordbot
+Allow: /invite/
+Disallow: /
+
+User-agent: SkypeUriPreview
+Allow: /invite/
+Disallow: /
+
+User-agent: iMessagePreviewService
+Allow: /invite/
+Disallow: /
+
+# No sitemap — invite tokens are private and not for indexing.

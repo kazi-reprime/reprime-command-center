@@ -82,6 +82,7 @@ export default function RightFlank() {
     setMessages((prev) => [...prev, { sender: 'user', text: userPrompt }]);
     setLoadingNora(true);
 
+    try {
       const contextPayload = {
         emails: emails.slice(0, 10), // Limit context size
         events,

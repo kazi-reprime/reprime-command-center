@@ -86,7 +86,8 @@ async function dropCachedCookies(): Promise<void> {
 }
 
 async function launchBrowser(): Promise<Browser> {
-  const { chromium: pwChromium } = await import('playwright-core')
+  // Use eval('require') to hide from webpack's static analysis at build time
+  const pwChromium = eval('require')('playwright-core').chromium
   const onServerless =
     !!process.env.AWS_LAMBDA_FUNCTION_VERSION ||
     process.env.VERCEL_ENV === 'production' ||
@@ -97,7 +98,7 @@ async function launchBrowser(): Promise<Browser> {
     // playwright-core's expected Chromium revision or CDP handshake fails
     // with "Target page, context or browser has been closed" on launch.
     // sparticuz 147.x ↔ playwright-core 1.59.x (Chromium 147).
-    const sparticuz = (await import('@sparticuz/chromium')).default
+    const sparticuz = eval('require')('@sparticuz/chromium')
     sparticuz.setGraphicsMode = false
     return pwChromium.launch({
       args: sparticuz.args,

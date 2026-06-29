@@ -4,7 +4,9 @@
  * and ingests new bankruptcy filing records.
  */
 
-import { chromium } from 'playwright';
+// playwright is loaded dynamically at runtime to avoid Vercel build failures
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const getChromium = () => eval('require')('playwright').chromium;
 import { Redis } from '@upstash/redis';
 import { createServiceClient } from '@/lib/supabase/server';
 
@@ -94,7 +96,7 @@ export async function runInforuptcyIngestion(): Promise<DocketFiling[]> {
   }
 
   console.log('Inforuptcy Worker: Launching headless browser...');
-  const browser = await chromium.launch({ headless: true });
+  const browser = await getChromium().launch({ headless: true });
   const context = await browser.newContext();
   const page = await context.newPage();
 

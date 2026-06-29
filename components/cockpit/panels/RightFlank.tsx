@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Sparkles, CheckSquare, Send, CalendarClock, Loader2, Check, Mic, StickyNote } from 'lucide-react';
 import { useStore } from '@/lib/store/useStore';
 import NotesPanel from './NotesPanel';
+import SpeakerButton from '@/components/chat/SpeakerButton';
 
 interface Task {
   id: string;
@@ -180,8 +181,13 @@ export default function RightFlank() {
                   : 'bg-[#123e80] border-[#FFCC33]/20 text-[#FFCC33] font-mono'
               }`}
             >
-              <div className="font-semibold text-[10px] text-gray-400 mb-1">
-                {msg.sender === 'nora' ? 'NORA AI' : 'GIDEON'}
+              <div className="font-semibold text-[10px] text-gray-400 mb-1 flex justify-between items-center">
+                <span>{msg.sender === 'nora' ? 'NORA AI' : 'GIDEON'}</span>
+                {msg.sender === 'nora' && (
+                  <div className="opacity-50 hover:opacity-100 transition scale-75 origin-right">
+                    <SpeakerButton text={msg.text} />
+                  </div>
+                )}
               </div>
               <p>{msg.text}</p>
             </div>

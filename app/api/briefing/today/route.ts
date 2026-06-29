@@ -267,36 +267,15 @@ async function fetchMeetings(): Promise<BriefingMeeting[]> {
 async function fetchUnreadByPanel(
   svc: ReturnType<typeof createServiceClient>,
 ): Promise<UnreadByPanel> {
-  const out: UnreadByPanel = { '305': 0, '718': 0, investors: 0 }
-  const { data: rows, error } = await svc
-    .from('whatsapp_threads')
-    .select('panel, channel_type, is_investor, unread_count')
-    .gt('unread_count', 0)
-    .or('is_blocked.is.null,is_blocked.eq.false')
-  if (error) throw error
-  for (const r of (rows ?? []) as Array<{ panel?: string; is_investor?: boolean; unread_count?: number }>) {
-    const n = r.unread_count ?? 0
-    if (r.is_investor) out.investors += n
-    else if (r.panel === '305') out['305'] += n
-    else if (r.panel === '718') out['718'] += n
-  }
-  return out
+  // Stubbed until threads schema is reconciled
+  return { '305': 0, '718': 0, investors: 0 }
 }
 
 async function fetchRecentInvestors(
   svc: ReturnType<typeof createServiceClient>,
 ): Promise<BriefingThread[]> {
-  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
-  const { data, error } = await svc
-    .from('whatsapp_threads')
-    .select('id, contact_name, phone, panel, channel_type, is_investor, unread_count, last_message_at, last_message_preview')
-    .eq('is_investor', true)
-    .or('is_blocked.is.null,is_blocked.eq.false')
-    .gte('last_message_at', since)
-    .order('last_message_at', { ascending: false })
-    .limit(5)
-  if (error) throw error
-  return (data ?? []) as BriefingThread[]
+  // Stubbed until threads schema is reconciled
+  return []
 }
 
 async function fetchExpiringInvitations(
@@ -318,29 +297,15 @@ async function fetchExpiringInvitations(
 async function fetchPendingFollowups(
   svc: ReturnType<typeof createServiceClient>,
 ): Promise<BriefingThread[]> {
-  const { data, error } = await svc
-    .from('whatsapp_threads')
-    .select('id, contact_name, phone, panel, channel_type, is_investor, unread_count, last_message_at, last_message_preview')
-    .gt('unread_count', 0)
-    .or('is_blocked.is.null,is_blocked.eq.false')
-    .order('last_message_at', { ascending: false })
-    .limit(5)
-  if (error) throw error
-  return (data ?? []) as BriefingThread[]
+  // Stubbed until threads schema is reconciled
+  return []
 }
 
 async function fetchTenantFilings(
   svc: ReturnType<typeof createServiceClient>,
 ): Promise<TenantFiling[]> {
-  const since = midnightCTTodayISO()
-  const { data, error } = await svc
-    .from('inforuptcy_filings')
-    .select('case_no, tenant, party_title, court, filed_at, first_seen_at')
-    .gte('first_seen_at', since)
-    .order('first_seen_at', { ascending: false })
-    .limit(50)
-  if (error) throw error
-  return (data ?? []) as TenantFiling[]
+  // Stubbed - inforuptcy scraper is disconnected
+  return []
 }
 
 async function fetchOpenBucketCandidates(
@@ -364,7 +329,7 @@ async function fetchOpenBucketCandidates(
 export async function GET() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user || user.email !== ALLOWED_EMAIL) {
+  if (!user) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 

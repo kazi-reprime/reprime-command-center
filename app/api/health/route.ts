@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server'
+import { pipedriveAdapter } from '@/lib/adapters/pipedriveAdapter'
+import { smsAdapter } from '@/lib/adapters/smsAdapter'
+import { whatsappAdapter } from '@/lib/adapters/whatsappAdapter'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -61,9 +64,17 @@ export async function GET() {
 
   const db = await pingDb()
 
+  const adapters = {
+    pipedrive: pipedriveAdapter.getStatus(),
+    sms: smsAdapter.getStatus(),
+    whatsapp: whatsappAdapter.getStatus(),
+  }
+
   const missingEnv = REQUIRED_ENVS.some((k) => !env[k])
+  const missingAdapter = Object.values(adapters).some(a => !a.isConfigured)
+  
   const overall: 'ok' | 'degraded' | 'down' =
-    !db.reachable ? 'down' : missingEnv ? 'degraded' : 'ok'
+    !db.reachable ? 'down' : (missingEnv || missingAdapter) ? 'degraded' : 'ok'
 
   return NextResponse.json(
     {
@@ -71,6 +82,7 @@ export async function GET() {
       deployedAt: process.env.VERCEL_DEPLOYMENT_TS || null,
       env,
       db,
+      adapters,
       overall,
     },
     {

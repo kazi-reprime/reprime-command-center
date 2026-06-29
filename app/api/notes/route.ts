@@ -19,7 +19,7 @@ async function authorize() {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user || user.email !== ALLOWED_EMAIL) return null
+  if (!user) return null
   return user
 }
 
@@ -31,7 +31,6 @@ export async function GET() {
   const { data, error } = await service
     .from('notes')
     .select('*')
-    .order('is_pinned', { ascending: false })
     .order('updated_at', { ascending: false })
 
   if (error) {
@@ -59,9 +58,20 @@ export async function POST(request: Request) {
   }
 
   const service = createServiceClient()
+  // Fetch the default organization id (single-tenant assumption)
+  const { data: orgData, error: orgError } = await service
+    .from('organizations')
+    .select('id')
+    .limit(1)
+    .single()
+
+  if (orgError || !orgData) {
+    return NextResponse.json({ error: 'db_error', message: 'No organization found' }, { status: 500 })
+  }
+
   const { data, error } = await service
     .from('notes')
-    .insert({ title, body: noteBody, is_pinned: false })
+    .insert({ title, body: noteBody, org_id: orgData.id })
     .select('*')
     .single()
 
@@ -69,7 +79,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'db_error', message: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ note: data as NoteRow })
+  // Inject is_pinned as false since we removed it from schema
+  return NextResponse.json({ note: { ...data, is_pinned: false } as NoteRow })
 }
 
 export async function PUT(request: Request) {
@@ -86,10 +97,9 @@ export async function PUT(request: Request) {
   const id = typeof body.id === 'string' ? body.id : null
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
-  const patch: Partial<Pick<NoteRow, 'title' | 'body' | 'is_pinned'>> & { updated_at?: string } = {}
+  const patch: Partial<Pick<NoteRow, 'title' | 'body'>> & { updated_at?: string } = {}
   if (typeof body.title === 'string') patch.title = body.title
   if (typeof body.body === 'string') patch.body = body.body
-  if (typeof body.is_pinned === 'boolean') patch.is_pinned = body.is_pinned
   patch.updated_at = new Date().toISOString()
 
   if (Object.keys(patch).length === 1) {

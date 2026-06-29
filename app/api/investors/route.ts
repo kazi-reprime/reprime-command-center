@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/db';
-import { investors } from '@/db/schema';
-import { eq, desc } from 'drizzle-orm';
-import { createServerClient } from '@/lib/supabase/server';
+import { createServerClient, createServiceClient } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
   try {
@@ -12,18 +9,18 @@ export async function GET(request: Request) {
     // Fallback orgId if not authenticated
     const orgId = session?.user?.id || '00000000-0000-0000-0000-000000000000';
 
-    let allInvestors = [];
-    try {
-      allInvestors = await db
-        .select()
-        .from(investors)
-        .where(eq(investors.orgId, orgId))
-        .orderBy(desc(investors.investorScore));
-    } catch (dbError) {
+    const service = createServiceClient();
+    
+    let { data: allInvestors, error: dbError } = await service
+      .from('investors')
+      .select('*')
+      .order('investor_score', { ascending: false });
+
+    if (dbError) {
       console.error('Investors query error:', dbError);
     }
     
-    if (allInvestors.length === 0) {
+    if (!allInvestors || allInvestors.length === 0) {
       // Mock data for prototyping if table is empty
       console.warn('Investors table is empty, returning mock data for prototyping');
       return NextResponse.json([
@@ -63,7 +60,21 @@ export async function GET(request: Request) {
       ]);
     }
 
-    return NextResponse.json(allInvestors);
+    const mappedInvestors = allInvestors.map(inv => ({
+      id: inv.id,
+      orgId: inv.org_id,
+      name: inv.name,
+      contactPhone: inv.contact_phone,
+      capitalCapacity: inv.capital_capacity,
+      preferredDealType: inv.preferred_deal_type,
+      preferredLocation: inv.preferred_location,
+      status: inv.status,
+      investorScore: inv.investor_score,
+      lastInteractionAt: inv.last_interaction_at,
+      createdAt: inv.created_at
+    }));
+
+    return NextResponse.json(mappedInvestors);
   } catch (error) {
     console.error('Failed to fetch investors:', error);
     return NextResponse.json({ error: 'Failed to fetch investors' }, { status: 500 });

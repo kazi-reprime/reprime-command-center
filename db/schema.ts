@@ -175,6 +175,60 @@ export const campaigns = pgTable('campaigns', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Table: notes
+export const notes = pgTable('notes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  body: text('body').notNull(),
+  createdBy: uuid('created_by').references(() => orgMembers.id, { onDelete: 'set null' }),
+  linkedSourceType: varchar('linked_source_type', { length: 50 }),
+  linkedSourceId: varchar('linked_source_id', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Table: briefings
+export const briefings = pgTable('briefings', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  type: varchar('type', { length: 50 }).notNull(), // 'morning', 'evening', 'meeting'
+  content: text('content').notNull(),
+  generatedFor: uuid('generated_for').references(() => orgMembers.id, { onDelete: 'set null' }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Table: contacts
+export const contacts = pgTable('contacts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  phone: varchar('phone', { length: 50 }),
+  email: varchar('email', { length: 255 }),
+  company: varchar('company', { length: 255 }),
+  isInvestor: boolean('is_investor').default(false).notNull(),
+  isStaff: boolean('is_staff').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Table: contact_labels
+export const contactLabels = pgTable('contact_labels', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  contactId: uuid('contact_id').references(() => contacts.id, { onDelete: 'cascade' }).notNull(),
+  label: varchar('label', { length: 100 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Table: audit_logs
+export const auditLogs = pgTable('audit_logs', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  action: varchar('action', { length: 255 }).notNull(),
+  actorId: uuid('actor_id').references(() => orgMembers.id, { onDelete: 'set null' }),
+  details: jsonb('details'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // --- Relationships ---
 
 export const organizationsRelations = relations(organizations, ({ many }) => ({
@@ -188,6 +242,10 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   decisions: many(decisions),
   payments: many(payments),
   campaigns: many(campaigns),
+  notes: many(notes),
+  briefings: many(briefings),
+  contacts: many(contacts),
+  auditLogs: many(auditLogs),
 }));
 
 export const orgMembersRelations = relations(orgMembers, ({ one }) => ({
@@ -230,6 +288,54 @@ export const bucketItemsRelations = relations(bucketItems, ({ one }) => ({
   }),
   assignor: one(orgMembers, {
     fields: [bucketItems.assignedBy],
+    references: [orgMembers.id],
+  }),
+}));
+
+export const notesRelations = relations(notes, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [notes.orgId],
+    references: [organizations.id],
+  }),
+  author: one(orgMembers, {
+    fields: [notes.createdBy],
+    references: [orgMembers.id],
+  }),
+}));
+
+export const briefingsRelations = relations(briefings, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [briefings.orgId],
+    references: [organizations.id],
+  }),
+  recipient: one(orgMembers, {
+    fields: [briefings.generatedFor],
+    references: [orgMembers.id],
+  }),
+}));
+
+export const contactsRelations = relations(contacts, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [contacts.orgId],
+    references: [organizations.id],
+  }),
+  labels: many(contactLabels),
+}));
+
+export const contactLabelsRelations = relations(contactLabels, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [contactLabels.contactId],
+    references: [contacts.id],
+  }),
+}));
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [auditLogs.orgId],
+    references: [organizations.id],
+  }),
+  actor: one(orgMembers, {
+    fields: [auditLogs.actorId],
     references: [orgMembers.id],
   }),
 }));
@@ -301,3 +407,4 @@ export const campaignsRelations = relations(campaigns, ({ one }) => ({
     references: [deals.id],
   }),
 }));
+

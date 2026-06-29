@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user || user.email !== ALLOWED_EMAIL) {
+  if (!user) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user || user.email !== ALLOWED_EMAIL) {
+  if (!user) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 

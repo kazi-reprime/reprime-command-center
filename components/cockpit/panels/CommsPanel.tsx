@@ -205,7 +205,12 @@ export default function CommsPanel() {
         });
       } else {
         const errData = await res.json();
-        console.error('Failed to send message:', errData.message);
+        console.error('Failed to send message:', errData);
+        if (errData.error === 'adapter_offline') {
+          alert(`Integration Offline: ${errData.message}`);
+        } else {
+          alert(`Failed to send message: ${errData.error || errData.message || 'Unknown error'}`);
+        }
       }
     } catch (e) {
       console.error('Error sending message:', e);
@@ -295,7 +300,22 @@ export default function CommsPanel() {
 
         {/* Thread List */}
         <div className="flex-1 overflow-y-auto divide-y divide-[#FFCC33]/10">
-          {loadingThreads && threads.length === 0 ? (
+          {(activeLane === 'sms' || activeLane === 'imessage') ? (
+            <div className="p-8 flex flex-col items-center justify-center text-center space-y-4 h-full">
+              <div className="p-4 bg-white/5 rounded-full border border-white/10">
+                 <Shield className="h-6 w-6 text-gray-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-gray-300">Integration Offline</h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  The {activeLane === 'sms' ? 'SMS / Twilio' : 'iMessage (BlueBubbles)'} adapter is currently disconnected or pending configuration.
+                </p>
+              </div>
+              <button className="px-4 py-1.5 bg-[#FFCC33]/10 text-[#FFCC33] text-[10px] font-bold uppercase rounded border border-[#FFCC33]/20 hover:bg-[#FFCC33]/20 transition">
+                Configure Adapter
+              </button>
+            </div>
+          ) : loadingThreads && threads.length === 0 ? (
             <div className="p-4 text-center">
               <Loader2 className="h-5 w-5 animate-spin text-[#FFCC33] mx-auto" />
             </div>

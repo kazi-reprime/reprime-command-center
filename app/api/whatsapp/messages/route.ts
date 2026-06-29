@@ -5,6 +5,7 @@ import { normalizePhone } from '@/lib/timelines/normalize-phone'
 import { getMediaType, parseTimelinesTimestamp } from '@/lib/timelines/parse'
 import type { DashboardMessage, Panel, TimelinesMessage } from '@/lib/timelines/types'
 import { recordOutboundAsk } from '@/lib/secretary/outbound-asks'
+import { whatsappAdapter } from '@/lib/adapters/whatsappAdapter'
 
 export const dynamic = 'force-dynamic'
 
@@ -149,6 +150,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
   }
 
+  const status = whatsappAdapter.getStatus();
+  if (!status.isConfigured) {
+    return NextResponse.json({ error: 'adapter_offline', message: status.error }, { status: 503 })
+  }
+
   // Phone + panel path (cockpit): cockpit thread.id is the phone, not the
   // Supabase row id. Fetch directly from Timelines and skip the row lookup.
   // The thread_id path below is unchanged (the main dashboard uses it).
@@ -277,6 +283,11 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser()
   if (!user || user.email !== 'g@reprime.com') {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  }
+
+  const status = whatsappAdapter.getStatus();
+  if (!status.isConfigured) {
+    return NextResponse.json({ error: 'adapter_offline', message: status.error }, { status: 503 })
   }
 
   let payload: SendBody

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ExternalLink, Loader2, Mail } from 'lucide-react';
+import { X, ExternalLink, Loader2, Mail, Reply, CheckCircle2 } from 'lucide-react';
+import ComposeEmailModal from './ComposeEmailModal';
 
 interface EmailModalProps {
   emailId: string;
@@ -12,6 +13,8 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
   const [emailData, setEmailData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCompose, setShowCompose] = useState(false);
+  const [loadingAction, setLoadingAction] = useState(false);
 
   useEffect(() => {
     const fetchEmail = async () => {
@@ -28,6 +31,26 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
     };
     fetchEmail();
   }, [emailId]);
+
+  const handleCreateFollowup = async () => {
+    setLoadingAction(true);
+    try {
+      const res = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: `Follow-up on email: ${emailData?.subject || ''}`,
+          priority: 2,
+          projectTag: 'Email Follow-up',
+        })
+      });
+      if (res.ok) alert('Follow-up task created in your bucket!');
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingAction(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -80,10 +103,6 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
               </div>
               
               <div className="border-t border-white/10 pt-6">
-                {/* 
-                  Using dangerouslySetInnerHTML because Gmail HTML parts can be rich.
-                  In a strict production env we would sanitize this with DOMPurify.
-                */}
                 <div 
                   className="prose prose-invert prose-sm max-w-none prose-a:text-[#FFCC33] prose-a:no-underline hover:prose-a:underline"
                   dangerouslySetInnerHTML={{ __html: emailData.body }} 
@@ -92,7 +111,38 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
             </div>
           ) : null}
         </div>
+        
+        {emailData && (
+          <div className="p-4 border-t border-[#FFCC33]/20 bg-[#08224d] flex items-center justify-between rounded-b-xl">
+            <button 
+              onClick={handleCreateFollowup}
+              disabled={loadingAction}
+              className="flex items-center space-x-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-bold rounded-lg transition disabled:opacity-50"
+            >
+              {loadingAction ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+              <span>Create Follow-up</span>
+            </button>
+            
+            <button 
+              onClick={() => setShowCompose(true)}
+              className="flex items-center space-x-2 px-5 py-2 bg-[#FFCC33] hover:bg-[#ffe066] text-[#0E3470] text-sm font-bold rounded-lg transition"
+            >
+              <Reply className="h-4 w-4" />
+              <span>Reply</span>
+            </button>
+          </div>
+        )}
       </div>
+
+      {showCompose && emailData && (
+        <ComposeEmailModal
+          open={showCompose}
+          onClose={() => setShowCompose(false)}
+          replyToId={emailId}
+          replyToSubject={emailData.subject}
+          replyToEmail={emailData.from}
+        />
+      )}
     </div>
   );
 }

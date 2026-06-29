@@ -16,6 +16,50 @@ export default function MeetingCockpit() {
   ]);
 
   const [notes, setNotes] = useState('');
+  const [briefingText, setBriefingText] = useState<string | null>(null);
+  const [generating, setGenerating] = useState(false);
+
+  const handleRegenerateBriefing = async () => {
+    setGenerating(true);
+    try {
+      const res = await fetch('/api/ai/nora', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: 'Generate a quick briefing for my meeting with Sarah Chen based on recent emails.' })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBriefingText(data.reply);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const handleSummary = async () => {
+    if (!notes.trim()) {
+      alert('Please type some notes first.');
+      return;
+    }
+    setGenerating(true);
+    try {
+      const res = await fetch('/api/ai/nora', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: `Generate a post-meeting summary and draft follow-ups based on these notes: ${notes}` })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        alert('Summary generated:\n\n' + data.reply);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   return (
     <div className="flex flex-col h-full bg-black text-zinc-200 border-r border-zinc-900 overflow-y-auto">
@@ -54,13 +98,19 @@ export default function MeetingCockpit() {
         <div className="border border-indigo-900/50 bg-indigo-900/5 rounded-lg p-4">
           <h3 className="text-[10px] uppercase font-mono text-indigo-500 mb-2 flex justify-between">
             Nora Briefing
-            <span className="text-zinc-500 cursor-pointer hover:text-indigo-400">Regenerate</span>
+            <button onClick={handleRegenerateBriefing} disabled={generating} className="text-zinc-500 hover:text-indigo-400 disabled:opacity-50">
+              {generating ? 'Regenerating...' : 'Regenerate'}
+            </button>
           </h3>
-          <ul className="text-sm text-zinc-300 space-y-2 pl-4 list-disc marker:text-indigo-500">
-            <li>Sarah invested $2M in Downtown Plaza last year.</li>
-            <li>Last time you spoke, she was looking for more Florida retail exposure.</li>
-            <li><strong>Action:</strong> Pitch the anchor tenant expansion for Bay Valley.</li>
-          </ul>
+          {briefingText ? (
+            <p className="text-sm text-zinc-300">{briefingText}</p>
+          ) : (
+            <ul className="text-sm text-zinc-300 space-y-2 pl-4 list-disc marker:text-indigo-500">
+              <li>Sarah invested $2M in Downtown Plaza last year.</li>
+              <li>Last time you spoke, she was looking for more Florida retail exposure.</li>
+              <li><strong>Action:</strong> Pitch the anchor tenant expansion for Bay Valley.</li>
+            </ul>
+          )}
         </div>
 
         {/* Live Notes / Transcription */}
@@ -80,8 +130,8 @@ export default function MeetingCockpit() {
           ></textarea>
         </div>
 
-        <button className="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-mono py-3 rounded transition-colors text-sm border border-zinc-800 hover:border-zinc-700">
-          Generate Post-Meeting Summary & Draft Follow-ups
+        <button onClick={handleSummary} disabled={generating} className="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-300 font-mono py-3 rounded transition-colors text-sm border border-zinc-800 hover:border-zinc-700 disabled:opacity-50">
+          {generating ? 'Processing...' : 'Generate Post-Meeting Summary & Draft Follow-ups'}
         </button>
       </div>
     </div>

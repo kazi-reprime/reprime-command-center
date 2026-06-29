@@ -21,6 +21,7 @@ export interface CalendarEvent {
   start: string;
   end: string;
   meetingUrl?: string;
+  attendees?: { email: string; displayName?: string; responseStatus?: string }[];
 }
 
 /**
@@ -202,6 +203,7 @@ export async function getCalendarAgendas(): Promise<CalendarEvent[]> {
       hangoutLink?: string;
       start?: { dateTime?: string; date?: string };
       end?: { dateTime?: string; date?: string };
+      attendees?: { email?: string; displayName?: string; responseStatus?: string }[];
     }
 
     return (calData.items as GoogleCalendarEvent[]).map((item) => {
@@ -216,6 +218,7 @@ export async function getCalendarAgendas(): Promise<CalendarEvent[]> {
         start,
         end,
         meetingUrl,
+        attendees: item.attendees?.map(a => ({ email: a.email || '', displayName: a.displayName, responseStatus: a.responseStatus })),
       };
     });
   } catch (err) {

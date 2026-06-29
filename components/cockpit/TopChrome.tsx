@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store/useStore';
-import { Clock, Shield, Sparkles, Presentation, Layers } from 'lucide-react';
+import { Clock, Shield, Sparkles, Presentation, Layers, Users } from 'lucide-react';
 import BriefingModal from '@/components/briefing/BriefingModal';
+import ContactsModal from '@/components/cockpit/modals/ContactsModal';
 import Link from 'next/link';
 
 export interface CrewMember {
@@ -15,7 +16,8 @@ export interface CrewMember {
 export default function TopChrome() {
   const { activeCrewId, setActiveCrewId, unreadCounts, hebcalAlert, setHebcalAlert, language, setLanguage } = useStore();
   const [timeString, setTimeString] = useState('');
-  const [showBriefing, setShowBriefing] = useState(false);
+  const [briefingMode, setBriefingMode] = useState<'morning' | 'evening' | null>(null);
+  const [showContacts, setShowContacts] = useState(false);
   const [crewMembers, setCrewMembers] = useState<CrewMember[]>([]);
 
   useEffect(() => {
@@ -153,12 +155,28 @@ export default function TopChrome() {
         </div>
 
         <button 
-          onClick={() => setShowBriefing(true)}
-          className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#FFCC33]/10 hover:bg-[#FFCC33]/20 border border-[#FFCC33]/30 rounded text-[#FFCC33] transition"
+          onClick={() => setShowContacts(true)}
+          className="flex items-center space-x-1.5 px-3 py-1.5 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 rounded text-sky-400 transition"
         >
-          <Presentation className="h-4 w-4" />
-          <span className="text-xs font-bold uppercase tracking-wider">Morning Briefing</span>
+          <Users className="h-4 w-4" />
+          <span className="text-xs font-bold uppercase tracking-wider">Contacts</span>
         </button>
+
+        <div className="flex items-center space-x-1">
+          <button 
+            onClick={() => setBriefingMode('morning')}
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#FFCC33]/10 hover:bg-[#FFCC33]/20 border border-[#FFCC33]/30 rounded-l text-[#FFCC33] transition"
+          >
+            <Presentation className="h-4 w-4" />
+            <span className="text-xs font-bold uppercase tracking-wider">Morning</span>
+          </button>
+          <button 
+            onClick={() => setBriefingMode('evening')}
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-r text-indigo-400 transition"
+          >
+            <span className="text-xs font-bold uppercase tracking-wider">Evening</span>
+          </button>
+        </div>
 
         <Link 
           href="/os"
@@ -169,7 +187,8 @@ export default function TopChrome() {
         </Link>
       </div>
 
-      <BriefingModal open={showBriefing} onClose={() => setShowBriefing(false)} />
+      <BriefingModal open={briefingMode !== null} mode={briefingMode || 'morning'} onClose={() => setBriefingMode(null)} />
+      <ContactsModal open={showContacts} onClose={() => setShowContacts(false)} />
     </header>
   );
 }

@@ -10,6 +10,7 @@ import {
 
 type Props = {
   open: boolean
+  mode?: 'morning' | 'evening'
   onClose: () => void
   /** Optional thread-click handler — caller decides how to navigate. */
   onThreadClick?: (thread: BriefingThread) => void
@@ -69,6 +70,26 @@ interface BriefingPayload {
   suggested_focus?: SuggestedFocusItem[]
 }
 
+interface EveningItem {
+  id: string
+  who: string
+  detail: string
+}
+
+interface EveningResponse {
+  date: string
+  greeting: string
+  handled: { replies_closed_today: number; meetings_today: number }
+  open: {
+    unread_total: number
+    overdue_followups: number
+    open_tasks: number
+    expiring_invitations: number
+  }
+  loose_ends: EveningItem[]
+  degraded?: boolean
+}
+
 const NAVY = '#0E3470'
 const GOLD = '#FFCC33'
 const TEXT = '#F5EFD8'
@@ -107,6 +128,20 @@ function buildNarrative(d: BriefingPayload): string {
   return parts.join(' ')
 }
 
+function buildEveningNarrative(d: EveningResponse): string {
+  const parts: string[] = []
+  parts.push(d.greeting)
+  if (d.handled.meetings_today > 0 || d.handled.replies_closed_today > 0) {
+    parts.push(`You completed ${d.handled.meetings_today} meetings and resolved ${d.handled.replies_closed_today} items today.`)
+  }
+  if (d.open.unread_total > 0) {
+    parts.push(`You have ${d.open.unread_total} unread messages remaining.`)
+  } else {
+    parts.push('Inbox is totally clear.')
+  }
+  return parts.join(' ')
+}
+
 function formatRelative(iso: string | null): string {
   if (!iso) return ''
   const d = new Date(iso)
@@ -125,7 +160,7 @@ function formatRelative(iso: string | null): string {
   }
 }
 
-export default function BriefingModal({ open, onClose, onThreadClick }: Props) {
+export default function BriefingModal({ open, mode = 'morning', onClose, onThreadClick }: Props) {
   useEffect(() => {
     if (!open) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -133,18 +168,23 @@ export default function BriefingModal({ open, onClose, onThreadClick }: Props) {
     return () => window.removeEventListener('keydown', handler)
   }, [open, onClose])
 
-  const { data, isLoading, isError } = useQuery<BriefingPayload>({
-    queryKey: ['briefing', 'today'],
-    queryFn: async (): Promise<BriefingPayload> => {
-      const res = await fetch('/api/briefing/today', { cache: 'no-store' })
+  const { data, isLoading, isError } = useQuery<BriefingPayload | EveningResponse>({
+    queryKey: ['briefing', mode],
+    queryFn: async () => {
+      const endpoint = mode === 'evening' ? '/api/briefing/evening' : '/api/briefing/today'
+      const res = await fetch(endpoint, { cache: 'no-store' })
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
-      return (await res.json()) as BriefingPayload
+      return await res.json()
     },
     enabled: open,
     staleTime: 60_000,
   })
 
-  const narrative = useMemo(() => (data ? buildNarrative(data) : ''), [data])
+  const narrative = useMemo(() => {
+    if (!data) return ''
+    if (mode === 'evening') return buildEveningNarrative(data as EveningResponse)
+    return buildNarrative(data as BriefingPayload)
+  }, [data, mode])
 
   if (!open) return null
 
@@ -180,7 +220,7 @@ export default function BriefingModal({ open, onClose, onThreadClick }: Props) {
         <div style={{ padding: '14px 20px', borderBottom: `1px solid ${GOLD}33`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <div style={{ color: GOLD, fontSize: 14, fontWeight: 700, letterSpacing: '0.06em' }}>
-              ☀ Morning Briefing
+              {mode === 'morning' ? '☀ Morning Briefing' : '🌙 Evening Briefing'}
             </div>
             {data && <div style={{ color: MUTED, fontSize: 11, marginTop: 2, letterSpacing: '0.04em' }}>{data.date}</div>}
           </div>
@@ -204,172 +244,217 @@ export default function BriefingModal({ open, onClose, onThreadClick }: Props) {
                 </div>
               </div>
 
-              {/* Stat row — color-coded by meaning per the legend */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-                <Stat
-                  label="Meetings"
-                  value={String(data.meetings.count)}
-                  sub={data.meetings.nextUp ? `Next: ${formatTime(data.meetings.nextUp.startTime)}` : (data.meetings.first ? `First: ${formatTime(data.meetings.first.startTime)}` : 'None')}
-                  accent={GOLD}
-                />
-                <Stat
-                  label="Unread"
-                  value={String(data.unread.total)}
-                  sub={`305:${data.unread.by_panel['305']} · 718:${data.unread.by_panel['718']} · Inv:${data.unread.by_panel.investors}`}
-                  accent={data.unread.by_panel.investors > 0 ? '#FFCC33' : '#25D366'}
-                />
-                <Stat
-                  label="Expiring"
-                  value={String(data.expiring_invitations.count)}
-                  sub="Invites within 24h"
-                  accent={data.expiring_invitations.count > 0 ? '#F59E0B' : '#25D366'}
-                />
-              </div>
+              {/* Content specific to morning vs evening */}
+              {mode === 'morning' ? (
+                <>
+                  {/* Stat row */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+                    <Stat
+                      label="Meetings"
+                      value={String((data as BriefingPayload).meetings.count)}
+                      sub={(data as BriefingPayload).meetings.nextUp ? `Next: ${formatTime((data as BriefingPayload).meetings.nextUp!.startTime)}` : ((data as BriefingPayload).meetings.first ? `First: ${formatTime((data as BriefingPayload).meetings.first!.startTime)}` : 'None')}
+                      accent={GOLD}
+                    />
+                    <Stat
+                      label="Unread"
+                      value={String((data as BriefingPayload).unread.total)}
+                      sub={`305:${(data as BriefingPayload).unread.by_panel['305']} · 718:${(data as BriefingPayload).unread.by_panel['718']} · Inv:${(data as BriefingPayload).unread.by_panel.investors}`}
+                      accent={(data as BriefingPayload).unread.by_panel.investors > 0 ? '#FFCC33' : '#25D366'}
+                    />
+                    <Stat
+                      label="Expiring"
+                      value={String((data as BriefingPayload).expiring_invitations.count)}
+                      sub="Invites within 24h"
+                      accent={(data as BriefingPayload).expiring_invitations.count > 0 ? '#F59E0B' : '#25D366'}
+                    />
+                  </div>
 
-              {/* Suggested focus — calendar-aware soft scheduling */}
-              {(data.suggested_focus?.length ?? 0) > 0 && (
-                <SuggestedFocusSection items={data.suggested_focus ?? []} />
-              )}
+                  {/* Suggested focus */}
+                  {((data as BriefingPayload).suggested_focus?.length ?? 0) > 0 && (
+                    <SuggestedFocusSection items={(data as BriefingPayload).suggested_focus ?? []} />
+                  )}
 
-              {/* Today's meetings */}
-              {data.meetings.items.length > 0 && (
-                <Section title="Today's Calendar">
-                  {data.meetings.items.map((m) => {
-                    const isNext = m.id === data.meetings.nextUp?.id
-                    return (
-                      <Row
-                        key={m.id}
-                        left={
-                          <div>
-                            <div style={{ color: TEXT, fontSize: 13, fontWeight: isNext ? 700 : 500 }}>
-                              {formatTime(m.startTime)} {isNext && <span style={{ color: GOLD, marginLeft: 6 }}>← next</span>}
+                  {/* Today's meetings */}
+                  {(data as BriefingPayload).meetings.items.length > 0 && (
+                    <Section title="Today's Calendar">
+                      {(data as BriefingPayload).meetings.items.map((m) => {
+                        const isNext = m.id === (data as BriefingPayload).meetings.nextUp?.id
+                        return (
+                          <Row
+                            key={m.id}
+                            left={
+                              <div>
+                                <div style={{ color: TEXT, fontSize: 13, fontWeight: isNext ? 700 : 500 }}>
+                                  {formatTime(m.startTime)} {isNext && <span style={{ color: GOLD, marginLeft: 6 }}>← next</span>}
+                                </div>
+                                <div style={{ color: MUTED, fontSize: 12, marginTop: 2 }}>{m.title}</div>
+                              </div>
+                            }
+                            right={m.zoomLink ? <a href={m.zoomLink} target="_blank" rel="noopener noreferrer" style={zoomLink}>Zoom ↗</a> : null}
+                          />
+                        )
+                      })}
+                    </Section>
+                  )}
+
+                  {/* Recent investor activity */}
+                  {(data as BriefingPayload).recent_investors.length > 0 && (
+                    <Section title="Recent Investor Activity (24h)">
+                      {(data as BriefingPayload).recent_investors.map((t) => (
+                        <Row
+                          key={t.id}
+                          onClick={onThreadClick ? () => { onThreadClick(t as BriefingThread); onClose() } : undefined}
+                          left={
+                            <div>
+                              <div style={{ color: TEXT, fontSize: 13, fontWeight: 600 }}>
+                                {t.contact_name || t.phone || 'Unknown'}
+                                <span style={{ color: GOLD, marginLeft: 6 }}>★</span>
+                              </div>
+                              <div style={{ color: MUTED, fontSize: 12, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {t.last_message_preview || '(no preview)'}
+                              </div>
                             </div>
-                            <div style={{ color: MUTED, fontSize: 12, marginTop: 2 }}>{m.title}</div>
-                          </div>
-                        }
-                        right={m.zoomLink ? <a href={m.zoomLink} target="_blank" rel="noopener noreferrer" style={zoomLink}>Zoom ↗</a> : null}
-                      />
-                    )
-                  })}
-                </Section>
-              )}
+                          }
+                          right={
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ color: MUTED, fontSize: 11 }}>{formatRelative(t.last_message_at)}</div>
+                              {t.unread_count > 0 && <div style={unreadPill}>{t.unread_count}</div>}
+                            </div>
+                          }
+                        />
+                      ))}
+                    </Section>
+                  )}
 
-              {/* Recent investor activity */}
-              {data.recent_investors.length > 0 && (
-                <Section title="Recent Investor Activity (24h)">
-                  {data.recent_investors.map((t) => (
-                    <Row
-                      key={t.id}
-                      onClick={onThreadClick ? () => { onThreadClick(t); onClose() } : undefined}
-                      left={
-                        <div>
-                          <div style={{ color: TEXT, fontSize: 13, fontWeight: 600 }}>
-                            {t.contact_name || t.phone || 'Unknown'}
-                            <span style={{ color: GOLD, marginLeft: 6 }}>★</span>
-                          </div>
-                          <div style={{ color: MUTED, fontSize: 12, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {t.last_message_preview || '(no preview)'}
-                          </div>
-                        </div>
-                      }
-                      right={
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ color: MUTED, fontSize: 11 }}>{formatRelative(t.last_message_at)}</div>
-                          {t.unread_count > 0 && <div style={unreadPill}>{t.unread_count}</div>}
-                        </div>
-                      }
+                  {/* Pending follow-ups */}
+                  {(data as BriefingPayload).pending_followups.length > 0 && (
+                    <Section title="Needs a Reply">
+                      {(data as BriefingPayload).pending_followups.map((t) => (
+                        <Row
+                          key={t.id}
+                          onClick={onThreadClick ? () => { onThreadClick(t as BriefingThread); onClose() } : undefined}
+                          left={
+                            <div>
+                              <div style={{ color: TEXT, fontSize: 13, fontWeight: 600 }}>
+                                {t.contact_name || t.phone || 'Unknown'}
+                                {t.is_investor && <span style={{ color: GOLD, marginLeft: 6 }}>★</span>}
+                              </div>
+                              <div style={{ color: MUTED, fontSize: 12, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {t.last_message_preview || '(no preview)'}
+                              </div>
+                            </div>
+                          }
+                          right={
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ color: MUTED, fontSize: 11 }}>{formatRelative(t.last_message_at)}</div>
+                              <div style={unreadPill}>{t.unread_count}</div>
+                            </div>
+                          }
+                        />
+                      ))}
+                    </Section>
+                  )}
+
+                  {/* New tenant filings */}
+                  {((data as BriefingPayload).tenant_filings_today?.length ?? 0) > 0 && (
+                    <Section title="New Tenant Filings (today)">
+                      {((data as BriefingPayload).tenant_filings_today ?? []).map((f) => (
+                        <Row
+                          key={f.case_no}
+                          left={
+                            <div>
+                              <div style={{ color: TEXT, fontSize: 13, fontWeight: 600 }}>
+                                {f.tenant}
+                              </div>
+                              <div style={{ color: MUTED, fontSize: 12, marginTop: 2 }}>
+                                {f.case_no}
+                                {f.court ? ` · ${f.court}` : ''}
+                              </div>
+                            </div>
+                          }
+                          right={
+                            <div style={{ textAlign: 'right' }}>
+                              {f.filed_at && (
+                                <div style={{ color: MUTED, fontSize: 11 }}>filed {f.filed_at}</div>
+                              )}
+                            </div>
+                          }
+                        />
+                      ))}
+                    </Section>
+                  )}
+
+                  {/* Expiring invitations */}
+                  {(data as BriefingPayload).expiring_invitations.items.length > 0 && (
+                    <Section title="Expiring Invitations">
+                      {(data as BriefingPayload).expiring_invitations.items.map((inv) => (
+                        <Row
+                          key={inv.id}
+                          left={
+                            <div>
+                              <div style={{ color: TEXT, fontSize: 13, fontWeight: 600 }}>
+                                {inv.contact_name || inv.contact_email || 'Unknown'}
+                              </div>
+                              {inv.contact_email && (
+                                <div style={{ color: MUTED, fontSize: 12, marginTop: 2 }}>{inv.contact_email}</div>
+                              )}
+                            </div>
+                          }
+                          right={<div style={{ color: '#FFB400', fontSize: 11 }}>expires {formatRelative(inv.expires_at)}</div>}
+                        />
+                      ))}
+                    </Section>
+                  )}
+                  
+                  {(data as BriefingPayload).meetings.count === 0 &&
+                    (data as BriefingPayload).recent_investors.length === 0 &&
+                    (data as BriefingPayload).pending_followups.length === 0 &&
+                    (data as BriefingPayload).expiring_invitations.count === 0 &&
+                    ((data as BriefingPayload).tenant_filings_today?.length ?? 0) === 0 && (
+                      <div style={{ ...msg, padding: '48px 0' }}>Nothing pending. Quiet morning.</div>
+                    )}
+                </>
+              ) : (
+                <>
+                  {/* Evening Mode */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
+                    <Stat
+                      label="Handled"
+                      value={String((data as EveningResponse).handled.replies_closed_today + (data as EveningResponse).handled.meetings_today)}
+                      sub={`${(data as EveningResponse).handled.replies_closed_today} replies, ${(data as EveningResponse).handled.meetings_today} meetings`}
+                      accent={'#25D366'}
                     />
-                  ))}
-                </Section>
-              )}
-
-              {/* Pending follow-ups */}
-              {data.pending_followups.length > 0 && (
-                <Section title="Needs a Reply">
-                  {data.pending_followups.map((t) => (
-                    <Row
-                      key={t.id}
-                      onClick={onThreadClick ? () => { onThreadClick(t); onClose() } : undefined}
-                      left={
-                        <div>
-                          <div style={{ color: TEXT, fontSize: 13, fontWeight: 600 }}>
-                            {t.contact_name || t.phone || 'Unknown'}
-                            {t.is_investor && <span style={{ color: GOLD, marginLeft: 6 }}>★</span>}
-                          </div>
-                          <div style={{ color: MUTED, fontSize: 12, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {t.last_message_preview || '(no preview)'}
-                          </div>
-                        </div>
-                      }
-                      right={
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{ color: MUTED, fontSize: 11 }}>{formatRelative(t.last_message_at)}</div>
-                          <div style={unreadPill}>{t.unread_count}</div>
-                        </div>
-                      }
+                    <Stat
+                      label="Pending"
+                      value={String((data as EveningResponse).open.unread_total + (data as EveningResponse).open.overdue_followups + (data as EveningResponse).open.open_tasks)}
+                      sub={`${(data as EveningResponse).open.unread_total} unread, ${(data as EveningResponse).open.open_tasks} tasks`}
+                      accent={(data as EveningResponse).open.unread_total > 0 ? '#F59E0B' : '#FFCC33'}
                     />
-                  ))}
-                </Section>
-              )}
+                  </div>
 
-              {/* New tenant filings (Inforuptcy) */}
-              {(data.tenant_filings_today?.length ?? 0) > 0 && (
-                <Section title="New Tenant Filings (today)">
-                  {(data.tenant_filings_today ?? []).map((f) => (
-                    <Row
-                      key={f.case_no}
-                      left={
-                        <div>
-                          <div style={{ color: TEXT, fontSize: 13, fontWeight: 600 }}>
-                            {f.tenant}
-                          </div>
-                          <div style={{ color: MUTED, fontSize: 12, marginTop: 2 }}>
-                            {f.case_no}
-                            {f.court ? ` · ${f.court}` : ''}
-                          </div>
-                        </div>
-                      }
-                      right={
-                        <div style={{ textAlign: 'right' }}>
-                          {f.filed_at && (
-                            <div style={{ color: MUTED, fontSize: 11 }}>filed {f.filed_at}</div>
-                          )}
-                        </div>
-                      }
-                    />
-                  ))}
-                </Section>
+                  {/* Loose ends */}
+                  {(data as EveningResponse).loose_ends.length > 0 && (
+                    <Section title="Loose Ends Awaiting Action">
+                      {(data as EveningResponse).loose_ends.map((item) => (
+                        <Row
+                          key={item.id}
+                          left={
+                            <div>
+                              <div style={{ color: TEXT, fontSize: 13, fontWeight: 600 }}>
+                                {item.who}
+                              </div>
+                              <div style={{ color: MUTED, fontSize: 12, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {item.detail}
+                              </div>
+                            </div>
+                          }
+                          right={null}
+                        />
+                      ))}
+                    </Section>
+                  )}
+                </>
               )}
-
-              {/* Expiring invitations */}
-              {data.expiring_invitations.items.length > 0 && (
-                <Section title="Expiring Invitations">
-                  {data.expiring_invitations.items.map((inv) => (
-                    <Row
-                      key={inv.id}
-                      left={
-                        <div>
-                          <div style={{ color: TEXT, fontSize: 13, fontWeight: 600 }}>
-                            {inv.contact_name || inv.contact_email || 'Unknown'}
-                          </div>
-                          {inv.contact_email && (
-                            <div style={{ color: MUTED, fontSize: 12, marginTop: 2 }}>{inv.contact_email}</div>
-                          )}
-                        </div>
-                      }
-                      right={<div style={{ color: '#FFB400', fontSize: 11 }}>expires {formatRelative(inv.expires_at)}</div>}
-                    />
-                  ))}
-                </Section>
-              )}
-
-              {data.meetings.count === 0 &&
-                data.recent_investors.length === 0 &&
-                data.pending_followups.length === 0 &&
-                data.expiring_invitations.count === 0 &&
-                (data.tenant_filings_today?.length ?? 0) === 0 && (
-                  <div style={{ ...msg, padding: '48px 0' }}>Nothing pending. Quiet morning.</div>
-                )}
             </div>
           )}
         </div>

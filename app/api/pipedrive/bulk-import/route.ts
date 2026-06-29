@@ -5,6 +5,7 @@ import {
   type BulkProgress,
   type BulkRow,
 } from '@/lib/pipedrive/bulk-upsert'
+import { pipedriveAdapter } from '@/lib/adapters/pipedriveAdapter'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -68,6 +69,14 @@ export async function POST(request: NextRequest) {
   if (!user || user.email !== ALLOWED_EMAIL) {
     return new Response(JSON.stringify({ error: 'unauthorized' }), {
       status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  const status = pipedriveAdapter.getStatus();
+  if (!status.isConfigured) {
+    return new Response(JSON.stringify({ error: 'adapter_offline', message: status.error }), {
+      status: 503,
       headers: { 'Content-Type': 'application/json' },
     })
   }

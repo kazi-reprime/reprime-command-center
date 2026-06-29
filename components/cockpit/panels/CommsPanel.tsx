@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useStore, Thread, Message } from '@/lib/store/useStore';
-import { Send, Mic, Phone, FolderArchive, Trash2, Search, User, Sparkles, Loader2, Languages, FileText, StickyNote, Clock } from 'lucide-react';
+import { Send, Mic, Phone, FolderArchive, Trash2, Search, User, Sparkles, Loader2, Languages, FileText, StickyNote, Clock, Shield, AlertTriangle, RefreshCw } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
 import SpeakerButton from '@/components/chat/SpeakerButton';
 
@@ -24,24 +24,45 @@ export default function CommsPanel() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // 1. Fetch Threads from both 305 and 718 panels
   const fetchThreads = async () => {
     setLoadingThreads(true);
+    setFetchError(null);
     try {
-      const [res305, res718] = await Promise.all([
-        fetch('/api/whatsapp/threads?panel=305'),
-        fetch('/api/whatsapp/threads?panel=718'),
+      const [res305, res718] = await Promise.allSettled([
+        fetch('/api/whatsapp/threads?panel=305').then(async (r) => {
+          if (!r.ok) {
+            const body = await r.json().catch(() => ({}));
+            throw new Error(body.error || `HTTP ${r.status}`);
+          }
+          return r.json();
+        }),
+        fetch('/api/whatsapp/threads?panel=718').then(async (r) => {
+          if (!r.ok) {
+            const body = await r.json().catch(() => ({}));
+            throw new Error(body.error || `HTTP ${r.status}`);
+          }
+          return r.json();
+        }),
       ]);
 
       let allRawThreads: any[] = [];
-      if (res305.ok) {
-        const data = await res305.json();
-        if (data.threads) allRawThreads = [...allRawThreads, ...data.threads];
+      let errors: string[] = [];
+      if (res305.status === 'fulfilled' && res305.value?.threads) {
+        allRawThreads = [...allRawThreads, ...res305.value.threads];
+      } else if (res305.status === 'rejected') {
+        errors.push(`305: ${res305.reason?.message || 'failed'}`);
       }
-      if (res718.ok) {
-        const data = await res718.json();
-        if (data.threads) allRawThreads = [...allRawThreads, ...data.threads];
+      if (res718.status === 'fulfilled' && res718.value?.threads) {
+        allRawThreads = [...allRawThreads, ...res718.value.threads];
+      } else if (res718.status === 'rejected') {
+        errors.push(`718: ${res718.reason?.message || 'failed'}`);
+      }
+
+      if (allRawThreads.length === 0 && errors.length > 0) {
+        setFetchError(errors.join('; '));
       }
 
       // Format & Sort threads by last message timestamp descending
@@ -316,8 +337,27 @@ export default function CommsPanel() {
               </button>
             </div>
           ) : loadingThreads && threads.length === 0 ? (
-            <div className="p-4 text-center">
-              <Loader2 className="h-5 w-5 animate-spin text-[#FFCC33] mx-auto" />
+            <div className="p-8 flex flex-col items-center justify-center text-center space-y-3 h-full">
+              <Loader2 className="h-6 w-6 animate-spin text-[#FFCC33]" />
+              <p className="text-xs text-gray-400">Loading conversations...</p>
+              <p className="text-[10px] text-gray-500">This may take 10-20 seconds on first load</p>
+            </div>
+          ) : fetchError && threads.length === 0 ? (
+            <div className="p-8 flex flex-col items-center justify-center text-center space-y-4 h-full">
+              <div className="p-4 bg-red-500/10 rounded-full border border-red-500/20">
+                <AlertTriangle className="h-6 w-6 text-red-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-gray-300">Failed to load conversations</h3>
+                <p className="text-xs text-gray-500 mt-1">{fetchError}</p>
+              </div>
+              <button
+                onClick={() => fetchThreads()}
+                className="flex items-center space-x-2 px-4 py-1.5 bg-[#FFCC33]/10 text-[#FFCC33] text-[10px] font-bold uppercase rounded border border-[#FFCC33]/20 hover:bg-[#FFCC33]/20 transition"
+              >
+                <RefreshCw className="h-3 w-3" />
+                <span>Retry</span>
+              </button>
             </div>
           ) : filteredThreads.length === 0 ? (
             <div className="p-4 text-center text-xs text-gray-400">

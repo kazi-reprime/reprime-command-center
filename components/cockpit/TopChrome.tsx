@@ -2,28 +2,92 @@
 
 import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store/useStore';
-import { Clock, Shield, Sparkles } from 'lucide-react';
+import { Clock, Shield, Sparkles, Presentation } from 'lucide-react';
+import BriefingModal from '@/components/briefing/BriefingModal';
 
-const CREW_MEMBERS = [
-  { id: '1', name: 'Gideon Gratsiani', role: 'Owner' },
-  { id: '2', name: 'Shirel Ben-Haroush', role: 'Admin' },
-  { id: '3', name: 'Steve Philipp', role: 'Agent' },
-  { id: '4', name: 'Adir Yonasi', role: 'Agent' },
-  { id: '5', name: 'Yaron Sitbon', role: 'Agent' },
-  { id: '6', name: 'Chaim Abrahams', role: 'Owner' },
-];
+export interface CrewMember {
+  email: string;
+  display_name: string;
+  role: string;
+}
 
 export default function TopChrome() {
-  const { activeCrewId, setActiveCrewId, unreadCounts } = useStore();
+  const { activeCrewId, setActiveCrewId, unreadCounts, hebcalAlert, setHebcalAlert, language, setLanguage } = useStore();
   const [timeString, setTimeString] = useState('');
+  const [showBriefing, setShowBriefing] = useState(false);
+  const [crewMembers, setCrewMembers] = useState<CrewMember[]>([]);
 
   useEffect(() => {
-    setActiveCrewId('1'); // Default to Gideon
+    const fetchCrew = async () => {
+      try {
+        const res = await fetch('/api/crew');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.crew && data.crew.length > 0) {
+            setCrewMembers(data.crew);
+            if (!activeCrewId) {
+              setActiveCrewId(data.crew[0].email);
+            }
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch crew:', e);
+      }
+    };
+    fetchCrew();
+
     const timer = setInterval(() => {
       setTimeString(new Date().toLocaleTimeString('en-US', { hour12: false }));
     }, 1000);
-    return () => clearInterval(timer);
-  }, [setActiveCrewId]);
+
+    const fetchHebcal = async () => {
+      try {
+        const res = await fetch('https://www.hebcal.com/shabbat?cfg=json&geonameid=4164138&m=50');
+        const data = await res.json();
+        const items = data.items || [];
+        
+        let candleTime = null;
+        let havdalahTime = null;
+        let holidayName = '';
+
+        for (const item of items) {
+          if (item.category === 'candles') candleTime = new Date(item.date);
+          if (item.category === 'havdalah') havdalahTime = new Date(item.date);
+          if (item.category === 'holiday') holidayName = item.title;
+        }
+
+        const now = new Date();
+        
+        if (candleTime && havdalahTime) {
+          if (now >= candleTime && now <= havdalahTime) {
+            setHebcalAlert(`SHABBAT / HOLIDAY ACTIVE ${holidayName ? `(${holidayName})` : ''} - Outbound queued`);
+          } else if (candleTime.getTime() - now.getTime() < 24 * 60 * 60 * 1000 && candleTime.getTime() > now.getTime()) {
+            setHebcalAlert(`SHABBAT INCOMING: ${candleTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`);
+          } else {
+            setHebcalAlert(null);
+          }
+        }
+      } catch (e) {
+        console.error('Hebcal error:', e);
+      }
+    };
+    
+    fetchHebcal();
+    const hebcalTimer = setInterval(fetchHebcal, 3600000);
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(hebcalTimer);
+    };
+  }, [setActiveCrewId, setHebcalAlert]);
+
+  useEffect(() => {
+    if (language === 'HE') {
+      document.documentElement.dir = 'rtl';
+    } else {
+      document.documentElement.dir = 'ltr';
+    }
+  }, [language]);
 
   return (
     <header className="h-14 bg-[#0E3470] border-b border-[#FFCC33]/30 px-6 flex items-center justify-between text-white select-none">
@@ -46,9 +110,11 @@ export default function TopChrome() {
         </div>
 
         {/* Shabbat Alert Helper Indicator */}
-        <div className="text-xs font-semibold px-2 py-1 bg-[#F59E0B]/10 border border-[#F59E0B]/30 rounded text-[#F59E0B] flex items-center space-x-1">
-          <span>SHABBAT MONITOR ACTIVE</span>
-        </div>
+        {hebcalAlert && (
+          <div className="text-[10px] font-bold px-2 py-1 bg-[#F59E0B]/10 border border-[#F59E0B]/30 rounded text-[#F59E0B] flex items-center space-x-1">
+            <span>{hebcalAlert}</span>
+          </div>
+        )}
       </div>
 
       {/* Right actions & crew picker */}
@@ -69,22 +135,40 @@ export default function TopChrome() {
           </div>
         </div>
 
+        {/* Language Toggle */}
+        <button
+          onClick={() => setLanguage(language === 'EN' ? 'HE' : 'EN')}
+          className="flex items-center justify-center h-7 w-9 bg-[#08224d] hover:bg-white/10 border border-white/20 rounded transition text-xs font-bold text-gray-300 hover:text-white"
+        >
+          {language}
+        </button>
+
         {/* Identity selector dropdown */}
         <div className="flex items-center space-x-2 bg-[#08224d] border border-white/10 rounded-lg px-3 py-1.5">
           <Shield className="h-4 w-4 text-[#FFCC33]" />
           <select
-            value={activeCrewId || '1'}
+            value={activeCrewId || ''}
             onChange={(e) => setActiveCrewId(e.target.value)}
             className="bg-transparent text-xs text-white font-semibold outline-none cursor-pointer border-none"
           >
-            {CREW_MEMBERS.map((member) => (
-              <option key={member.id} value={member.id} className="bg-[#0E3470]">
-                {member.name} ({member.role})
+            {crewMembers.map((member) => (
+              <option key={member.email} value={member.email} className="bg-[#0E3470]">
+                {member.display_name} ({member.role})
               </option>
             ))}
           </select>
         </div>
+
+        <button 
+          onClick={() => setShowBriefing(true)}
+          className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#FFCC33]/10 hover:bg-[#FFCC33]/20 border border-[#FFCC33]/30 rounded text-[#FFCC33] transition"
+        >
+          <Presentation className="h-4 w-4" />
+          <span className="text-xs font-bold uppercase tracking-wider">Morning Briefing</span>
+        </button>
       </div>
+
+      <BriefingModal open={showBriefing} onClose={() => setShowBriefing(false)} />
     </header>
   );
 }

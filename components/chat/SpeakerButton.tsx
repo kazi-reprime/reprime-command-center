@@ -16,6 +16,7 @@ type State = 'idle' | 'loading' | 'playing' | 'paused' | 'error'
 
 export default function SpeakerButton({ text }: Props) {
   const [state, setState] = useState<State>('idle')
+  const [speed, setSpeed] = useState<number>(1)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const urlRef = useRef<string | null>(null)
 
@@ -41,6 +42,13 @@ export default function SpeakerButton({ text }: Props) {
     setState('idle')
   }, [text])
 
+  // Update speed of existing audio element if it changes
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = speed;
+    }
+  }, [speed])
+
   const fetchAudio = async (): Promise<HTMLAudioElement> => {
     const language = detectHebrew(text) ? 'he' : 'en'
     const res = await fetch('/api/voice/speak', {
@@ -61,6 +69,7 @@ export default function SpeakerButton({ text }: Props) {
       if (!audio.ended) setState('paused')
     }
     audio.onplay = () => setState('playing')
+    audio.playbackRate = speed
     audioRef.current = audio
     return audio
   }
@@ -106,6 +115,7 @@ export default function SpeakerButton({ text }: Props) {
         : '🔊'
 
   return (
+    <>
     <button
       type="button"
       onClick={onClick}
@@ -137,5 +147,28 @@ export default function SpeakerButton({ text }: Props) {
     >
       {icon}
     </button>
+    <button
+      type="button"
+      onClick={() => setSpeed(s => s === 1 ? 1.5 : s === 1.5 ? 2 : 1)}
+      disabled={state === 'loading'}
+      title="Playback Speed"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '0.3rem 0.4rem',
+        borderRadius: 6,
+        fontSize: 10,
+        fontWeight: 'bold',
+        marginLeft: 4,
+        background: 'rgba(255,255,255,0.07)',
+        border: '1px solid rgba(255,255,255,0.18)',
+        color: '#fff',
+        cursor: 'pointer',
+      }}
+    >
+      {speed}x
+    </button>
+    </>
   )
 }

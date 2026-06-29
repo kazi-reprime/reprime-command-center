@@ -29,6 +29,11 @@ interface CockpitState {
   unreadCounts: Record<string, number>;
   activeCrewId: string | null;
 
+  emails: any[];
+  events: any[];
+  hebcalAlert: string | null;
+  language: 'EN' | 'HE';
+
   setActiveTab: (tab: string) => void;
   setSelectedThreadId: (id: string | null) => void;
   setThreads: (threads: Thread[]) => void;
@@ -36,6 +41,10 @@ interface CockpitState {
   addMessage: (message: Message) => void;
   setUnreadCounts: (counts: Record<string, number>) => void;
   setActiveCrewId: (id: string | null) => void;
+  setEmails: (emails: any[]) => void;
+  setEvents: (events: any[]) => void;
+  setHebcalAlert: (alert: string | null) => void;
+  setLanguage: (lang: 'EN' | 'HE') => void;
 }
 
 // Global state store for real-time communications and cockpit parameters
@@ -46,6 +55,10 @@ export const useStore = create<CockpitState>((set) => ({
   messages: [],
   unreadCounts: { whatsapp: 0, imessage: 0, sms: 0 },
   activeCrewId: null,
+  emails: [],
+  events: [],
+  hebcalAlert: null,
+  language: 'EN',
 
   setActiveTab: (tab) => set({ activeTab: tab }),
   setSelectedThreadId: (id) => set({ selectedThreadId: id }),
@@ -54,4 +67,8 @@ export const useStore = create<CockpitState>((set) => ({
   addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
   setUnreadCounts: (unreadCounts) => set({ unreadCounts }),
   setActiveCrewId: (activeCrewId) => set({ activeCrewId }),
+  setEmails: (emails) => set({ emails }),
+  setEvents: (events) => set({ events }),
+  setHebcalAlert: (hebcalAlert) => set({ hebcalAlert }),
+  setLanguage: (language) => set({ language }),
 }));

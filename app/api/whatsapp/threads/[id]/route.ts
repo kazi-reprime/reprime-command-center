@@ -7,6 +7,8 @@ type LaneOverride = 'investor' | 'staff' | 'general' | null
 
 type PatchBody = {
   lane_override?: LaneOverride
+  is_archived?: boolean
+  is_blocked?: boolean
 }
 
 export async function PATCH(
@@ -43,6 +45,14 @@ export async function PATCH(
     updates.lane_override = v
   }
 
+  if ('is_archived' in body) {
+    updates.is_archived = Boolean(body.is_archived)
+  }
+
+  if ('is_blocked' in body) {
+    updates.is_blocked = Boolean(body.is_blocked)
+  }
+
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'no_fields_to_update' }, { status: 400 })
   }
@@ -52,7 +62,7 @@ export async function PATCH(
     .from('whatsapp_threads')
     .update(updates)
     .eq('id', id)
-    .select('id, lane_override')
+    .select('id, lane_override, is_archived, is_blocked')
     .single()
 
   if (error) {

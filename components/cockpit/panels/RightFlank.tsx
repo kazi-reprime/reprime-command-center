@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Sparkles, CheckSquare, Send, CalendarClock, Loader2, Check } from 'lucide-react';
+import { Sparkles, CheckSquare, Send, CalendarClock, Loader2, Check, Mic, StickyNote } from 'lucide-react';
+import { useStore } from '@/lib/store/useStore';
+import NotesPanel from './NotesPanel';
 
 interface Task {
   id: string;
@@ -17,13 +19,15 @@ interface NoraMessage {
 
 export default function RightFlank() {
   const [prompt, setPrompt] = useState('');
-  const [messages, setMessages] = useState<NoraMessage[]>([
-    { sender: 'nora', text: 'Hello Gideon. Ready to draft your replies. I have retrieved 5 relevant context blocks from Pipedrive deal memories.' },
-  ]);
+  const [messages, setMessages] = useState<NoraMessage[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loadingNora, setLoadingNora] = useState(false);
   const [loadingTasks, setLoadingTasks] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [activeTab, setActiveTab] = useState<'tasks' | 'notes'>('tasks');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const { emails, events, threads, selectedThreadId } = useStore();
 
   // Fetch active tasks
   const fetchTasks = async () => {
@@ -43,6 +47,26 @@ export default function RightFlank() {
 
   useEffect(() => {
     fetchTasks();
+    const fetchHistory = async () => {
+      try {
+        const res = await fetch('/api/nora/history');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.messages && data.messages.length > 0) {
+            setMessages(data.messages.map((m: any) => ({
+              sender: m.role === 'assistant' ? 'nora' : 'user',
+              text: m.content
+            })));
+            return;
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch Nora history', e);
+      }
+      // Fallback greeting
+      setMessages([{ sender: 'nora', text: 'System online. Ready to execute.' }]);
+    };
+    fetchHistory();
   }, []);
 
   // Scroll to bottom of Nora messages
@@ -58,13 +82,18 @@ export default function RightFlank() {
     setMessages((prev) => [...prev, { sender: 'user', text: userPrompt }]);
     setLoadingNora(true);
 
-    try {
+      const contextPayload = {
+        emails: emails.slice(0, 10), // Limit context size
+        events,
+        activeThread: threads.find(t => t.id === selectedThreadId)
+      };
+
       const res = await fetch('/api/ai/nora', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: userPrompt }),
+        body: JSON.stringify({ prompt: userPrompt, context: contextPayload }),
       });
 
       if (res.ok) {
@@ -145,7 +174,31 @@ export default function RightFlank() {
         </div>
 
         {/* Input prompt */}
-        <div className="mt-3 flex items-center bg-[#08224d] border border-[#FFCC33]/20 rounded-lg px-3 py-2">
+        <div className="mt-3 flex items-center bg-[#08224d] border border-[#FFCC33]/20 rounded-lg px-2 py-2">
+          <button
+            onClick={() => {
+              if (isListening) return;
+              setIsListening(true);
+              const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+              if (SpeechRecognition) {
+                const recognition = new SpeechRecognition();
+                recognition.onresult = (event: any) => {
+                  setPrompt((prev) => prev + (prev ? ' ' : '') + event.results[0][0].transcript);
+                  setIsListening(false);
+                };
+                recognition.onerror = () => setIsListening(false);
+                recognition.onend = () => setIsListening(false);
+                recognition.start();
+              } else {
+                alert('Speech recognition not supported in this browser.');
+                setIsListening(false);
+              }
+            }}
+            className={`p-1.5 mr-1 rounded-md transition ${isListening ? 'text-red-400 bg-red-500/10' : 'text-gray-400 hover:text-[#FFCC33]'}`}
+            title="Dictate to Nora"
+          >
+            <Mic className="h-4 w-4" />
+          </button>
           <input
             type="text"
             value={prompt}
@@ -153,33 +206,52 @@ export default function RightFlank() {
             onKeyDown={(e) => e.key === 'Enter' && handlePromptSend()}
             disabled={loadingNora}
             placeholder={loadingNora ? 'Processing...' : 'Instruct Nora...'}
-            className="bg-transparent text-xs text-white outline-none flex-1 placeholder-gray-500 disabled:opacity-50"
+            className="bg-transparent text-xs text-white outline-none flex-1 placeholder-gray-500 disabled:opacity-50 min-w-0"
           />
           <button
             onClick={handlePromptSend}
             disabled={loadingNora}
-            className="p-1 hover:text-[#FFCC33] text-gray-400 transition disabled:opacity-50"
+            className="p-1.5 hover:text-[#FFCC33] text-[#FFCC33]/70 transition disabled:opacity-50 ml-1"
           >
             <Send className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      {/* 2. Tasks Bucket Panel */}
+      {/* 2. Secondary Panel (Tasks / Notes) */}
       <div className="h-80 bg-[#0c2957] border border-[#FFCC33]/20 rounded-xl p-4 flex flex-col overflow-hidden">
         <div className="flex items-center justify-between border-b border-[#FFCC33]/15 pb-3 mb-3">
-          <div className="flex items-center space-x-2">
-            <CheckSquare className="h-4 w-4 text-[#FFCC33]" />
-            <h2 className="text-sm font-bold text-[#FFCC33] uppercase tracking-wider">Tasks Bucket</h2>
+          <div className="flex items-center space-x-1">
+            <button
+              onClick={() => setActiveTab('tasks')}
+              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg transition ${
+                activeTab === 'tasks' ? 'bg-[#FFCC33]/10 text-[#FFCC33]' : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              <CheckSquare className="h-4 w-4" />
+              <h2 className="text-sm font-bold uppercase tracking-wider">Tasks Bucket</h2>
+            </button>
+            <button
+              onClick={() => setActiveTab('notes')}
+              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg transition ${
+                activeTab === 'notes' ? 'bg-[#FFCC33]/10 text-[#FFCC33]' : 'text-gray-400 hover:text-gray-200'
+              }`}
+            >
+              <StickyNote className="h-4 w-4" />
+              <h2 className="text-sm font-bold uppercase tracking-wider">Notes</h2>
+            </button>
           </div>
-          {loadingTasks ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-400" />
-          ) : (
-            <CalendarClock className="h-4 w-4 text-gray-400" />
+          {activeTab === 'tasks' && (
+            loadingTasks ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-400" />
+            ) : (
+              <CalendarClock className="h-4 w-4 text-gray-400" />
+            )
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-3">
+        {activeTab === 'tasks' ? (
+          <div className="flex-1 overflow-y-auto space-y-3">
           {tasks.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-4">
               <span className="text-xs text-gray-500">No active tasks. Instruct Nora to assign items.</span>
@@ -210,6 +282,11 @@ export default function RightFlank() {
             ))
           )}
         </div>
+        ) : (
+          <div className="flex-1 overflow-hidden">
+            <NotesPanel />
+          </div>
+        )}
       </div>
     </div>
   );

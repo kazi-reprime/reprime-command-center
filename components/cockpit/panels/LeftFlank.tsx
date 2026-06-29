@@ -2,6 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { Mail, Calendar, ExternalLink, CalendarClock, AlertTriangle, Loader2 } from 'lucide-react';
+import { useStore } from '@/lib/store/useStore';
+import ApexCard from './ApexCard';
+import EmailModal from '../modals/EmailModal';
+import FollowupPanel from './FollowupPanel';
 
 interface Email {
   id: string;
@@ -50,10 +54,10 @@ function getEventDuration(startStr: string, endStr: string) {
 }
 
 export default function LeftFlank() {
-  const [emails, setEmails] = useState<Email[]>([]);
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const { emails, setEmails, events, setEvents, hebcalAlert } = useStore();
   const [loadingEmails, setLoadingEmails] = useState(false);
   const [loadingEvents, setLoadingEvents] = useState(false);
+  const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchEmails = async () => {
@@ -92,6 +96,9 @@ export default function LeftFlank() {
 
   return (
     <div className="w-[380px] flex flex-col space-y-4 h-[calc(100vh-6rem)]">
+      {/* 0. APEX Priority Panel */}
+      <ApexCard />
+
       {/* 1. Email Triage Panel */}
       <div className="flex-1 bg-[#0c2957] border border-[#FFCC33]/20 rounded-xl p-4 flex flex-col overflow-hidden">
         <div className="flex items-center justify-between border-b border-[#FFCC33]/15 pb-3 mb-3">
@@ -109,7 +116,11 @@ export default function LeftFlank() {
             </div>
           ) : (
             emails.map((email) => (
-              <div key={email.id} className="p-3 bg-[#08224d] border border-white/5 rounded-lg hover:border-[#FFCC33]/20 transition cursor-pointer">
+              <div 
+                key={email.id} 
+                onClick={() => setSelectedEmailId(email.id)}
+                className="p-3 bg-[#08224d] border border-white/5 rounded-lg hover:border-[#FFCC33]/20 transition cursor-pointer"
+              >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-white truncate max-w-[180px]">{email.from}</span>
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
@@ -126,7 +137,13 @@ export default function LeftFlank() {
                 <p className="text-[11px] text-gray-400 mt-0.5 line-clamp-2 leading-relaxed">{email.snippet}</p>
                 <div className="flex justify-between items-center mt-2">
                   <span className="text-[10px] text-gray-400">{getRelativeTime(email.date)}</span>
-                  <button className="text-[10px] text-[#FFCC33] hover:underline flex items-center space-x-0.5">
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(`https://mail.google.com/mail/u/0/#inbox/${email.id}`, '_blank');
+                    }}
+                    className="text-[10px] text-[#FFCC33] hover:underline flex items-center space-x-0.5"
+                  >
                     <span>Open Gmail</span>
                     <ExternalLink className="h-3 w-3" />
                   </button>
@@ -137,8 +154,11 @@ export default function LeftFlank() {
         </div>
       </div>
 
+      {/* 1.5 Follow-up Panel */}
+      <FollowupPanel />
+
       {/* 2. Calendar Panel */}
-      <div className="h-72 bg-[#0c2957] border border-[#FFCC33]/20 rounded-xl p-4 flex flex-col overflow-hidden">
+      <div className="h-72 bg-[#0c2957] border border-[#FFCC33]/20 rounded-xl p-4 flex flex-col overflow-hidden shrink-0">
         <div className="flex items-center justify-between border-b border-[#FFCC33]/15 pb-3 mb-3">
           <div className="flex items-center space-x-2">
             <Calendar className="h-4 w-4 text-[#FFCC33]" />
@@ -185,11 +205,20 @@ export default function LeftFlank() {
         </div>
 
         {/* Shabbat alert warnings */}
-        <div className="mt-3 p-2 bg-[#F59E0B]/10 border border-[#F59E0B]/20 rounded-lg flex items-center space-x-2 text-[10px] text-[#F59E0B]">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span>Shabbat lockout armed. All outbound schedules queue at sunset.</span>
-        </div>
+        {hebcalAlert && (
+          <div className="mt-3 p-2 bg-[#F59E0B]/10 border border-[#F59E0B]/20 rounded-lg flex items-center space-x-2 text-[10px] text-[#F59E0B]">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            <span>{hebcalAlert}</span>
+          </div>
+        )}
       </div>
+
+      {selectedEmailId && (
+        <EmailModal 
+          emailId={selectedEmailId} 
+          onClose={() => setSelectedEmailId(null)} 
+        />
+      )}
     </div>
   );
 }

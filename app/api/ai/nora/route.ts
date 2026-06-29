@@ -5,7 +5,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 
 export async function POST(req: Request) {
   try {
-    const { prompt } = await req.json();
+    const { prompt, context } = await req.json();
     if (!prompt) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
     }
@@ -115,6 +115,9 @@ Style constraints:
 
 Context Memories (retrieved from notes):
 ${contextMemories.length > 0 ? contextMemories.map((m) => `- ${m}`).join('\n') : 'No past memories found for this context.'}
+
+Current Cockpit Context (Live Dashboard State):
+${context ? JSON.stringify(context, null, 2) : 'No live context provided.'}
 
 You can take action by returning a structured JSON response:
 1. If the user gives you a new piece of information that is worth remembering long-term (e.g. contact details, preferences, client info, deal notes), include it in the "memoriesToStore" array.

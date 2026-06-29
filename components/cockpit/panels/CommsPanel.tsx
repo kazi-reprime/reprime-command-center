@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useStore, Thread, Message } from '@/lib/store/useStore';
-import { Send, Mic, Phone, FolderArchive, Trash2, Search, User, Sparkles, Loader2 } from 'lucide-react';
+import { Send, Mic, Phone, FolderArchive, Trash2, Search, User, Sparkles, Loader2, Languages, FileText, StickyNote, Clock } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
+import SpeakerButton from '@/components/chat/SpeakerButton';
 
 export default function CommsPanel() {
   const { 
@@ -17,11 +18,12 @@ export default function CommsPanel() {
     setUnreadCounts
   } = useStore();
 
-  const [activeLane, setActiveLane] = useState<'all' | 'whatsapp' | 'imessage' | 'sms'>('all');
+  const [activeLane, setActiveLane] = useState<'all' | 'whatsapp' | 'imessage' | 'sms' | 'investor'>('all');
   const [replyText, setReplyText] = useState('');
   const [loadingThreads, setLoadingThreads] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isListening, setIsListening] = useState(false);
 
   // 1. Fetch Threads from both 305 and 718 panels
   const fetchThreads = async () => {
@@ -142,7 +144,11 @@ export default function CommsPanel() {
 
   // 3. Search & Channel filtering
   const filteredThreads = threads.filter((t) => {
-    const matchesLane = activeLane === 'all' || t.channel === activeLane;
+    const matchesLane = 
+      activeLane === 'all' ? true : 
+      activeLane === 'investor' ? t.laneOverride === 'investor' : 
+      t.channel === activeLane;
+      
     const matchesSearch = 
       t.contactPhone.includes(searchQuery) || 
       (t.contactName && t.contactName.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -206,6 +212,30 @@ export default function CommsPanel() {
     }
   };
 
+  const handleArchive = async (id: string) => {
+    try {
+      const res = await fetch(`/api/whatsapp/threads/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_archived: true }),
+      });
+      if (res.ok) {
+        setThreads(threads.filter(t => t.id !== id));
+        if (selectedThreadId === id) setSelectedThreadId(null);
+      } else {
+        console.error('Failed to archive thread');
+      }
+    } catch (e) {
+      console.error('Error archiving thread:', e);
+    }
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this conversation? This will archive it permanently.')) {
+      handleArchive(id);
+    }
+  };
+
   return (
     <div className="flex-1 flex bg-[#0c2957] border border-[#FFCC33]/20 rounded-xl overflow-hidden h-[calc(100vh-6rem)]">
       {/* 1. Left side: Thread directory */}
@@ -223,8 +253,8 @@ export default function CommsPanel() {
             />
           </div>
 
-          <div className="flex space-x-1 bg-[#09224d] p-0.5 rounded-lg border border-white/5 text-xs font-semibold">
-            {(['all', 'whatsapp', 'imessage', 'sms'] as const).map((lane) => (
+          <div className="flex space-x-1 bg-[#09224d] p-0.5 rounded-lg border border-white/5 text-xs font-semibold overflow-x-auto hide-scrollbar">
+            {(['all', 'whatsapp', 'imessage', 'sms', 'investor'] as const).map((lane) => (
               <button
                 key={lane}
                 onClick={() => setActiveLane(lane)}
@@ -264,8 +294,9 @@ export default function CommsPanel() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white truncate">
-                      {thread.contactName || thread.contactPhone}
+                    <span className="text-xs font-bold text-white truncate flex items-center space-x-1">
+                      <span>{thread.contactName || thread.contactPhone}</span>
+                      {thread.laneOverride === 'investor' && <span className="text-[#FFCC33]">★</span>}
                     </span>
                     <span className="text-[10px] text-gray-400">{thread.lastMessageAt}</span>
                   </div>
@@ -306,17 +337,49 @@ export default function CommsPanel() {
                 </span>
                 <span className="text-xs text-gray-400">({activeThread.laneOverride})</span>
               </div>
-              <div className="flex items-center space-x-3">
-                <button className="p-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-white/5">
+              <div className="flex items-center space-x-1">
+                <button 
+                  onClick={() => window.open(`tel:${activeThread.contactPhone}`, '_blank')}
+                  className="p-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-white/5"
+                  title="Call"
+                >
                   <Phone className="h-4 w-4" />
                 </button>
-                <button className="p-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-white/5">
+                <button 
+                  onClick={() => handleArchive(activeThread.id)}
+                  className="p-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-white/5"
+                  title="Archive"
+                >
                   <FolderArchive className="h-4 w-4" />
                 </button>
-                <button className="p-2 text-gray-400 hover:text-red-400 transition rounded-lg hover:bg-white/5">
+                <button 
+                  onClick={() => handleDelete(activeThread.id)}
+                  className="p-2 text-gray-400 hover:text-red-400 transition rounded-lg hover:bg-white/5"
+                  title="Delete"
+                >
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
+            </div>
+
+            {/* Action Bar */}
+            <div className="bg-[#08224d] border-b border-[#FFCC33]/15 px-6 py-2 flex items-center space-x-2">
+              <button className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
+                <Languages className="h-3 w-3" />
+                <span>Translate</span>
+              </button>
+              <button className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
+                <FileText className="h-3 w-3" />
+                <span>Summarize</span>
+              </button>
+              <button className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
+                <StickyNote className="h-3 w-3" />
+                <span>Add Note</span>
+              </button>
+              <button className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
+                <Clock className="h-3 w-3" />
+                <span>Follow-up</span>
+              </button>
             </div>
 
             {/* Bubble logs */}
@@ -347,6 +410,11 @@ export default function CommsPanel() {
                       >
                         <p>{msg.body}</p>
                         <div className="flex items-center justify-end space-x-1.5 mt-1">
+                          {msg.direction === 'inbound' && (
+                            <div className="opacity-50 hover:opacity-100 transition scale-75 origin-right mr-1">
+                              <SpeakerButton text={msg.body} />
+                            </div>
+                          )}
                           <span className="text-[9px] text-gray-400 font-mono">{msg.createdAt}</span>
                         </div>
                       </div>
@@ -359,7 +427,28 @@ export default function CommsPanel() {
             {/* Compose reply box */}
             <div className="p-4 border-t border-[#FFCC33]/15 bg-[#09224d]/50">
               <div className="flex items-center space-x-3 bg-[#08224d] border border-[#FFCC33]/20 rounded-xl px-4 py-2.5">
-                <button className="p-1.5 text-gray-400 hover:text-[#FFCC33] transition rounded-lg hover:bg-white/5">
+                <button 
+                  onClick={() => {
+                    if (isListening) return;
+                    setIsListening(true);
+                    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+                    if (SpeechRecognition) {
+                      const recognition = new SpeechRecognition();
+                      recognition.onresult = (event: any) => {
+                        setReplyText((prev) => prev + (prev ? ' ' : '') + event.results[0][0].transcript);
+                        setIsListening(false);
+                      };
+                      recognition.onerror = () => setIsListening(false);
+                      recognition.onend = () => setIsListening(false);
+                      recognition.start();
+                    } else {
+                      alert('Speech recognition not supported in this browser.');
+                      setIsListening(false);
+                    }
+                  }}
+                  className={`p-1.5 transition rounded-lg ${isListening ? 'text-red-400 bg-red-500/10' : 'text-gray-400 hover:text-[#FFCC33] hover:bg-white/5'}`}
+                  title="Dictate message"
+                >
                   <Mic className="h-4 w-4" />
                 </button>
                 <input

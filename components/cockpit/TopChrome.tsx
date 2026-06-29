@@ -178,13 +178,15 @@ export default function TopChrome() {
           </button>
         </div>
 
-        <Link 
-          href="/os"
+        <a 
+          href="https://portal.reprimeterminal.com/dashboard"
+          target="_blank"
+          rel="noopener noreferrer"
           className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded text-emerald-400 transition"
         >
           <Layers className="h-4 w-4" />
-          <span className="text-xs font-bold uppercase tracking-wider">OS Layer</span>
-        </Link>
+          <span className="text-xs font-bold uppercase tracking-wider">OS Advanced Modules</span>
+        </a>
       </div>
 
       <BriefingModal open={briefingMode !== null} mode={briefingMode || 'morning'} onClose={() => setBriefingMode(null)} />

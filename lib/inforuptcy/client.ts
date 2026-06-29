@@ -14,6 +14,8 @@
 // local dev.
 
 import type { Browser, BrowserContext, Cookie, Page } from 'playwright-core'
+// Note: playwright-core and @sparticuz/chromium are dynamically imported
+// at runtime to avoid webpack build failures on Vercel
 import { Redis } from '@upstash/redis'
 
 const COOKIE_KEY = 'inforuptcy:cookies:v1'

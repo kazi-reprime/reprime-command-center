@@ -43,9 +43,9 @@ export default function CampaignLauncher() {
             <div className="border border-zinc-800 rounded-lg bg-zinc-950 p-4">
               <label className="text-xs uppercase font-mono text-zinc-500 block mb-2">Target Segment</label>
               <select className="w-full bg-zinc-900 border border-zinc-800 rounded p-2 text-white font-mono text-sm focus:outline-none focus:border-zinc-700">
-                <option>All Hot Investors (Score > 80)</option>
+                <option>All Hot Investors (Score &gt; 80)</option>
                 <option>Florida Retail Buyers</option>
-                <option>Past Commitments > $1M</option>
+                <option>Past Commitments &gt; $1M</option>
                 <option>Custom List...</option>
               </select>
               <p className="text-xs text-zinc-400 mt-2">Targeting ~14 investors.</p>

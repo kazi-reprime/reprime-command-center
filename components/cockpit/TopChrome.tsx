@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useStore } from '@/lib/store/useStore';
-import { Clock, Shield, Sparkles, Presentation } from 'lucide-react';
+import { Clock, Shield, Sparkles, Presentation, Layers } from 'lucide-react';
 import BriefingModal from '@/components/briefing/BriefingModal';
+import Link from 'next/link';
 
 export interface CrewMember {
   email: string;
@@ -166,6 +167,14 @@ export default function TopChrome() {
           <Presentation className="h-4 w-4" />
           <span className="text-xs font-bold uppercase tracking-wider">Morning Briefing</span>
         </button>
+
+        <Link 
+          href="/os"
+          className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded text-emerald-400 transition"
+        >
+          <Layers className="h-4 w-4" />
+          <span className="text-xs font-bold uppercase tracking-wider">OS Layer</span>
+        </Link>
       </div>
 
       <BriefingModal open={showBriefing} onClose={() => setShowBriefing(false)} />

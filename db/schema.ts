@@ -86,6 +86,95 @@ export const noraMemory = pgTable('nora_memory', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
+// Table: deals
+export const deals = pgTable('deals', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  address: varchar('address', { length: 255 }),
+  assetType: varchar('asset_type', { length: 100 }),
+  purchasePrice: integer('purchase_price'),
+  loanAmount: integer('loan_amount'),
+  equityNeeded: integer('equity_needed'),
+  status: varchar('status', { length: 50 }).default('active').notNull(),
+  priority: integer('priority').default(3).notNull(),
+  riskScore: integer('risk_score'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Table: deal_contacts
+export const dealContacts = pgTable('deal_contacts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  dealId: uuid('deal_id').references(() => deals.id, { onDelete: 'cascade' }).notNull(),
+  contactPhone: varchar('contact_phone', { length: 50 }).notNull(),
+  role: varchar('role', { length: 100 }).notNull(), // 'broker', 'attorney', 'lender', 'investor'
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Table: investors
+export const investors = pgTable('investors', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  contactPhone: varchar('contact_phone', { length: 50 }).notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  capitalCapacity: integer('capital_capacity'),
+  preferredDealType: varchar('preferred_deal_type', { length: 100 }),
+  preferredLocation: varchar('preferred_location', { length: 100 }),
+  status: varchar('status', { length: 50 }).default('warm').notNull(), // cold, warm, hot, committed, inactive
+  investorScore: integer('investor_score').default(0).notNull(),
+  lastInteractionAt: timestamp('last_interaction_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Table: investor_activity
+export const investorActivity = pgTable('investor_activity', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  investorId: uuid('investor_id').references(() => investors.id, { onDelete: 'cascade' }).notNull(),
+  activityType: varchar('activity_type', { length: 100 }).notNull(), // 'meeting', 'document_sent', 'email', 'call'
+  description: text('description'),
+  sentiment: varchar('sentiment', { length: 50 }), // 'positive', 'neutral', 'negative'
+  activityAt: timestamp('activity_at').defaultNow().notNull(),
+});
+
+// Table: decisions
+export const decisions = pgTable('decisions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  decidedBy: varchar('decided_by', { length: 100 }),
+  reason: text('reason'),
+  status: varchar('status', { length: 50 }).default('active').notNull(), // 'active', 'reversed', 'parked'
+  isReversible: boolean('is_reversible').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Table: payments
+export const payments = pgTable('payments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  amount: integer('amount').notNull(),
+  payee: varchar('payee', { length: 255 }).notNull(),
+  dueDate: timestamp('due_date').notNull(),
+  relatedDealId: uuid('related_deal_id').references(() => deals.id, { onDelete: 'set null' }),
+  status: varchar('status', { length: 50 }).default('pending').notNull(), // 'pending', 'paid', 'overdue', 'snoozed'
+  notes: text('notes'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Table: campaigns
+export const campaigns = pgTable('campaigns', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  relatedDealId: uuid('related_deal_id').references(() => deals.id, { onDelete: 'set null' }),
+  status: varchar('status', { length: 50 }).default('draft').notNull(), // 'draft', 'sending', 'completed'
+  sentCount: integer('sent_count').default(0).notNull(),
+  replyCount: integer('reply_count').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 // --- Relationships ---
 
 export const organizationsRelations = relations(organizations, ({ many }) => ({
@@ -94,6 +183,11 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   threads: many(threads),
   bucketItems: many(bucketItems),
   noraMemory: many(noraMemory),
+  deals: many(deals),
+  investors: many(investors),
+  decisions: many(decisions),
+  payments: many(payments),
+  campaigns: many(campaigns),
 }));
 
 export const orgMembersRelations = relations(orgMembers, ({ one }) => ({
@@ -144,5 +238,66 @@ export const noraMemoryRelations = relations(noraMemory, ({ one }) => ({
   organization: one(organizations, {
     fields: [noraMemory.orgId],
     references: [organizations.id],
+  }),
+}));
+
+export const dealsRelations = relations(deals, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [deals.orgId],
+    references: [organizations.id],
+  }),
+  contacts: many(dealContacts),
+  payments: many(payments),
+  campaigns: many(campaigns),
+}));
+
+export const dealContactsRelations = relations(dealContacts, ({ one }) => ({
+  deal: one(deals, {
+    fields: [dealContacts.dealId],
+    references: [deals.id],
+  }),
+}));
+
+export const investorsRelations = relations(investors, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [investors.orgId],
+    references: [organizations.id],
+  }),
+  activities: many(investorActivity),
+}));
+
+export const investorActivityRelations = relations(investorActivity, ({ one }) => ({
+  investor: one(investors, {
+    fields: [investorActivity.investorId],
+    references: [investors.id],
+  }),
+}));
+
+export const decisionsRelations = relations(decisions, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [decisions.orgId],
+    references: [organizations.id],
+  }),
+}));
+
+export const paymentsRelations = relations(payments, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [payments.orgId],
+    references: [organizations.id],
+  }),
+  deal: one(deals, {
+    fields: [payments.relatedDealId],
+    references: [deals.id],
+  }),
+}));
+
+export const campaignsRelations = relations(campaigns, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [campaigns.orgId],
+    references: [organizations.id],
+  }),
+  deal: one(deals, {
+    fields: [campaigns.relatedDealId],
+    references: [deals.id],
   }),
 }));

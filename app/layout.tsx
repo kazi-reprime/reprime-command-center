@@ -27,6 +27,7 @@ export const metadata: Metadata = {
   title: "RePrime Command Center",
   description: "CRE command center",
   icons: [{ rel: "icon", url: "/icon.svg" }],
+  manifest: "/manifest.json",
 };
 
 export const viewport: Viewport = {

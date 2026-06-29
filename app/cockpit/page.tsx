@@ -4,10 +4,13 @@ import TopChrome from '@/components/cockpit/TopChrome';
 import LeftFlank from '@/components/cockpit/panels/LeftFlank';
 import CommsPanel from '@/components/cockpit/panels/CommsPanel';
 import RightFlank from '@/components/cockpit/panels/RightFlank';
+import GlobalSearch from '@/components/os/GlobalSearch';
 
 export default function CockpitPage() {
   return (
-    <div className="min-h-screen bg-[#08224d] flex flex-col font-sans overflow-hidden">
+    <div className="min-h-screen bg-[#08224d] flex flex-col font-sans overflow-hidden relative">
+      <GlobalSearch />
+      
       {/* 1. Header Navigation and Info bar */}
       <TopChrome />
 

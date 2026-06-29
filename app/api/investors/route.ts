@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { investors } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createServerClient();
     const { data: { session } } = await supabase.auth.getSession();
     
     // Fallback orgId if not authenticated

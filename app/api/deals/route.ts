@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server';
 import { db } from '@/db';
 import { deals } from '@/db/schema';
 import { eq, desc } from 'drizzle-orm';
-import { createClient } from '@/lib/supabase/server';
+import { createServerClient } from '@/lib/supabase/server';
 
 export async function GET(request: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createServerClient();
     const { data: { session } } = await supabase.auth.getSession();
     
     // Fallback orgId if not authenticated (for local prototyping)
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const supabase = createClient();
+    const supabase = await createServerClient();
     const { data: { session } } = await supabase.auth.getSession();
     const orgId = session?.user?.id || '00000000-0000-0000-0000-000000000000';
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/server';
-import { runInforuptcyIngestion } from '@/lib/inforuptcy';
+// Dynamic import to avoid playwright build failures
+// import { runInforuptcyIngestion } from '@/lib/inforuptcy';
 
 export async function POST(req: Request) {
   try {
@@ -14,6 +15,7 @@ export async function POST(req: Request) {
 
     // 1. Intercept Inforuptcy Scraper Requests
     if (lowerPrompt.includes('inforuptcy') || lowerPrompt.includes('scraper')) {
+      const { runInforuptcyIngestion } = await import('@/lib/inforuptcy');
       const dockets = await runInforuptcyIngestion();
       const memoriesToStore: string[] = [];
       const tasksToCreate: Array<{ title: string; priority: number; projectTag: string }> = [];

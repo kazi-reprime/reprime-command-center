@@ -5,7 +5,18 @@
 
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { searchTenants, type InforuptcyCase } from '@/lib/inforuptcy/client'
+// Inline type to avoid importing from inforuptcy client at build time
+// (playwright-core / @sparticuz/chromium cause webpack resolution failures)
+interface InforuptcyCase {
+  case_no: string
+  debtor: string
+  chapter: string
+  date_filed: string
+  court: string
+  judge?: string
+  status?: string
+  tenant?: string
+}
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -85,6 +96,7 @@ async function runPoll(): Promise<InsertResult> {
 
   let scraped: { all: InforuptcyCase[]; byTenant: Record<string, number>; reauthed: boolean }
   try {
+    const { searchTenants } = await import('@/lib/inforuptcy/client')
     scraped = await searchTenants(WATCHLIST)
   } catch (err) {
     result.errors.push(`scrape_failed: ${(err as Error).message}`)

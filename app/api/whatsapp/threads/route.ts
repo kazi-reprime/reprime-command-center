@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
     const {
       data: { user },
     } = await supabase.auth.getUser()
-    if (!user || user.email !== 'g@reprime.com') {
+    if (!user) {
       return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
     }
 
@@ -87,14 +87,10 @@ export async function GET(request: NextRequest) {
       }
     } catch (timelinesErr: unknown) {
       const msg = (timelinesErr as Error).message ?? ''
-      // 403 = quota exhausted; 429 = rate limited; timeout = upstream slow.
-      // All three fall back to DB cache so the UI keeps working.
-      if (msg.includes('403') || msg.includes('429') || msg.includes('timeout')) {
-        console.warn('[/api/whatsapp/threads] Timelines unavailable — falling back to DB cache', { panel, msg: msg.slice(0, 200) })
-        timelinesSkipped = true
-      } else {
-        throw timelinesErr
-      }
+      // Any error (403 quota, 429 rate limit, 404 not found, 401 unauth, timeouts)
+      // falls back to DB cache so the UI keeps working.
+      console.warn('[/api/whatsapp/threads] Timelines unavailable — falling back to DB cache', { panel, msg: msg.slice(0, 200) })
+      timelinesSkipped = true
     }
     const chatsForThisPanel = allChats.filter(
       (chat) => panelFromAccountId(chat.whatsapp_account_id || '') === panel

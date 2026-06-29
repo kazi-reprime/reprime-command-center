@@ -22,8 +22,12 @@ export async function GET(request: Request) {
         .where(eq(deals.orgId, orgId))
         .orderBy(desc(deals.createdAt));
     } catch (dbError) {
-      // If table doesn't exist yet, return mock data for UI prototyping
-      console.warn('Deals table query failed, returning mock data:', dbError);
+      console.error('Deals query error:', dbError);
+    }
+    
+    if (allDeals.length === 0) {
+      // Mock data for prototyping if table is empty
+      console.warn('Deals table is empty, returning mock data for prototyping');
       return NextResponse.json([
         {
           id: '1',

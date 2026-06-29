@@ -20,8 +20,12 @@ export async function GET(request: Request) {
         .where(eq(investors.orgId, orgId))
         .orderBy(desc(investors.investorScore));
     } catch (dbError) {
-      // Mock data for prototyping if table not ready
-      console.warn('Investors table query failed, returning mock data:', dbError);
+      console.error('Investors query error:', dbError);
+    }
+    
+    if (allInvestors.length === 0) {
+      // Mock data for prototyping if table is empty
+      console.warn('Investors table is empty, returning mock data for prototyping');
       return NextResponse.json([
         {
           id: '1',

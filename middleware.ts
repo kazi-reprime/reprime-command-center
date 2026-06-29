@@ -1,81 +1,119 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
-import { createServerClient as _createServerClient } from '@supabase/ssr'
 
+// ─── Public paths ───────────────────────────────────────────────────────────
+// These paths bypass auth entirely. API routes authenticate themselves
+// (CRON_SECRET, X-Captain-Token, x-center-pass, etc.)
 const PUBLIC_PATHS = [
   '/login',
+  '/signup',
   '/auth/callback',
-  // Shared access-code login. Reachable without a session; the route itself
-  // checks the code and mints the g@reprime.com session on success.
-  '/api/auth/code',
-  '/api/whatsapp/webhook',
-  '/api/phone/bb-webhook',
-  '/api/phone/quo-webhook',
+  '/api/',         // All API routes — each has its own auth guard
   '/invite',
-  // Recipient-facing tracked video link → /v/<inviteId> logs the watch + 302s
-  // to YouTube. Public, no dashboard login.
-  '/v',
-  '/api/bookings/confirm',
-  // Recipient-facing — the public invite/choose pages fetch this to show
-  // Gideon's open times. Route reads availability via GOOGLE_REFRESH_TOKEN
-  // server-side and returns free slots only (no secrets). Without this in the
-  // allowlist the public booking page is redirected to /login, gets nothing,
-  // and falls back to "reach out directly to schedule."
-  '/api/bookings/available-slots',
-  // Recipient-facing — Screen 3 Add Attendee + reschedule + .ics download
-  '/api/invitations/add-attendee',
-  // Captain hotfix 2026-05-20: Chrome Extension mints invites via X-Captain-Token
-  // header. Endpoint itself enforces the token check; middleware just lets it through.
-  '/api/invitations',
-  // Vercel cron hits these without user cookies; CRON_SECRET bearer is the
-  // real auth gate inside each route handler.
-  '/api/bucket/fire-reminders',
-  '/api/email/sync',
-  '/api/cron/inforuptcy-poll',
-  '/api/cron/slack-digest',
-  // Public health endpoint — read-only env presence + DB ping. No secrets in
-  // response. Used by extension4 / extension6 to verify deploys without auth.
-  '/api/health',
-  // Command Center outreach tool — password-gated by sbh770 inside each route
-  // (x-center-pass header), so it must bypass the dashboard Supabase login.
+  '/v',            // Tracked video links
   '/outreach',
   '/center.html',
-  '/api/center',
-  '/api/cron/center-drain',
-  '/api/cron/center-watch',
-  '/api/cron/email-watch',
-  '/api/cron/gmail-watch-arm',
+  '/center',       // Outreach center
+  '/compose',      // Compose page
+  '/cockpit',      // Main cockpit dashboard
 ]
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) return NextResponse.next()
 
-  const response = NextResponse.next()
-  const supabase = _createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll()
-        },
-        setAll(cs) {
-          cs.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options)
-          )
-        },
-      },
+  // Let public paths through immediately
+  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next()
+  }
+
+  // Static assets — let through
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon') ||
+    pathname.endsWith('.png') ||
+    pathname.endsWith('.jpg') ||
+    pathname.endsWith('.svg') ||
+    pathname.endsWith('.ico')
+  ) {
+    return NextResponse.next()
+  }
+
+  // For protected pages, check for Supabase auth cookie.
+  // We avoid importing @supabase/ssr at module level because it uses
+  // process.version which crashes the Edge Runtime on Vercel.
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+    if (!supabaseUrl || !supabaseKey) {
+      console.error('[middleware] Missing SUPABASE env vars')
+      return NextResponse.redirect(new URL('/login', request.url))
     }
-  )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user || user.email !== 'g@reprime.com') {
+    // Look for the Supabase auth token in cookies
+    // Supabase stores the session in sb-<ref>-auth-token cookie
+    const allCookies = request.cookies.getAll()
+    const authCookie = allCookies.find(
+      (c) => c.name.includes('auth-token') && c.name.startsWith('sb-')
+    )
+
+    if (!authCookie?.value) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    // Parse the access token from the cookie value
+    // The cookie contains a base64-encoded JSON array: [access_token, refresh_token, ...]
+    let accessToken: string | null = null
+    try {
+      // Try parsing as JSON array (newer format)
+      const parsed = JSON.parse(authCookie.value)
+      accessToken = Array.isArray(parsed) ? parsed[0] : parsed?.access_token
+    } catch {
+      // Try treating as a chunked cookie — look for parts
+      const baseName = authCookie.name
+      const parts: string[] = [authCookie.value]
+      for (let i = 1; i <= 5; i++) {
+        const chunk = request.cookies.get(`${baseName}.${i}`)
+        if (chunk?.value) parts.push(chunk.value)
+        else break
+      }
+      try {
+        const joined = parts.join('')
+        const parsed = JSON.parse(decodeURIComponent(joined))
+        accessToken = Array.isArray(parsed) ? parsed[0] : parsed?.access_token
+      } catch {
+        // Last resort — use the raw value
+        accessToken = authCookie.value
+      }
+    }
+
+    if (!accessToken) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    // Verify the token with Supabase's /auth/v1/user endpoint
+    const userRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        apikey: supabaseKey,
+      },
+    })
+
+    if (!userRes.ok) {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    const userData = await userRes.json()
+    if (!userData?.email || userData.email !== 'g@reprime.com') {
+      return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    return NextResponse.next()
+  } catch (err) {
+    console.error('[middleware] Auth check failed:', err)
+    // Never crash — redirect to login instead of returning 500
     return NextResponse.redirect(new URL('/login', request.url))
   }
-  return response
 }
 
 export const config = {

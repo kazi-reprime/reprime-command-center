@@ -236,6 +236,29 @@ export default function CommsPanel() {
     }
   };
 
+  const handleNoraAction = async (promptText: string) => {
+    try {
+      const res = await fetch('/api/ai/nora', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: promptText,
+          context: {
+            activeThread,
+            messages: messages.slice(-5)
+          }
+        }),
+      });
+      if (res.ok) {
+        alert('Nora is processing: ' + promptText);
+      }
+    } catch (e) {
+      console.error('Failed to trigger Nora action', e);
+    }
+  };
+
   return (
     <div className="flex-1 flex bg-[#0c2957] border border-[#FFCC33]/20 rounded-xl overflow-hidden h-[calc(100vh-6rem)]">
       {/* 1. Left side: Thread directory */}
@@ -364,19 +387,19 @@ export default function CommsPanel() {
 
             {/* Action Bar */}
             <div className="bg-[#08224d] border-b border-[#FFCC33]/15 px-6 py-2 flex items-center space-x-2">
-              <button className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
+              <button onClick={() => handleNoraAction('Translate the last 5 messages to English')} className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
                 <Languages className="h-3 w-3" />
                 <span>Translate</span>
               </button>
-              <button className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
+              <button onClick={() => handleNoraAction('Summarize this conversation')} className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
                 <FileText className="h-3 w-3" />
                 <span>Summarize</span>
               </button>
-              <button className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
+              <button onClick={() => handleNoraAction('Extract key details and add a note')} className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
                 <StickyNote className="h-3 w-3" />
                 <span>Add Note</span>
               </button>
-              <button className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
+              <button onClick={() => handleNoraAction('Create a follow-up task for this contact')} className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
                 <Clock className="h-3 w-3" />
                 <span>Follow-up</span>
               </button>

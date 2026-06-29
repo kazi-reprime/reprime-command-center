@@ -10,6 +10,7 @@ interface Task {
   title: string;
   priority: number;
   projectTag: string | null;
+  status: string;
 }
 
 interface NoraMessage {
@@ -100,6 +101,26 @@ export default function RightFlank() {
       if (res.ok) {
         const data = await res.json();
         setMessages((prev) => [...prev, { sender: 'nora', text: data.reply }]);
+        
+        // Play TTS audio
+        try {
+          const audioRes = await fetch('/api/voice/speak', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              text: data.reply,
+              language: /[א-ת]/.test(data.reply) ? 'he' : 'en'
+            }),
+          });
+          if (audioRes.ok) {
+            const audioBlob = await audioRes.blob();
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const audio = new Audio(audioUrl);
+            audio.play().catch(e => console.error('Audio playback blocked:', e));
+          }
+        } catch (audioErr) {
+          console.error('Failed to play Nora TTS', audioErr);
+        }
         
         // If Nora stored memories or created tasks, reload tasks
         if (data.tasksToCreate && data.tasksToCreate.length > 0) {
@@ -258,29 +279,40 @@ export default function RightFlank() {
               <span className="text-xs text-gray-500">No active tasks. Instruct Nora to assign items.</span>
             </div>
           ) : (
-            tasks.map((task) => (
-              <div key={task.id} className="p-3 bg-[#08224d] border border-white/5 rounded-lg flex items-center justify-between group">
-                <div className="flex-1 min-w-0 pr-2">
-                  <div className="flex items-start justify-between">
-                    <span className="text-xs font-bold text-white leading-snug truncate">{task.title}</span>
+            <>
+              {['open', 'pending', 'snoozed', 'parked'].map(statusGroup => {
+                const groupTasks = tasks.filter(t => t.status === statusGroup);
+                if (groupTasks.length === 0) return null;
+                return (
+                  <div key={statusGroup} className="space-y-2">
+                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1 mb-2 border-b border-white/5 pb-1">{statusGroup}</h3>
+                    {groupTasks.map((task) => (
+                      <div key={task.id} className="p-3 bg-[#08224d] border border-white/5 rounded-lg flex items-center justify-between group hover:border-[#FFCC33]/30 transition">
+                        <div className="flex-1 min-w-0 pr-2">
+                          <div className="flex items-start justify-between">
+                            <span className="text-xs font-bold text-white leading-snug truncate">{task.title}</span>
+                          </div>
+                          <div className="flex items-center space-x-2 mt-1">
+                            <span className="text-[9px] text-[#FFCC33] font-semibold">#{task.projectTag || 'General'}</span>
+                            <span className={`text-[8px] font-bold px-1.5 py-0.25 rounded ${
+                              task.priority === 1 ? 'bg-red-500/20 text-red-400' : 'bg-gray-500/20 text-gray-400'
+                            }`}>
+                              P{task.priority}
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => handleCompleteTask(task.id)}
+                          className="h-6 w-6 rounded-full border border-gray-600 flex items-center justify-center hover:border-green-500 hover:bg-green-500/20 text-transparent hover:text-green-400 shrink-0 transition"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
                   </div>
-                  <div className="flex items-center space-x-2 mt-1">
-                    <span className="text-[9px] text-[#FFCC33] font-semibold">#{task.projectTag || 'General'}</span>
-                    <span className={`text-[8px] font-bold px-1.5 py-0.25 rounded ${
-                      task.priority === 1 ? 'bg-red-500/20 text-red-400' : 'bg-gray-500/20 text-gray-400'
-                    }`}>
-                      P{task.priority}
-                    </span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleCompleteTask(task.id)}
-                  className="h-6 w-6 rounded-full border border-gray-600 flex items-center justify-center hover:border-green-500 hover:bg-green-500/20 text-transparent hover:text-green-400 shrink-0 transition"
-                >
-                  <Check className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            ))
+                );
+              })}
+            </>
           )}
         </div>
         ) : (

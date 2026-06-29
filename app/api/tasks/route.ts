@@ -7,7 +7,7 @@ export async function GET() {
     const { data, error } = await service
       .from('bucket_items')
       .select('*')
-      .in('status', ['open', 'doing'])
+      .neq('status', 'done')
       .order('priority', { ascending: true })
       .order('created_at', { ascending: false });
 
@@ -22,6 +22,7 @@ export async function GET() {
       title: item.title,
       priority: item.priority,
       projectTag: item.source_type || 'General',
+      status: item.status || 'open',
     }));
 
     return NextResponse.json(tasks);

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServiceClient } from '@/lib/supabase/server';
+import { createServerClient, createServiceClient } from '@/lib/supabase/server';
 // Dynamic import to avoid playwright build failures
 // import { runInforuptcyIngestion } from '@/lib/inforuptcy';
 
@@ -301,6 +301,24 @@ Output format MUST be valid JSON:
           console.error('Failed to create task:', e);
         }
       }
+    }
+
+    // 6. Persist to chat history
+    try {
+      const HEBREW_RE = /[א-ת]/;
+      const userLanguage = HEBREW_RE.test(prompt) ? 'he' : 'en';
+      const replyLanguage = HEBREW_RE.test(noraResponse.reply) ? 'he' : 'en';
+      
+      const { error: persistError } = await service.from('nora_chat_messages').insert([
+        { role: 'user', content: prompt, language: userLanguage },
+        { role: 'assistant', content: noraResponse.reply, language: replyLanguage },
+      ]);
+      
+      if (persistError) {
+        console.error('Failed to persist Nora chat message:', persistError.message);
+      }
+    } catch (e) {
+      console.error('Failed to persist Nora chat message exception:', e);
     }
 
     return NextResponse.json(noraResponse);

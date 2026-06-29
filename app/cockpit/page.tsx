@@ -4,6 +4,7 @@ import TopChrome from '@/components/cockpit/TopChrome';
 import LeftFlank from '@/components/cockpit/panels/LeftFlank';
 import CommsPanel from '@/components/cockpit/panels/CommsPanel';
 import RightFlank from '@/components/cockpit/panels/RightFlank';
+import ApexCard from '@/components/cockpit/ApexCard';
 import GlobalSearch from '@/components/os/GlobalSearch';
 
 export default function CockpitPage() {
@@ -13,6 +14,7 @@ export default function CockpitPage() {
       
       {/* 1. Header Navigation and Info bar */}
       <TopChrome />
+      <ApexCard />
 
       {/* 2. Three Column Workspace Grid Layout */}
       <main className="flex-1 p-4 flex space-x-4 overflow-hidden h-[calc(100vh-3.5rem)]">

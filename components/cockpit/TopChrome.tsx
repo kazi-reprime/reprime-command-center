@@ -43,27 +43,19 @@ export default function TopChrome() {
 
     const fetchHebcal = async () => {
       try {
-        const res = await fetch('https://www.hebcal.com/shabbat?cfg=json&geonameid=4164138&m=50');
-        const data = await res.json();
-        const items = data.items || [];
-        
-        let candleTime = null;
-        let havdalahTime = null;
-        let holidayName = '';
-
-        for (const item of items) {
-          if (item.category === 'candles') candleTime = new Date(item.date);
-          if (item.category === 'havdalah') havdalahTime = new Date(item.date);
-          if (item.category === 'holiday') holidayName = item.title;
-        }
-
-        const now = new Date();
-        
-        if (candleTime && havdalahTime) {
-          if (now >= candleTime && now <= havdalahTime) {
-            setHebcalAlert(`SHABBAT / HOLIDAY ACTIVE ${holidayName ? `(${holidayName})` : ''} - Outbound queued`);
-          } else if (candleTime.getTime() - now.getTime() < 24 * 60 * 60 * 1000 && candleTime.getTime() > now.getTime()) {
-            setHebcalAlert(`SHABBAT INCOMING: ${candleTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`);
+        const res = await fetch('/api/hebcal');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.isShabbat) {
+            setHebcalAlert(`SHABBAT ACTIVE - System restricted`);
+          } else if (data.nextCandleLighting) {
+            const candleTime = new Date(data.nextCandleLighting);
+            const now = new Date();
+            if (candleTime.getTime() - now.getTime() < 24 * 60 * 60 * 1000 && candleTime.getTime() > now.getTime()) {
+              setHebcalAlert(`SHABBAT INCOMING: ${candleTime.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`);
+            } else {
+              setHebcalAlert(data.parsha ? `Parsha: ${data.parsha}` : null);
+            }
           } else {
             setHebcalAlert(null);
           }

@@ -3,8 +3,15 @@
 import { useState, useEffect } from 'react';
 import { Target, Loader2, AlertCircle } from 'lucide-react';
 
+interface ApexItem {
+  type: 'meeting' | 'followup' | 'focus';
+  title: string;
+  time?: string;
+  description?: string;
+}
+
 export default function ApexCard() {
-  const [priority, setPriority] = useState<any>(null);
+  const [priority, setPriority] = useState<ApexItem | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -13,7 +20,7 @@ export default function ApexCard() {
         const res = await fetch('/api/briefing/today');
         if (res.ok) {
           const data = await res.json();
-          let topItem = null;
+          let topItem: ApexItem | null = null;
           
           if (data.meetings && data.meetings.nextUp) {
             topItem = { 

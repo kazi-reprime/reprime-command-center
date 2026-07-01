@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { centerAuthed } from '@/lib/center/auth'
 import { createServiceClient } from '@/lib/supabase/server'
-import { getChats, PANEL_ACCOUNT_MAP } from '@/lib/timelines/client'
+import { getChats } from '@/lib/timelines/client'
 import type { Panel } from '@/lib/timelines/types'
 
 export const dynamic = 'force-dynamic'

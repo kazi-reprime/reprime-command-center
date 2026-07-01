@@ -45,7 +45,6 @@ function authorized(request: Request): boolean {
   return header === `Bearer ${expected}`
 }
 
-type InvestorPhones = Array<{ id: number; phones: string[] }>
 
 type InvestorEmailIndex = {
   // lowercased email → true

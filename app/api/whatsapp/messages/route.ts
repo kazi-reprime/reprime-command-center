@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createServerClient, createServiceClient } from '@/lib/supabase/server'
-import { getAllChats, getMessages, sendMessage, PANEL_ACCOUNT_MAP } from '@/lib/timelines/client'
+import { getAllChats, getMessages, sendMessage, PANEL_ACCOUNT_MAP, resolveChatId, sendChatMessage } from '@/lib/timelines/client'
 import { normalizePhone } from '@/lib/timelines/normalize-phone'
 import { getMediaType, parseTimelinesTimestamp } from '@/lib/timelines/parse'
 import type { DashboardMessage, Panel, TimelinesMessage } from '@/lib/timelines/types'
@@ -178,7 +178,7 @@ export async function GET(request: NextRequest) {
   // Use phone-based lookup to find Timelines chat ID instead.
   const { data: thread, error: threadErr } = await service
     .from('whatsapp_threads')
-    .select('id, panel, phone, is_group')
+    .select('id, panel, phone, is_group, timelines_chat_id')
     .eq('id', threadId)
     .single()
 
@@ -197,14 +197,23 @@ export async function GET(request: NextRequest) {
   // Find the matching Timelines chat by phone so we can fetch its messages
   let messages: TimelinesMessage[] = []
   try {
-    const allChats = await getAllChats(panel)
-    const matchingChat = allChats.find(
-      (c) => normalizePhone(c.phone) === threadPhone || c.phone === threadPhone
-    )
-    if (matchingChat) {
-      messages = await getMessages(matchingChat.id)
+    let timelinesChatId = thread.timelines_chat_id
+    if (!timelinesChatId) {
+      // One-time resolution if missing
+      const accountPhone = PANEL_ACCOUNT_MAP[panel]
+      timelinesChatId = await resolveChatId(threadPhone, accountPhone)
+      if (timelinesChatId) {
+        await service
+          .from('whatsapp_threads')
+          .update({ timelines_chat_id: timelinesChatId })
+          .eq('id', threadId)
+      }
+    }
+
+    if (timelinesChatId) {
+      messages = await getMessages(timelinesChatId)
     } else {
-      console.warn('[messages/GET] no matching Timelines chat for phone', { threadPhone, panel, totalChats: allChats.length })
+      console.warn('[messages/GET] could not resolve Timelines chat for phone', { threadPhone, panel })
     }
   } catch (err) {
     const msg = (err as Error).message ?? ''
@@ -324,9 +333,8 @@ export async function POST(request: NextRequest) {
 
   const service = createServiceClient()
   // Resolve the thread row by uuid (legacy) or by phone+panel (cockpit).
-  // BUG 5: Do NOT select timelines_chat_id — sendMessage() needs phone, not chat ID
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  let threadQuery = service.from('whatsapp_threads').select('id, panel, phone, is_group')
+  let threadQuery = service.from('whatsapp_threads').select('id, panel, phone, is_group, timelines_chat_id')
   if (threadId && UUID_RE.test(threadId)) {
     threadQuery = threadQuery.eq('id', threadId)
   } else {
@@ -356,16 +364,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'thread_has_no_phone' }, { status: 409 })
   }
 
-  // Block outbound to group chats — Timelines.ai's /messages endpoint requires a
-  // real phone, and we only have a synthetic group:{chat_id} identifier. Sending
-  // to groups from the dashboard isn't supported until we wire up Timelines'
-  // group-send API. Reply from the iPhone WhatsApp directly for now.
-  if (thread.is_group || recipientPhone.startsWith('group:') || /^\+?\d+$/.test(recipientPhone) === false) {
+  // Block outbound to group chats UNLESS we have a resolved timelines_chat_id.
+  // Timelines.ai's /messages endpoint (sendMessage) requires a real phone,
+  // but /chats/{id}/messages (sendChatMessage) works for groups.
+  if (thread.is_group && !thread.timelines_chat_id) {
     return NextResponse.json(
       {
         error: 'group_send_unsupported',
         message:
-          'Sending to group chats from the dashboard is not supported yet. Reply from your iPhone WhatsApp directly.',
+          'Sending to this group is not supported yet (missing chat ID). Reply from your iPhone WhatsApp directly.',
       },
       { status: 400 }
     )
@@ -410,11 +417,15 @@ export async function POST(request: NextRequest) {
 
   let sent: TimelinesMessage
   try {
-    sent = await sendMessage({
-      phone: recipientPhone,
-      text: wireText,
-      whatsappAccountPhone: accountId,
-    })
+    if (thread.is_group && thread.timelines_chat_id) {
+      sent = await sendChatMessage(thread.timelines_chat_id, wireText)
+    } else {
+      sent = await sendMessage({
+        phone: recipientPhone!,
+        text: wireText,
+        whatsappAccountPhone: accountId,
+      })
+    }
   } catch (err) {
     const msg = (err as Error).message ?? ''
     const isQuota = msg.includes('403')

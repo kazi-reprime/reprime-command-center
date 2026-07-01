@@ -212,11 +212,11 @@ export default function ConciergeButtons({ meeting, onSent }: Props) {
         </button>
         <button
           type="button"
-          aria-label="Couldn't make it"
+          aria-label="Couldn&apos;t make it"
           onClick={() => start('couldnt_make_it')}
           style={{ ...baseBtn, borderColor: '#FF7474', color: '#FF7474' }}
         >
-          ❌ Can't make it
+          ❌ Can&apos;t make it
         </button>
       </div>
 

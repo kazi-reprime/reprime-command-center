@@ -198,7 +198,7 @@ export default function NotesPanel() {
     enabled: open,
   })
 
-  const notes = data?.notes ?? []
+  const notes = useMemo(() => data?.notes ?? [], [data?.notes])
   const selected = useMemo(
     () => notes.find((n) => n.id === selectedId) ?? null,
     [notes, selectedId]

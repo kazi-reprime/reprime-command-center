@@ -1,17 +1,14 @@
 import { NextResponse } from 'next/server';
 import { createServerClient, createServiceClient } from '@/lib/supabase/server';
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const supabase = await createServerClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    await supabase.auth.getSession();
     
-    // Fallback orgId if not authenticated
-    const orgId = session?.user?.id || '00000000-0000-0000-0000-000000000000';
-
     const service = createServiceClient();
     
-    let { data: allInvestors, error: dbError } = await service
+    const { data: allInvestors, error: dbError } = await service
       .from('investors')
       .select('*')
       .order('investor_score', { ascending: false });

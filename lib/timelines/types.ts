@@ -23,7 +23,7 @@ export interface TimelinesChat {
   unattended: boolean
   photo: string | null
   is_allowed_to_message: boolean
-  group_members: any[]
+  group_members: unknown[]
 }
 
 export interface TimelinesMessage {
@@ -42,8 +42,8 @@ export interface TimelinesMessage {
   origin: string
   has_attachment: boolean
   message_type: string
-  reactions: { users: any[]; reactions: Record<string, any>; total: number }
-  data: Record<string, any>
+  reactions: { users: unknown[]; reactions: Record<string, unknown>; total: number }
+  data: Record<string, unknown>
 }
 
 export interface DashboardThread {

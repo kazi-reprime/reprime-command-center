@@ -10,7 +10,6 @@ export const maxDuration = 60
 // The approval queue: the Spanish secretary's Hebrew<->Spanish drafts wait here
 // for the English side (Gideon/Shirel) to approve + send. Nothing else needs
 // approval — English-side messages (English OR Hebrew) send directly.
-const dig9 = (s: string) => (s || '').replace(/\D/g, '').slice(-9)
 const b64url = (b: string | Buffer) => Buffer.from(b).toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 const encSub = (s: string) => '=?UTF-8?B?' + Buffer.from(s, 'utf8').toString('base64') + '?='
 

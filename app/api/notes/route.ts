@@ -3,7 +3,6 @@ import { createServerClient, createServiceClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
-const ALLOWED_EMAIL = 'g@reprime.com'
 
 interface NoteRow {
   id: string

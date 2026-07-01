@@ -9,8 +9,16 @@ interface EmailModalProps {
   onClose: () => void;
 }
 
+interface EmailDetails {
+  id: string;
+  subject: string;
+  from: string;
+  date: string;
+  body: string;
+}
+
 export default function EmailModal({ emailId, onClose }: EmailModalProps) {
-  const [emailData, setEmailData] = useState<any>(null);
+  const [emailData, setEmailData] = useState<EmailDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCompose, setShowCompose] = useState(false);
@@ -23,8 +31,8 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
         if (!res.ok) throw new Error('Failed to fetch email details');
         const data = await res.json();
         setEmailData(data);
-      } catch (e: any) {
-        setError(e.message);
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : 'Unknown error');
       } finally {
         setLoading(false);
       }

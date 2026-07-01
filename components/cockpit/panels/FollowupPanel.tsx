@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Clock, Loader2, MessageCircle } from 'lucide-react';
+import { Clock, Loader2 } from 'lucide-react';
 import { useStore } from '@/lib/store/useStore';
 
 interface FollowupThread {

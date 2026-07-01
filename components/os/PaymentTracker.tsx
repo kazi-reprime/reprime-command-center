@@ -1,46 +1,56 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Loader2, Check, Clock } from 'lucide-react';
 
 type Payment = {
   id: string;
   title: string;
   amount: number;
   payee: string;
-  dueDate: string;
+  due_date: string;
+  dueDateFormatted: string;
   status: 'pending' | 'paid' | 'overdue' | 'snoozed';
   dealContext?: string;
 };
 
 export default function PaymentTracker() {
-  const [payments] = useState<Payment[]>([
-    {
-      id: '1',
-      title: 'Legal Settlement',
-      amount: 150000,
-      payee: 'Cohen Law Firm Escrow',
-      dueDate: 'Tomorrow',
-      status: 'pending',
-      dealContext: 'Bay Valley Shopping Center'
-    },
-    {
-      id: '2',
-      title: 'Q3 Investor Distribution',
-      amount: 85000,
-      payee: 'Sarah Chen',
-      dueDate: 'Today',
-      status: 'pending',
-      dealContext: 'Downtown Office Plaza'
-    },
-    {
-      id: '3',
-      title: 'Vendor Invoice 402',
-      amount: 12500,
-      payee: 'Apex Roofing LLC',
-      dueDate: 'Overdue',
-      status: 'overdue'
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchPayments = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/center/payments');
+      if (res.ok) {
+        const data = await res.json();
+        setPayments(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch payments:', err);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    fetchPayments();
+  }, []);
+
+  const handleUpdateStatus = async (id: string, status: Payment['status']) => {
+    try {
+      const res = await fetch('/api/center/payments', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status }),
+      });
+      if (res.ok) {
+        setPayments(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+      }
+    } catch (err) {
+      console.error('Failed to update payment status:', err);
+    }
+  };
 
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
@@ -68,39 +78,57 @@ export default function PaymentTracker() {
       </div>
 
       <div className="p-4 flex flex-col gap-4">
-        {payments.map(payment => (
-          <div key={payment.id} className={`border rounded-lg bg-zinc-950 p-4 transition-colors ${
-            payment.status === 'overdue' ? 'border-rose-900/50' : 'border-zinc-800'
-          }`}>
-            <div className="flex justify-between items-start mb-2">
-              <div>
-                <h3 className="font-semibold text-white">{payment.title}</h3>
-                <p className="text-xs text-zinc-400 mt-1">To: {payment.payee}</p>
-              </div>
-              <div className="text-right">
-                <div className="text-xl font-mono font-medium text-white">{formatCurrency(payment.amount)}</div>
-                <div className={`mt-1 text-[10px] uppercase font-mono px-1.5 py-0.5 rounded inline-block ${getStatusColor(payment.status)}`}>
-                  {payment.status} &bull; {payment.dueDate}
+        {loading ? (
+          <div className="flex items-center justify-center h-32">
+            <Loader2 className="h-6 w-6 animate-spin text-zinc-500" />
+          </div>
+        ) : payments.length === 0 ? (
+          <div className="text-center py-8 text-zinc-500 text-xs font-mono">
+            No active payment obligations.
+          </div>
+        ) : (
+          payments.map(payment => (
+            <div key={payment.id} className={`border rounded-lg bg-zinc-950 p-4 transition-colors ${
+              payment.status === 'overdue' ? 'border-rose-900/50' : 'border-zinc-800'
+            } ${payment.status === 'paid' ? 'opacity-50' : ''}`}>
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <h3 className="font-semibold text-white">{payment.title}</h3>
+                  <p className="text-xs text-zinc-400 mt-1">To: {payment.payee}</p>
+                </div>
+                <div className="text-right">
+                  <div className="text-xl font-mono font-medium text-white">{formatCurrency(payment.amount)}</div>
+                  <div className={`mt-1 text-[10px] uppercase font-mono px-1.5 py-0.5 rounded inline-block ${getStatusColor(payment.status)}`}>
+                    {payment.status} &bull; {payment.dueDateFormatted}
+                  </div>
                 </div>
               </div>
+              
+              {payment.dealContext && (
+                <div className="mt-3 text-xs font-mono text-zinc-500 flex items-center gap-2 border-t border-zinc-900 pt-3">
+                  <span className="bg-zinc-900 px-1.5 py-0.5 rounded">Deal</span> {payment.dealContext}
+                </div>
+              )}
+              
+              {payment.status !== 'paid' && (
+                <div className="mt-4 flex gap-2">
+                  <button 
+                    onClick={() => handleUpdateStatus(payment.id, 'paid')}
+                    className="flex-1 bg-emerald-600/10 hover:bg-emerald-600/20 text-emerald-500 text-xs py-1.5 rounded border border-emerald-600/20 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Check className="h-3 w-3" /> Mark Paid
+                  </button>
+                  <button 
+                    onClick={() => handleUpdateStatus(payment.id, 'snoozed')}
+                    className="flex-1 bg-zinc-900 hover:bg-zinc-800 text-xs py-1.5 rounded text-zinc-300 border border-zinc-800 transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Clock className="h-3 w-3" /> Snooze
+                  </button>
+                </div>
+              )}
             </div>
-            
-            {payment.dealContext && (
-              <div className="mt-3 text-xs font-mono text-zinc-500 flex items-center gap-2 border-t border-zinc-900 pt-3">
-                <span className="bg-zinc-900 px-1.5 py-0.5 rounded">Deal</span> {payment.dealContext}
-              </div>
-            )}
-            
-            <div className="mt-4 flex gap-2">
-              <button className="flex-1 bg-zinc-900 hover:bg-zinc-800 text-xs py-1.5 rounded text-zinc-300 transition-colors">
-                Mark Paid
-              </button>
-              <button className="flex-1 bg-zinc-900 hover:bg-zinc-800 text-xs py-1.5 rounded text-zinc-300 transition-colors">
-                Snooze
-              </button>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

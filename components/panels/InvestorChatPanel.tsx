@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { formatPhoneDisplay } from '@/lib/timelines/parse'
@@ -59,7 +59,6 @@ export default function InvestorChatPanel() {
   const [search, setSearch] = useState('')
   const [tierFilter, setTierFilter] = useState<TierFilter>('all')
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('both')
-  const prevSelectedId = useRef<string | null>(null)
 
   // ── Thread list ────────────────────────────────────────────────────────────
   const { data: threadsData, isLoading, error, refetch } = useQuery({
@@ -95,7 +94,7 @@ export default function InvestorChatPanel() {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'whatsapp_messages' },
-        (payload: any) => {
+        (payload: { new?: { thread_id?: string } }) => {
           if (payload.new?.thread_id) {
             queryClient.invalidateQueries({ queryKey: ['messages', payload.new.thread_id] })
           }

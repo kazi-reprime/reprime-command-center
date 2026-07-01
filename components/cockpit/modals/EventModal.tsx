@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Calendar, MapPin, Users, Link as LinkIcon, FileText, CheckCircle2, Clock, StickyNote, Loader2 } from 'lucide-react';
+import { X, Calendar, Users, Link as LinkIcon, FileText, CheckCircle2, Clock, StickyNote, Loader2 } from 'lucide-react';
 import { useStore } from '@/lib/store/useStore';
 
 interface EventModalProps {

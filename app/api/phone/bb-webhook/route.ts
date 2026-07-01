@@ -22,8 +22,7 @@ function verifySecret(request: NextRequest): boolean {
 
 const OUR_718 = /7185505500/
 
-function contactAddress(handle: string, isFromMe: boolean): string {
-  // If "from me", the handle IS the contact (recipient). Same if inbound.
+function contactAddress(handle: string): string {
   return handle
 }
 
@@ -83,7 +82,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true })
   }
 
-  const contactPhone = normalizePhone(contactAddress(handle, isFromMe)) ?? handle
+  const contactPhone = normalizePhone(contactAddress(handle)) ?? handle
   const direction: 'in' | 'out' = isFromMe ? 'out' : 'in'
 
   const db = createServiceClient()

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServerClient, createServiceClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/server';
 // Dynamic import to avoid playwright build failures
 // import { runInforuptcyIngestion } from '@/lib/inforuptcy';
 

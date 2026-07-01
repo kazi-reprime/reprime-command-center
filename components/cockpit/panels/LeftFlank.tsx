@@ -9,24 +9,6 @@ import ComposeEmailModal from '../modals/ComposeEmailModal';
 import EventModal from '../modals/EventModal';
 import FollowupPanel from './FollowupPanel';
 
-interface Email {
-  id: string;
-  from: string;
-  subject: string;
-  snippet: string;
-  date: string;
-  score: number;
-}
-
-interface CalendarEvent {
-  id: string;
-  summary: string;
-  description?: string;
-  start: string;
-  end: string;
-  meetingUrl?: string;
-  attendees?: { email: string; displayName?: string; responseStatus?: string }[];
-}
 
 function getRelativeTime(dateStr: string): string {
   const date = new Date(dateStr);
@@ -97,7 +79,7 @@ export default function LeftFlank() {
 
     fetchEmails();
     fetchEvents();
-  }, []);
+  }, [setEmails, setEvents]);
 
   return (
     <div className="w-[380px] flex flex-col space-y-4 h-[calc(100vh-6rem)]">

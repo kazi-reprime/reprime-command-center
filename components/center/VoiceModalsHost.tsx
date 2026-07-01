@@ -6,7 +6,6 @@ import QuickCallModal from '@/components/phone/QuickCallModal'
 import QuickEmailModal from '@/components/email/QuickEmailModal'
 import BriefingModal from '@/components/briefing/BriefingModal'
 import { dispatchOpenWindow } from '@/lib/windows/store'
-import type { DashboardThread } from '@/lib/timelines/types'
 
 /**
  * VoiceModalsHost — mounts the four voice-targeted modals on /center and

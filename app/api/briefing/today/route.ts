@@ -14,10 +14,10 @@ import {
   type BucketCandidate,
   type SuggestedFocus,
 } from '@/lib/center/soft-schedule'
+import { jewishCalendarAdapter } from '@/lib/adapters/jewishCalendarAdapter'
 
 export const dynamic = 'force-dynamic'
 
-const ALLOWED_EMAIL = 'g@reprime.com'
 const ACTIVE_DEALS_CACHE_TTL = 300 // 5 min
 const ACTIVE_DEALS_CACHE_KEY = 'briefing:active-deals:v1'
 const TODAY_CACHE_TTL = 60 // 1 min — payload-level cache keyed by CT date
@@ -185,42 +185,11 @@ interface BriefingResponse {
   active_deals: ActiveDeal[]
   tenant_filings_today: TenantFiling[]
   suggested_focus: SuggestedFocus[]
+  jewish_date: string
+  hebcal_alert: string | null
   degraded?: boolean
 }
 
-/**
- * Returns the ISO instant for "today midnight in America/Chicago" — DST-aware,
- * works in both CDT and CST. Used to bucket inforuptcy_filings rows that
- * landed since the last cron run.
- */
-function midnightCTTodayISO(): string {
-  const now = new Date()
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/Chicago',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: false,
-  }).formatToParts(now)
-  const part = (t: string) => parts.find((p) => p.type === t)?.value ?? '0'
-  const y = Number(part('year'))
-  const m = Number(part('month'))
-  const d = Number(part('day'))
-  const ctAsUTC = Date.UTC(
-    y,
-    m - 1,
-    d,
-    Number(part('hour')) % 24,
-    Number(part('minute')),
-    Number(part('second')),
-  )
-  const offsetMs = ctAsUTC - now.getTime()
-  const ctMidnightAsUTC = Date.UTC(y, m - 1, d, 0, 0, 0)
-  return new Date(ctMidnightAsUTC - offsetMs).toISOString()
-}
 
 /**
  * CT-local YYYY-MM-DD for the cache key. Pinned to the user's wall-clock day
@@ -264,18 +233,37 @@ async function fetchMeetings(): Promise<BriefingMeeting[]> {
     .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
 }
 
-async function fetchUnreadByPanel(
-  svc: ReturnType<typeof createServiceClient>,
-): Promise<UnreadByPanel> {
-  // Stubbed until threads schema is reconciled
-  return { '305': 0, '718': 0, investors: 0 }
+async function fetchUnreadByPanel(): Promise<UnreadByPanel> {
+  const service = createServiceClient()
+  const { data, error } = await service
+    .from('whatsapp_threads')
+    .select('panel, unread_count, is_investor')
+  
+  const counts: UnreadByPanel = { '305': 0, '718': 0, investors: 0 }
+  if (error || !data) return counts
+
+  for (const t of data) {
+    if (t.is_investor && t.unread_count > 0) {
+      counts.investors += t.unread_count
+    } else if (t.panel === '305') {
+      counts['305'] += (t.unread_count || 0)
+    } else if (t.panel === '718') {
+      counts['718'] += (t.unread_count || 0)
+    }
+  }
+  return counts
 }
 
-async function fetchRecentInvestors(
-  svc: ReturnType<typeof createServiceClient>,
-): Promise<BriefingThread[]> {
-  // Stubbed until threads schema is reconciled
-  return []
+async function fetchRecentInvestors(): Promise<BriefingThread[]> {
+  const service = createServiceClient()
+  const { data, error } = await service
+    .from('whatsapp_threads')
+    .select('*')
+    .eq('is_investor', true)
+    .order('last_message_at', { ascending: false })
+    .limit(5)
+  if (error || !data) return []
+  return data as unknown as BriefingThread[]
 }
 
 async function fetchExpiringInvitations(
@@ -294,18 +282,35 @@ async function fetchExpiringInvitations(
   return (data ?? []) as ExpiringRow[]
 }
 
-async function fetchPendingFollowups(
-  svc: ReturnType<typeof createServiceClient>,
-): Promise<BriefingThread[]> {
-  // Stubbed until threads schema is reconciled
-  return []
+async function fetchPendingFollowups(): Promise<BriefingThread[]> {
+  const service = createServiceClient()
+  const { data, error } = await service
+    .from('whatsapp_threads')
+    .select('*')
+    .eq('is_priority', true)
+    .gt('unread_count', 0)
+    .order('last_message_at', { ascending: false })
+    .limit(5)
+  if (error || !data) return []
+  return data as unknown as BriefingThread[]
 }
 
-async function fetchTenantFilings(
-  svc: ReturnType<typeof createServiceClient>,
-): Promise<TenantFiling[]> {
-  // Stubbed - inforuptcy scraper is disconnected
-  return []
+async function fetchTenantFilings(): Promise<TenantFiling[]> {
+  try {
+    const { runInforuptcyIngestion } = await import('@/lib/inforuptcy')
+    const filings = await runInforuptcyIngestion()
+    return filings.map((f) => ({
+      case_no: f.caseNumber,
+      tenant: f.debtor,
+      party_title: f.chapter,
+      court: f.court,
+      filed_at: f.dateFiled,
+      first_seen_at: new Date().toISOString(),
+    }))
+  } catch (err) {
+    console.error('[briefing] tenant_filings fetch failed', err)
+    return []
+  }
 }
 
 async function fetchOpenBucketCandidates(
@@ -367,12 +372,12 @@ export async function GET() {
     bucketCandidatesResult,
   ] = await Promise.all([
     withTimeout(fetchMeetings(), 'meetings'),
-    withTimeout(fetchUnreadByPanel(svc), 'unread_by_panel'),
-    withTimeout(fetchRecentInvestors(svc), 'recent_investors'),
+    withTimeout(fetchUnreadByPanel(), 'unread_by_panel'),
+    withTimeout(fetchRecentInvestors(), 'recent_investors'),
     withTimeout(fetchExpiringInvitations(svc), 'expiring_invitations'),
-    withTimeout(fetchPendingFollowups(svc), 'pending_followups'),
+    withTimeout(fetchPendingFollowups(), 'pending_followups'),
     withTimeout(fetchActiveDeals(), 'active_deals'),
-    withTimeout(fetchTenantFilings(svc), 'tenant_filings'),
+    withTimeout(fetchTenantFilings(), 'tenant_filings'),
     withTimeout(fetchOpenBucketCandidates(svc), 'bucket_candidates'),
   ])
 
@@ -409,8 +414,17 @@ export async function GET() {
     console.error('[briefing] suggested_focus failed', err)
   }
 
+  const jewishInfo = jewishCalendarAdapter.getTodayInfo();
+  // Filter for alerts like Shabbat, Candles, or Holidays
+  const hebcalAlert = jewishInfo.events
+    .filter(ev => ev.category.includes('holiday') || ev.category.includes('shabbat'))
+    .map(ev => ev.title)
+    .join(' • ') || null;
+
   const payload: BriefingResponse = {
     date: dateStr,
+    jewish_date: jewishInfo.hdate,
+    hebcal_alert: hebcalAlert,
     meetings: {
       count: meetings.length,
       first: meetings[0] ?? null,

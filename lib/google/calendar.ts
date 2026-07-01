@@ -35,16 +35,16 @@ export async function getTodayEvents() {
       null
     const zoomLink = locationMatch || descriptionMatch || (videoEntry?.includes('zoom.us') ? videoEntry : null)
     return {
-      id: event.id!,
+      id: event.id || '',
       title: event.summary || 'Untitled',
-      startTime: event.start?.dateTime || event.start?.date!,
-      endTime: event.end?.dateTime || event.end?.date!,
+      startTime: event.start?.dateTime || event.start?.date || '',
+      endTime: event.end?.dateTime || event.end?.date || '',
       zoomLink,
       // hangoutLink / any conference entry point so the cockpit Join button has
       // a real URL even for Meet or add-on-based meetings.
       hangoutLink: event.hangoutLink || videoEntry || null,
       location: event.location || null,
-      attendees: event.attendees?.map(a => a.email!).filter(Boolean) || [],
+      attendees: event.attendees?.map(a => a.email).filter((email): email is string => !!email) || [],
     }
   }) || []
 }

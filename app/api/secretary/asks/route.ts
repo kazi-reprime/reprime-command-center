@@ -32,7 +32,7 @@ type OutboundAsk = {
  * Each bucket is capped at LIMIT_PER_BUCKET. Pipedrive name resolution is
  * left to the client (it already has caching via /api/pipedrive/resolve).
  */
-export async function GET(_request: NextRequest) {
+export async function GET() {
   const supabase = await createServerClient()
   const {
     data: { user },

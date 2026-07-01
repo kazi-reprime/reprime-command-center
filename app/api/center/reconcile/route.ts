@@ -18,7 +18,6 @@ export const maxDuration = 60
 
 const dig9 = (s: string | null | undefined) => (s || '').replace(/\D/g, '').slice(-9)
 const fmtDate = (iso: string | number) => { try { return new Intl.DateTimeFormat('en-US', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Chicago' }).format(new Date(iso)) } catch { return '' } }
-const isHe = (s: string) => /[֐-׿]/.test(s || '')
 
 function mediaMarker(t: string | undefined): string {
   const x = (t || '').toLowerCase()
@@ -152,9 +151,8 @@ async function runBatch(service: ReturnType<typeof createServiceClient>, limitIn
   // Least-recently-reconciled first so repeated runs cycle through everyone.
   const limit = Math.min(60, Math.max(1, limitIn || 30))
   const scope = scopeIn === 'all' ? 'all' : 'active'
-  // `any` on the builder: chaining many Supabase filters makes the TS type
-  // recursion blow up ("excessively deep"); the runtime is unaffected.
-  let q = service.from('roster').select('source_row, phone, board_stage, thread_json, awaiting_us, last_reply_at') as any
+  // @ts-expect-error chaining Supabase filters makes the TS type recursion blow up
+  let q = service.from('roster').select('source_row, phone, board_stage, thread_json, awaiting_us, last_reply_at')
   q = q.not('phone', 'is', null)
   // Only contacts who have had real WhatsApp activity (last_reply_at set) — skip
   // invitees who never messaged on WhatsApp (nothing to mirror, wastes API calls).

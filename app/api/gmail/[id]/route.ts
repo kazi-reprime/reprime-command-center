@@ -37,8 +37,8 @@ export async function GET(
     let body = data.snippet || '';
     if (data.payload?.parts) {
       // Find text/plain part
-      const textPart = data.payload.parts.find((p: any) => p.mimeType === 'text/plain');
-      const htmlPart = data.payload.parts.find((p: any) => p.mimeType === 'text/html');
+      const textPart = data.payload.parts.find((p: { mimeType: string }) => p.mimeType === 'text/plain');
+      const htmlPart = data.payload.parts.find((p: { mimeType: string }) => p.mimeType === 'text/html');
       const targetPart = htmlPart || textPart;
       
       if (targetPart && targetPart.body?.data) {

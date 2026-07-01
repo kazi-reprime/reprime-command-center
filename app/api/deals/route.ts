@@ -1,15 +1,11 @@
 import { NextResponse } from 'next/server';
 import { createServerClient, createServiceClient } from '@/lib/supabase/server';
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const supabase = await createServerClient();
-    const { data: { session } } = await supabase.auth.getSession();
+    await supabase.auth.getSession();
     
-    // Fallback orgId if not authenticated (for local prototyping)
-    // The previous implementation often used a fallback or fetched from orgMembers
-    const orgId = session?.user?.id || '00000000-0000-0000-0000-000000000000'; // Default prototype orgId
-
     const service = createServiceClient();
     // Try to fetch deals for this org via REST API
     const { data: allDeals, error: dbError } = await service
@@ -78,8 +74,8 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const supabase = await createServerClient();
-    const { data: { session } } = await supabase.auth.getSession();
-    const orgId = session?.user?.id || '00000000-0000-0000-0000-000000000000';
+    await supabase.auth.getSession();
+    const orgId = '00000000-0000-0000-0000-000000000000';
 
     const body = await request.json();
     const { name, address, assetType, purchasePrice, loanAmount, equityNeeded, status, priority, riskScore } = body;

@@ -37,7 +37,7 @@ function getRedis(): Redis | null {
   return new Redis({ url, token })
 }
 
-function chatToThreadRow(chat: TimelinesChat, _panel: Panel) {
+function chatToThreadRow(chat: TimelinesChat) {
   const normalizedPhone = normalizePhone(chat.phone) || chat.phone
   const derivedPanel = panelFromAccountId(chat.whatsapp_account_id || '')
   // BUG 4: fall back to created_timestamp when last_message_timestamp is absent
@@ -59,6 +59,8 @@ function chatToThreadRow(chat: TimelinesChat, _panel: Panel) {
     unread_count: chat.read === false ? 1 : 0,
     pipedrive_contact_id: null,
     is_investor: false,
+    is_family: false,
+    is_staff: false,
   }
 }
 
@@ -133,7 +135,7 @@ export async function GET(request: NextRequest) {
 
     const service = createServiceClient()
     // When Timelines was skipped (quota 403) kept is empty — skip upsert entirely
-    const rows = timelinesSkipped ? [] : kept.map((c) => chatToThreadRow(c, panel))
+    const rows = timelinesSkipped ? [] : kept.map((c) => chatToThreadRow(c))
 
     const sortedRows = rows.sort((a, b) => {
       const at = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
@@ -446,6 +448,8 @@ export async function GET(request: NextRequest) {
         unread_count: t.unread_count ?? 0,
         pipedrive_contact_id: t.pipedrive_contact_id,
         is_investor: investorIds.has(t.id),
+        is_family: t.is_family ?? false,
+        is_staff: t.is_staff ?? false,
         investor_tier: investorTierByThreadId.get(t.id)?.tier ?? null,
         investor_role: investorTierByThreadId.get(t.id)?.role ?? null,
         is_priority: t.is_priority ?? false,
@@ -453,8 +457,8 @@ export async function GET(request: NextRequest) {
     )
 
     return NextResponse.json({ threads: result })
-  } catch (e: any) {
-    console.error('[/api/whatsapp/threads] handler error', { message: e?.message, stack: e?.stack })
-    return NextResponse.json({ error: 'Failed to load threads', detail: e?.message }, { status: 502 })
+  } catch (e: unknown) {
+    console.error('[/api/whatsapp/threads] handler error', { message: (e as Error)?.message, stack: (e as Error)?.stack })
+    return NextResponse.json({ error: 'Failed to load threads', detail: (e as Error)?.message }, { status: 502 })
   }
 }

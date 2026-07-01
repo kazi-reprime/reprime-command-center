@@ -12,6 +12,24 @@ interface Task {
   priority: number;
   projectTag: string | null;
   status: string;
+  zoomLink?: string | null
+}
+
+interface SpeechRecognitionEvent extends Event {
+  results: {
+    [key: number]: {
+      [key: number]: {
+        transcript: string;
+      };
+    };
+  };
+}
+
+interface SpeechRecognition extends EventTarget {
+  start(): void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: { error: string }) => void;
+  onend: () => void;
 }
 
 interface NoraMessage {
@@ -55,7 +73,7 @@ export default function RightFlank() {
         if (res.ok) {
           const data = await res.json();
           if (data.messages && data.messages.length > 0) {
-            setMessages(data.messages.map((m: any) => ({
+            setMessages(data.messages.map((m: { role: string; content: string }) => ({
               sender: m.role === 'assistant' ? 'nora' : 'user',
               text: m.content
             })));
@@ -207,10 +225,10 @@ export default function RightFlank() {
             onClick={() => {
               if (isListening) return;
               setIsListening(true);
-              const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+              const SpeechRecognition = (window as unknown as { SpeechRecognition: new () => SpeechRecognition }).SpeechRecognition || (window as unknown as { webkitSpeechRecognition: new () => SpeechRecognition }).webkitSpeechRecognition;
               if (SpeechRecognition) {
-                const recognition = new SpeechRecognition();
-                recognition.onresult = (event: any) => {
+                const recognition: SpeechRecognition = new SpeechRecognition();
+                recognition.onresult = (event: SpeechRecognitionEvent) => {
                   setPrompt((prev) => prev + (prev ? ' ' : '') + event.results[0][0].transcript);
                   setIsListening(false);
                 };

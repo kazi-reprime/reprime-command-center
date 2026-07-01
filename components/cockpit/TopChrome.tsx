@@ -5,7 +5,6 @@ import { useStore } from '@/lib/store/useStore';
 import { Clock, Shield, Sparkles, Presentation, Layers, Users } from 'lucide-react';
 import BriefingModal from '@/components/briefing/BriefingModal';
 import ContactsModal from '@/components/cockpit/modals/ContactsModal';
-import Link from 'next/link';
 
 export interface CrewMember {
   email: string;
@@ -74,7 +73,7 @@ export default function TopChrome() {
       clearInterval(timer);
       clearInterval(hebcalTimer);
     };
-  }, [setActiveCrewId, setHebcalAlert]);
+  }, [setActiveCrewId, setHebcalAlert, activeCrewId]);
 
   useEffect(() => {
     if (language === 'HE') {

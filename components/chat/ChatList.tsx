@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
 import { formatPhoneDisplay } from '@/lib/timelines/parse'
 import type { DashboardThread, Panel } from '@/lib/timelines/types'
 
@@ -133,7 +132,7 @@ export default function ChatList({ panel, selectedThreadId, onSelect, hideInvest
       })
     }
     return list
-  }, [data, filter, search, sort])
+  }, [data, filter, search, sort, hideInvestors])
 
   return (
     <div

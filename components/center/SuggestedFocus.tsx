@@ -11,7 +11,7 @@
 // The timer is a single global slot — starting a new focus replaces any
 // running one. That's intentional: Gideon focuses on one thing at a time.
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 export interface SuggestedFocusItem {
   gap_start: string

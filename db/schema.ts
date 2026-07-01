@@ -228,6 +228,88 @@ export const auditLogs = pgTable('audit_logs', {
   details: jsonb('details'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+// Table: nora_chat_messages
+export const noraChatMessages = pgTable('nora_chat_messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  role: varchar('role', { length: 20 }).notNull(), // 'user', 'assistant'
+  content: text('content').notNull(),
+  language: varchar('language', { length: 10 }).default('en'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Table: whatsapp_threads
+export const whatsappThreads = pgTable('whatsapp_threads', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  panel: varchar('panel', { length: 10 }).notNull(),
+  channelType: varchar('channel_type', { length: 20 }).notNull(),
+  phone: varchar('phone', { length: 50 }).notNull(),
+  contactName: text('contact_name'),
+  isGroup: boolean('is_group').default(false).notNull(),
+  jid: text('jid'),
+  lastMessageAt: timestamp('last_message_at'),
+  lastMessagePreview: text('last_message_preview'),
+  unreadCount: integer('unread_count').default(0).notNull(),
+  pipedriveContactId: integer('pipedrive_contact_id'),
+  isInvestor: boolean('is_investor').default(false).notNull(),
+  isBlocked: boolean('is_blocked').default(false).notNull(),
+  timelinesChatId: integer('timelines_chat_id'),
+  isPriority: boolean('is_priority').default(false).notNull(),
+  isFamily: boolean('is_family').default(false).notNull(),
+  isStaff: boolean('is_staff').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Table: whatsapp_messages
+export const whatsappMessages = pgTable('whatsapp_messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  threadId: uuid('thread_id').references(() => whatsappThreads.id, { onDelete: 'cascade' }),
+  panel: varchar('panel', { length: 10 }).notNull(),
+  channelType: varchar('channel_type', { length: 20 }).notNull(),
+  direction: varchar('direction', { length: 10 }).notNull(),
+  body: text('body'),
+  mediaUrl: text('media_url'),
+  mediaType: text('media_type'),
+  mediaFilename: text('media_filename'),
+  timelinesUid: varchar('timelines_uid', { length: 255 }).unique(),
+  fromPhone: varchar('from_phone', { length: 50 }),
+  fromName: text('from_name'),
+  sentAt: timestamp('sent_at'),
+  status: varchar('status', { length: 50 }),
+  isGroupMessage: boolean('is_group_message').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+// Table: roster (Contacts Board)
+export const roster = pgTable('roster', {
+  sourceRow: integer('source_row').primaryKey(),
+  phone: varchar('phone', { length: 50 }).unique(),
+  boardStage: varchar('board_stage', { length: 50 }),
+  threadJson: jsonb('thread_json'),
+  awaitingUs: boolean('awaiting_us').default(false),
+  lastReplyAt: timestamp('last_reply_at'),
+  lastReplyText: text('last_reply_text'),
+  lastFrom: varchar('last_from', { length: 10 }),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+// Table: outbound_asks
+export const outboundAsks = pgTable('outbound_asks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  senderIdentity: varchar('sender_identity', { length: 255 }).notNull(),
+  recipientIdentifier: varchar('recipient_identifier', { length: 255 }).notNull(),
+  channel: varchar('channel', { length: 50 }).notNull(),
+  body: text('body'),
+  sentAt: timestamp('sent_at').defaultNow().notNull(),
+  expectedReplyBy: timestamp('expected_reply_by').notNull(),
+  status: varchar('status', { length: 50 }).default('open').notNull(),
+  relatedThreadId: uuid('related_thread_id'),
+  remindedAt: timestamp('reminded_at'),
+  closedAt: timestamp('closed_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
 
 // --- Relationships ---
 
@@ -246,6 +328,8 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   briefings: many(briefings),
   contacts: many(contacts),
   auditLogs: many(auditLogs),
+  whatsappThreads: many(whatsappThreads),
+  outboundAsks: many(outboundAsks),
 }));
 
 export const orgMembersRelations = relations(orgMembers, ({ one }) => ({
@@ -405,6 +489,24 @@ export const campaignsRelations = relations(campaigns, ({ one }) => ({
   deal: one(deals, {
     fields: [campaigns.relatedDealId],
     references: [deals.id],
+  }),
+}));
+
+export const whatsappThreadsRelations = relations(whatsappThreads, ({ many }) => ({
+  messages: many(whatsappMessages),
+}));
+
+export const whatsappMessagesRelations = relations(whatsappMessages, ({ one }) => ({
+  thread: one(whatsappThreads, {
+    fields: [whatsappMessages.threadId],
+    references: [whatsappThreads.id],
+  }),
+}));
+
+export const outboundAsksRelations = relations(outboundAsks, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [outboundAsks.orgId],
+    references: [organizations.id],
   }),
 }));
 

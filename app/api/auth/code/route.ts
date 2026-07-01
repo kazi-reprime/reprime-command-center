@@ -49,7 +49,6 @@ export async function POST(request: NextRequest) {
 
     // Generate a magic-link token for the fixed authorized email. If the user
     // doesn't exist yet, create it first then retry.
-    let hashedToken: string | undefined
     let { data, error } = await admin.auth.admin.generateLink({
       type: 'magiclink',
       email: ALLOWED_EMAIL,
@@ -60,13 +59,15 @@ export async function POST(request: NextRequest) {
         email: ALLOWED_EMAIL,
         email_confirm: true,
       })
-      ;({ data, error } = await admin.auth.admin.generateLink({
+      const secondTry = await admin.auth.admin.generateLink({
         type: 'magiclink',
         email: ALLOWED_EMAIL,
-      }))
+      })
+      data = secondTry.data
+      error = secondTry.error
     }
 
-    hashedToken = data?.properties?.hashed_token
+    const hashedToken = data?.properties?.hashed_token
     if (error || !hashedToken) {
       throw new Error(error?.message || 'generateLink returned no token')
     }

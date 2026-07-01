@@ -13,9 +13,6 @@ export const contentType = 'image/png'
 
 const NAVY = '#0E3470'
 const GOLD = '#FFCC33'
-const GOLD_RGBA_85 = 'rgba(255, 204, 51, 0.85)'
-const GOLD_RGBA_70 = 'rgba(255, 204, 51, 0.70)'
-const GOLD_RGBA_45 = 'rgba(255, 204, 51, 0.45)'
 
 async function fetchFont(family: string, weight: number, italic = false): Promise<ArrayBuffer | null> {
   try {

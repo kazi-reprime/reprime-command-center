@@ -151,7 +151,7 @@ export function useColumnCount(): number {
 
 export default function InboxColumn() {
   const qc = useQueryClient()
-  const [account, _setAccount] = useState('g@reprime.com')
+  const [account] = useState('g@reprime.com')
   const [hiddenSenders, setHiddenSenders] = useState<Set<string>>(() => loadHiddenSenders())
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [composeFor, setComposeFor] = useState<TriageItem | null>(null)

@@ -1,10 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useStore, Thread, Message } from '@/lib/store/useStore';
+import { useState, useEffect, useCallback } from 'react';
+import { useStore, Thread } from '@/lib/store/useStore';
+import type { DashboardThread, DashboardMessage } from '@/lib/timelines/types';
 import { Send, Mic, Phone, FolderArchive, Trash2, Search, User, Sparkles, Loader2, Languages, FileText, StickyNote, Clock, Shield, AlertTriangle, RefreshCw } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
 import SpeakerButton from '@/components/chat/SpeakerButton';
+
+interface SpeechRecognitionEvent extends Event {
+  results: {
+    [index: number]: {
+      [index: number]: {
+        transcript: string;
+      };
+    };
+  };
+}
+
+interface SpeechRecognition extends EventTarget {
+  start(): void;
+  stop(): void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: (event: { error: string }) => void;
+  onend: () => void;
+}
 
 export default function CommsPanel() {
   const { 
@@ -18,16 +37,17 @@ export default function CommsPanel() {
     setUnreadCounts
   } = useStore();
 
-  const [activeLane, setActiveLane] = useState<'all' | 'whatsapp' | 'imessage' | 'sms' | 'investor'>('all');
+  const [activeLane, setActiveLane] = useState<'all' | 'whatsapp' | 'imessage' | 'sms' | 'investor' | 'family' | 'staff'>('all');
   const [replyText, setReplyText] = useState('');
   const [loadingThreads, setLoadingThreads] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isListening, setIsListening] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [adapterHealth, setAdapterHealth] = useState<Record<string, { isConfigured: boolean, error?: string }>>({});
 
   // 1. Fetch Threads from both 305 and 718 panels
-  const fetchThreads = async () => {
+  const fetchThreads = useCallback(async () => {
     setLoadingThreads(true);
     setFetchError(null);
     try {
@@ -48,8 +68,8 @@ export default function CommsPanel() {
         }),
       ]);
 
-      let allRawThreads: any[] = [];
-      let errors: string[] = [];
+      let allRawThreads: DashboardThread[] = [];
+      const errors: string[] = [];
       if (res305.status === 'fulfilled' && res305.value?.threads) {
         allRawThreads = [...allRawThreads, ...res305.value.threads];
       } else if (res305.status === 'rejected') {
@@ -71,7 +91,7 @@ export default function CommsPanel() {
         contactPhone: t.phone,
         contactName: t.contact_name || t.phone,
         channel: t.channel_type as 'whatsapp' | 'imessage' | 'sms',
-        laneOverride: t.is_investor ? 'investor' : 'general',
+        laneOverride: t.is_investor ? 'investor' : t.is_family ? 'family' : t.is_staff ? 'staff' : 'general',
         isBlocked: t.is_blocked || false,
         lastMessageAt: t.last_message_at 
           ? new Date(t.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
@@ -97,14 +117,21 @@ export default function CommsPanel() {
     } finally {
       setLoadingThreads(false);
     }
-  };
+  }, [setUnreadCounts, setThreads]);
 
   useEffect(() => {
     fetchThreads();
+    
+    // Fetch adapter health
+    fetch('/api/center/health')
+      .then(r => r.json())
+      .then(data => setAdapterHealth(data))
+      .catch(err => console.error('Failed to fetch adapter health:', err));
+
     // Poll for updates every 60 seconds
     const interval = setInterval(fetchThreads, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [fetchThreads]);
 
   // 2. Fetch Messages for Selected Thread
   useEffect(() => {
@@ -117,7 +144,7 @@ export default function CommsPanel() {
         if (res.ok) {
           const data = await res.json();
           const rawMsgs = data.messages || [];
-          const formatted = rawMsgs.map((m: any) => ({
+          const formatted = rawMsgs.map((m: DashboardMessage) => ({
             id: m.id,
             body: m.body || '',
             direction: m.direction === 'out' ? 'outbound' : 'inbound',
@@ -144,7 +171,7 @@ export default function CommsPanel() {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'whatsapp_messages', filter: `thread_id=eq.${selectedThreadId}` },
         (payload) => {
-          const newMsg = payload.new as any;
+          const newMsg = payload.new as DashboardMessage;
           addMessage({
             id: newMsg.id,
             body: newMsg.body || '',
@@ -168,6 +195,8 @@ export default function CommsPanel() {
     const matchesLane = 
       activeLane === 'all' ? true : 
       activeLane === 'investor' ? t.laneOverride === 'investor' : 
+      activeLane === 'family' ? t.laneOverride === 'family' :
+      activeLane === 'staff' ? t.laneOverride === 'staff' :
       t.channel === activeLane;
       
     const matchesSearch = 
@@ -302,8 +331,8 @@ export default function CommsPanel() {
             />
           </div>
 
-          <div className="flex space-x-1 bg-[#09224d] p-0.5 rounded-lg border border-white/5 text-xs font-semibold overflow-x-auto hide-scrollbar">
-            {(['all', 'whatsapp', 'imessage', 'sms', 'investor'] as const).map((lane) => (
+          <div className="flex space-x-1 bg-[#09224d] p-0.5 rounded-lg border border-white/5 text-[10px] font-semibold overflow-x-auto hide-scrollbar">
+            {(['all', 'whatsapp', 'imessage', 'sms', 'investor', 'family', 'staff'] as const).map((lane) => (
               <button
                 key={lane}
                 onClick={() => setActiveLane(lane)}
@@ -321,7 +350,7 @@ export default function CommsPanel() {
 
         {/* Thread List */}
         <div className="flex-1 overflow-y-auto divide-y divide-[#FFCC33]/10">
-          {(activeLane === 'sms' || activeLane === 'imessage') ? (
+          {(activeLane !== 'all' && activeLane !== 'investor' && adapterHealth[activeLane] && !adapterHealth[activeLane].isConfigured) ? (
             <div className="p-8 flex flex-col items-center justify-center text-center space-y-4 h-full">
               <div className="p-4 bg-white/5 rounded-full border border-white/10">
                  <Shield className="h-6 w-6 text-gray-400" />
@@ -329,10 +358,18 @@ export default function CommsPanel() {
               <div>
                 <h3 className="text-sm font-bold text-gray-300">Integration Offline</h3>
                 <p className="text-xs text-gray-500 mt-1">
-                  The {activeLane === 'sms' ? 'SMS / Twilio' : 'iMessage (BlueBubbles)'} adapter is currently disconnected or pending configuration.
+                  The {activeLane.toUpperCase()} adapter is currently disconnected or pending configuration.
                 </p>
+                {adapterHealth[activeLane].error && (
+                  <p className="text-[10px] text-red-400/60 mt-2 font-mono">
+                    {adapterHealth[activeLane].error}
+                  </p>
+                )}
               </div>
-              <button className="px-4 py-1.5 bg-[#FFCC33]/10 text-[#FFCC33] text-[10px] font-bold uppercase rounded border border-[#FFCC33]/20 hover:bg-[#FFCC33]/20 transition">
+              <button 
+                onClick={() => window.open('/settings/integrations', '_blank')}
+                className="px-4 py-1.5 bg-[#FFCC33]/10 text-[#FFCC33] text-[10px] font-bold uppercase rounded border border-[#FFCC33]/20 hover:bg-[#FFCC33]/20 transition"
+              >
                 Configure Adapter
               </button>
             </div>
@@ -514,11 +551,11 @@ export default function CommsPanel() {
                   onClick={() => {
                     if (isListening) return;
                     setIsListening(true);
-                    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+                    const SpeechRecognition = (window as unknown as { SpeechRecognition: new () => SpeechRecognition }).SpeechRecognition || (window as unknown as { webkitSpeechRecognition: new () => SpeechRecognition }).webkitSpeechRecognition;
                     if (SpeechRecognition) {
-                      const recognition = new SpeechRecognition();
-                      recognition.onresult = (event: any) => {
-                        setReplyText((prev) => prev + (prev ? ' ' : '') + event.results[0][0].transcript);
+                      const recognition: SpeechRecognition = new SpeechRecognition();
+                      recognition.onresult = (event: SpeechRecognitionEvent) => {
+                        setReplyText((prev: string) => prev + (prev ? ' ' : '') + event.results[0][0].transcript);
                         setIsListening(false);
                       };
                       recognition.onerror = () => setIsListening(false);

@@ -677,7 +677,7 @@ export default function BookingsPanel({ onClose, autofillPhone, autofillName }: 
                 )}
               </div>
               <div style={{ color: MUTED, fontSize: '0.72rem', lineHeight: 1.4 }}>
-                Tip: if you'd rather use email for cold contacts going forward, untoggle WhatsApp 305/718 and select Email — SendGrid sends to any address without needing a prior chat.
+                Tip: if you&apos;d rather use email for cold contacts going forward, untoggle WhatsApp 305/718 and select Email — SendGrid sends to any address without needing a prior chat.
               </div>
             </div>
           )}

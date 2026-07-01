@@ -297,7 +297,7 @@ export default function PipelineColumn() {
   const events = calendar.data?.events ?? []
   const deals = briefing.data?.active_deals ?? []
   const expiring = briefing.data?.expiring_invitations.items ?? []
-  const tenantFilings = briefing.data?.tenant_filings_today ?? []
+  const tenantFilings = useMemo(() => briefing.data?.tenant_filings_today ?? [], [briefing.data?.tenant_filings_today])
   const tenantCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     for (const t of TENANT_WATCHLIST) counts[t] = 0

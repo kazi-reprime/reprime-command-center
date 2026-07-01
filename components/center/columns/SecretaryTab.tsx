@@ -385,13 +385,13 @@ export default function SecretaryTab() {
 
   const [showRepliedAll, setShowRepliedAll] = useState(false)
 
-  const repliedToShow = useMemo(() => {
-    const all = asks.data?.replied_recent ?? []
-    return showRepliedAll ? all : all.slice(0, 5)
-  }, [asks.data, showRepliedAll])
+  const overdue = useMemo(() => asks.data?.overdue ?? [], [asks.data?.overdue])
+  const awaiting = useMemo(() => asks.data?.awaiting ?? [], [asks.data?.awaiting])
+  const repliedRecent = useMemo(() => asks.data?.replied_recent ?? [], [asks.data?.replied_recent])
 
-  const overdue = asks.data?.overdue ?? []
-  const awaiting = asks.data?.awaiting ?? []
+  const repliedToShow = useMemo(() => {
+    return showRepliedAll ? repliedRecent : repliedRecent.slice(0, 5)
+  }, [repliedRecent, showRepliedAll])
 
   // Collect identifiers across all sections so each unique recipient is
   // resolved once. Pipedrive lookup runs in parallel and never blocks the
@@ -401,9 +401,9 @@ export default function SecretaryTab() {
     const ids: string[] = []
     for (const a of overdue) ids.push(a.recipient_identifier)
     for (const a of awaiting) ids.push(a.recipient_identifier)
-    for (const a of asks.data?.replied_recent ?? []) ids.push(a.recipient_identifier)
+    for (const a of repliedRecent) ids.push(a.recipient_identifier)
     return ids
-  }, [overdue, awaiting, asks.data?.replied_recent])
+  }, [overdue, awaiting, repliedRecent])
 
   const nameMap = useResolvedNames(allIdentifiers)
 
@@ -467,9 +467,9 @@ export default function SecretaryTab() {
       >
         <div style={sectionLabel}>
           <span>Replied This Week</span>
-          <span style={sectionCount}>{asks.data?.replied_recent.length ?? 0}</span>
+          <span style={sectionCount}>{repliedRecent.length}</span>
         </div>
-        {!asks.isLoading && (asks.data?.replied_recent.length ?? 0) === 0 && (
+        {!asks.isLoading && repliedRecent.length === 0 && (
           <EmptyHint text="No replies yet this week." />
         )}
         {repliedToShow.map((ask) => (
@@ -479,7 +479,7 @@ export default function SecretaryTab() {
             resolvedName={nameMap.get(ask.recipient_identifier) ?? null}
           />
         ))}
-        {(asks.data?.replied_recent.length ?? 0) > 5 && (
+        {repliedRecent.length > 5 && (
           <button
             type="button"
             onClick={() => setShowRepliedAll((v) => !v)}
@@ -495,7 +495,7 @@ export default function SecretaryTab() {
           >
             {showRepliedAll
               ? 'Show fewer'
-              : `Show all ${asks.data?.replied_recent.length ?? 0}`}
+              : `Show all ${repliedRecent.length}`}
           </button>
         )}
       </section>

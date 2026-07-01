@@ -4,6 +4,20 @@ import { useState, useEffect } from 'react';
 import { X, Users, RefreshCw, Phone, Shield, Star, Loader2 } from 'lucide-react';
 import { useStore } from '@/lib/store/useStore';
 
+interface CrewMember {
+  display_name: string;
+  email: string;
+  role: string;
+}
+
+interface Investor {
+  id: string;
+  name?: string;
+  contactName?: string;
+  phone?: string;
+  contactPhone?: string;
+}
+
 interface ContactsModalProps {
   open: boolean;
   onClose: () => void;
@@ -11,8 +25,8 @@ interface ContactsModalProps {
 
 export default function ContactsModal({ open, onClose }: ContactsModalProps) {
   const { threads, setSelectedThreadId } = useStore();
-  const [crew, setCrew] = useState<any[]>([]);
-  const [investors, setInvestors] = useState<any[]>([]);
+  const [crew, setCrew] = useState<CrewMember[]>([]);
+  const [investors, setInvestors] = useState<Investor[]>([]);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [activeTab, setActiveTab] = useState<'investors' | 'staff' | 'all'>('investors');
@@ -139,7 +153,7 @@ export default function ContactsModal({ open, onClose }: ContactsModalProps) {
           ) : activeTab === 'investors' ? (
             <div className="space-y-1">
               {investors.length === 0 ? <p className="text-gray-400 text-center p-4 text-xs">No investors found.</p> : null}
-              {investors.map((inv: any) => (
+              {investors.map((inv: Investor) => (
                 <div key={inv.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition border border-transparent hover:border-white/10">
                   <div className="flex items-center space-x-3">
                     <div className="h-8 w-8 rounded-full bg-[#FFCC33]/20 flex items-center justify-center text-[#FFCC33]">

@@ -294,7 +294,7 @@ export default function InvestorCadenceWindow() {
     staleTime: REFETCH_MS,
   })
 
-  const items = cadence.data?.items ?? []
+  const items = useMemo(() => cadence.data?.items ?? [], [cadence.data?.items])
 
   const counts = useMemo(() => {
     const c: Record<CadenceStatus, number> = {

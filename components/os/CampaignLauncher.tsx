@@ -80,7 +80,7 @@ export default function CampaignLauncher() {
               <label className="text-[10px] uppercase font-mono text-emerald-500 block mb-2">Preview (Sarah Chen)</label>
               <p className="text-sm text-zinc-300 whitespace-pre-wrap">
                 Hi Sarah, we just secured a major national anchor for Bay Valley which significantly derisks the retail footprint. 
-                Given your capacity preference for FL retail, I wanted to check if you'd like to review the updated proforma?
+                Given your capacity preference for FL retail, I wanted to check if you&apos;d like to review the updated proforma?
               </p>
             </div>
             <div className="flex gap-2 mt-2">

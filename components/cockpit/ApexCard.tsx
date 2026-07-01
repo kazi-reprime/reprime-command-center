@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Target, ArrowRight, Loader2, Zap } from 'lucide-react';
+import { ArrowRight, Loader2, Zap } from 'lucide-react';
 
 interface SuggestedFocus {
   gap_start: string;

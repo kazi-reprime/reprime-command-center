@@ -13,12 +13,32 @@ export interface Thread {
   contactPhone: string;
   contactName?: string;
   channel: 'whatsapp' | 'imessage' | 'sms';
-  laneOverride: 'general' | 'investor' | 'staff';
+  laneOverride: 'general' | 'investor' | 'staff' | 'family';
   isBlocked: boolean;
   lastMessageAt: string;
   unreadCount?: number;
   lastMessageBody?: string;
   panel?: string;
+}
+
+export interface Email {
+  id: string;
+  from: string;
+  subject: string;
+  snippet: string;
+  date: string;
+  score: number;
+}
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  startTime: string;
+  endTime: string;
+  zoomLink: string | null;
+  hangoutLink: string | null;
+  location: string | null;
+  attendees: string[];
 }
 
 interface CockpitState {
@@ -29,8 +49,8 @@ interface CockpitState {
   unreadCounts: Record<string, number>;
   activeCrewId: string | null;
 
-  emails: any[];
-  events: any[];
+  emails: Email[];
+  events: CalendarEvent[];
   hebcalAlert: string | null;
   language: 'EN' | 'HE';
 
@@ -41,8 +61,8 @@ interface CockpitState {
   addMessage: (message: Message) => void;
   setUnreadCounts: (counts: Record<string, number>) => void;
   setActiveCrewId: (id: string | null) => void;
-  setEmails: (emails: any[]) => void;
-  setEvents: (events: any[]) => void;
+  setEmails: (emails: Email[]) => void;
+  setEvents: (events: CalendarEvent[]) => void;
   setHebcalAlert: (alert: string | null) => void;
   setLanguage: (lang: 'EN' | 'HE') => void;
 }

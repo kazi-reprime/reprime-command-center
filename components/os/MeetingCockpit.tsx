@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 type Attendee = {
   name: string;
@@ -18,6 +19,7 @@ export default function MeetingCockpit() {
   const [notes, setNotes] = useState('');
   const [briefingText, setBriefingText] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
+  const { addToast } = useToast();
 
   const handleRegenerateBriefing = async () => {
     setGenerating(true);
@@ -40,7 +42,7 @@ export default function MeetingCockpit() {
 
   const handleSummary = async () => {
     if (!notes.trim()) {
-      alert('Please type some notes first.');
+      addToast('Please type some notes first.', 'warning');
       return;
     }
     setGenerating(true);
@@ -52,7 +54,8 @@ export default function MeetingCockpit() {
       });
       if (res.ok) {
         const data = await res.json();
-        alert('Summary generated:\n\n' + data.reply);
+        setBriefingText(data.reply);
+        addToast('Summary generated! See below.', 'success');
       }
     } catch (e) {
       console.error(e);

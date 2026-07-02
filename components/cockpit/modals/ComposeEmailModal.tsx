@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { X, Send, Loader2, Sparkles } from 'lucide-react';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 interface ComposeEmailModalProps {
   open: boolean;
@@ -17,6 +18,7 @@ export default function ComposeEmailModal({ open, onClose, replyToId, replyToSub
   const [body, setBody] = useState('');
   const [loading, setLoading] = useState(false);
   const [noraLoading, setNoraLoading] = useState(false);
+  const { addToast } = useToast();
 
   if (!open) return null;
 
@@ -35,14 +37,14 @@ export default function ComposeEmailModal({ open, onClose, replyToId, replyToSub
         })
       });
       if (res.ok) {
-        alert('Email sent successfully.');
+        addToast('Email sent successfully.', 'success');
         onClose();
       } else {
-        alert('Failed to send email.');
+        addToast('Failed to send email.', 'error');
       }
     } catch (e) {
       console.error(e);
-      alert('Network error.');
+      addToast('Network error.', 'error');
     } finally {
       setLoading(false);
     }

@@ -5,6 +5,7 @@ import { Sparkles, CheckSquare, Send, CalendarClock, Loader2, Check, Mic, Sticky
 import { useStore } from '@/lib/store/useStore';
 import NotesPanel from './NotesPanel';
 import SpeakerButton from '@/components/chat/SpeakerButton';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 interface Task {
   id: string;
@@ -39,6 +40,7 @@ interface NoraMessage {
 
 export default function RightFlank() {
   const [prompt, setPrompt] = useState('');
+  const { addToast } = useToast();
   const [messages, setMessages] = useState<NoraMessage[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loadingNora, setLoadingNora] = useState(false);
@@ -236,7 +238,7 @@ export default function RightFlank() {
                 recognition.onend = () => setIsListening(false);
                 recognition.start();
               } else {
-                alert('Speech recognition not supported in this browser.');
+                addToast('Speech recognition not supported in this browser.', 'warning');
                 setIsListening(false);
               }
             }}

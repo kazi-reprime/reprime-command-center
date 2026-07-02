@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { formatPhoneDisplay } from '@/lib/timelines/parse'
 import type { DashboardThread, Panel } from '@/lib/timelines/types'
+import { useToast } from '@/lib/contexts/ToastContext'
 
 async function blockThread(thread: DashboardThread): Promise<void> {
   const res = await fetch('/api/contacts/block', {
@@ -81,6 +82,7 @@ function truncate(s: string | null, n: number): string {
 export default function ChatList({ panel, selectedThreadId, onSelect, hideInvestors = false }: Props) {
   const theme = PANEL_THEME[panel]
   const queryClient = useQueryClient()
+  const { addToast } = useToast()
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState<SortMode>('recent')
   const [filter, setFilter] = useState<FilterMode>('all')
@@ -479,7 +481,7 @@ export default function ChatList({ panel, selectedThreadId, onSelect, hideInvest
                     queryClient.invalidateQueries({ queryKey: ['investor-chat-threads'] })
                     setConfirmBlock(null)
                   } catch (err) {
-                    alert(`Block failed: ${(err as Error).message}`)
+                    addToast(`Block failed: ${(err as Error).message}`, 'error')
                   } finally {
                     setBlockingId(null)
                   }

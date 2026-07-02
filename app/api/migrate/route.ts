@@ -165,8 +165,12 @@ CREATE TABLE IF NOT EXISTS outbound_asks (
 );
   `;
 
+  const url = new URL(process.env.DATABASE_URL || '');
+  url.searchParams.delete('sslmode');
+  const connectionString = url.toString();
+
   const client = new Client({
-    connectionString: process.env.DATABASE_URL,
+    connectionString,
     ssl: { rejectUnauthorized: false }
   });
 
@@ -180,4 +184,8 @@ CREATE TABLE IF NOT EXISTS outbound_asks (
   } finally {
     await client.end();
   }
+}
+
+export async function POST() {
+  return GET();
 }

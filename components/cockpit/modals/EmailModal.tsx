@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, ExternalLink, Loader2, Mail, Reply, CheckCircle2 } from 'lucide-react';
 import ComposeEmailModal from './ComposeEmailModal';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 interface EmailModalProps {
   emailId: string;
@@ -23,6 +24,7 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
   const [error, setError] = useState<string | null>(null);
   const [showCompose, setShowCompose] = useState(false);
   const [loadingAction, setLoadingAction] = useState(false);
+  const { addToast } = useToast();
 
   useEffect(() => {
     const fetchEmail = async () => {
@@ -52,7 +54,7 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
           projectTag: 'Email Follow-up',
         })
       });
-      if (res.ok) alert('Follow-up task created in your bucket!');
+      if (res.ok) addToast('Follow-up task created in your bucket!', 'success');
     } catch (e) {
       console.error(e);
     } finally {

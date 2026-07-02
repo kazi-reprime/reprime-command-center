@@ -6,6 +6,7 @@ import type { DashboardThread, DashboardMessage } from '@/lib/timelines/types';
 import { Send, Mic, Phone, FolderArchive, Trash2, Search, User, Sparkles, Loader2, Languages, FileText, StickyNote, Clock, Shield, AlertTriangle, RefreshCw } from 'lucide-react';
 import { supabaseClient } from '@/lib/supabaseClient';
 import SpeakerButton from '@/components/chat/SpeakerButton';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 interface SpeechRecognitionEvent extends Event {
   results: {
@@ -36,6 +37,7 @@ export default function CommsPanel() {
     addMessage,
     setUnreadCounts
   } = useStore();
+  const { addToast } = useToast();
 
   const [activeLane, setActiveLane] = useState<'all' | 'whatsapp' | 'imessage' | 'sms' | 'investor' | 'family' | 'staff'>('all');
   const [replyText, setReplyText] = useState('');
@@ -257,9 +259,9 @@ export default function CommsPanel() {
         const errData = await res.json();
         console.error('Failed to send message:', errData);
         if (errData.error === 'adapter_offline') {
-          alert(`Integration Offline: ${errData.message}`);
+          addToast(`Integration Offline: ${errData.message}`, 'warning');
         } else {
-          alert(`Failed to send message: ${errData.error || errData.message || 'Unknown error'}`);
+          addToast(`Failed to send message: ${errData.error || errData.message || 'Unknown error'}`, 'error');
         }
       }
     } catch (e) {
@@ -307,7 +309,7 @@ export default function CommsPanel() {
         }),
       });
       if (res.ok) {
-        alert('Nora is processing: ' + promptText);
+        addToast('Nora is processing: ' + promptText, 'info');
       }
     } catch (e) {
       console.error('Failed to trigger Nora action', e);
@@ -388,13 +390,23 @@ export default function CommsPanel() {
                 <h3 className="text-sm font-bold text-gray-300">Failed to load conversations</h3>
                 <p className="text-xs text-gray-500 mt-1">{fetchError}</p>
               </div>
-              <button
-                onClick={() => fetchThreads()}
-                className="flex items-center space-x-2 px-4 py-1.5 bg-[#FFCC33]/10 text-[#FFCC33] text-[10px] font-bold uppercase rounded border border-[#FFCC33]/20 hover:bg-[#FFCC33]/20 transition"
-              >
-                <RefreshCw className="h-3 w-3" />
-                <span>Retry</span>
-              </button>
+              {fetchError.toLowerCase().includes('unauthorized') ? (
+                <button
+                  onClick={() => window.location.href = '/login'}
+                  className="flex items-center space-x-2 px-4 py-1.5 bg-[#FFCC33] text-[#0E3470] text-[10px] font-bold uppercase rounded border border-[#FFCC33]/20 hover:bg-[#ffe066] transition"
+                >
+                  <Shield className="h-3 w-3" />
+                  <span>Login to Command Center</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => fetchThreads()}
+                  className="flex items-center space-x-2 px-4 py-1.5 bg-[#FFCC33]/10 text-[#FFCC33] text-[10px] font-bold uppercase rounded border border-[#FFCC33]/20 hover:bg-[#FFCC33]/20 transition"
+                >
+                  <RefreshCw className="h-3 w-3" />
+                  <span>Retry</span>
+                </button>
+              )}
             </div>
           ) : filteredThreads.length === 0 ? (
             <div className="p-4 text-center text-xs text-gray-400">
@@ -562,7 +574,7 @@ export default function CommsPanel() {
                       recognition.onend = () => setIsListening(false);
                       recognition.start();
                     } else {
-                      alert('Speech recognition not supported in this browser.');
+                      addToast('Speech recognition not supported in this browser.', 'warning');
                       setIsListening(false);
                     }
                   }}

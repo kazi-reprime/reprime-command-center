@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { DashboardThread, Panel } from '@/lib/timelines/types'
+import { useToast } from '@/lib/contexts/ToastContext'
 import { PIPEDRIVE_FIELD_KEYS } from '@/lib/pipedrive/client'
 import type {
   PipedriveActivity,
@@ -120,6 +121,7 @@ export default function PipedriveCard({
 }) {
   const theme = themes[panel]
   const queryClient = useQueryClient()
+  const { addToast } = useToast()
   const queryKey = ['pipedrive', 'resolve', thread.phone, panel] as const
 
   const { data, isLoading, isError, error } = useQuery({
@@ -244,7 +246,7 @@ export default function PipedriveCard({
         </p>
         <button
           type="button"
-          onClick={() => window.alert('Create-from-conversation: stub for V2.')}
+          onClick={() => addToast('Create-from-conversation: coming in V2.', 'info')}
           style={{
             background: theme.buttonBg,
             color: theme.buttonText,

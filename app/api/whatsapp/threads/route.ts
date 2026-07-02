@@ -88,10 +88,13 @@ export async function GET(request: NextRequest) {
         console.log('[threads] sample chat keys', Object.keys(allChats[0] as unknown as Record<string, unknown>))
       }
     } catch (timelinesErr: unknown) {
-      const msg = (timelinesErr as Error).message ?? ''
-      // Any error (403 quota, 429 rate limit, 404 not found, 401 unauth, timeouts)
-      // falls back to DB cache so the UI keeps working.
-      console.warn('[/api/whatsapp/threads] Timelines unavailable — falling back to DB cache', { panel, msg: msg.slice(0, 200) })
+      const msg = (timelinesErr as any).message ?? ''
+      const detail = (timelinesErr as any).response?.data ?? (timelinesErr as any).data ?? ''
+      console.warn('[/api/whatsapp/threads] Timelines unavailable — falling back to DB cache', { 
+        panel, 
+        msg: msg.slice(0, 200),
+        detail: typeof detail === 'string' ? detail.slice(0, 500) : JSON.stringify(detail).slice(0, 500)
+      })
       timelinesSkipped = true
     }
     const chatsForThisPanel = allChats.filter(

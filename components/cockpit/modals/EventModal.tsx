@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { X, Calendar, Users, Link as LinkIcon, FileText, CheckCircle2, Clock, StickyNote, Loader2 } from 'lucide-react';
 import { useStore } from '@/lib/store/useStore';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 interface EventModalProps {
   eventId: string;
@@ -13,6 +14,7 @@ export default function EventModal({ eventId, onClose }: EventModalProps) {
   const { events } = useStore();
   const event = events.find(e => e.id === eventId);
   const [loadingAction, setLoadingAction] = useState<string | null>(null);
+  const { addToast } = useToast();
 
   if (!event) return null;
 
@@ -33,7 +35,7 @@ export default function EventModal({ eventId, onClose }: EventModalProps) {
           linked_event_id: event.id
         })
       });
-      if (res.ok) alert('Note created! You can find it in the Notes panel.');
+      if (res.ok) addToast('Note created! You can find it in the Notes panel.', 'success');
     } catch (e) {
       console.error(e);
     } finally {
@@ -53,7 +55,7 @@ export default function EventModal({ eventId, onClose }: EventModalProps) {
           projectTag: 'Meeting Follow-up',
         })
       });
-      if (res.ok) alert('Follow-up task created in your bucket!');
+      if (res.ok) addToast('Follow-up task created in your bucket!', 'success');
     } catch (e) {
       console.error(e);
     } finally {

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Users, RefreshCw, Phone, Shield, Star, Loader2 } from 'lucide-react';
 import { useStore } from '@/lib/store/useStore';
+import { useToast } from '@/lib/contexts/ToastContext';
 
 interface CrewMember {
   display_name: string;
@@ -25,6 +26,7 @@ interface ContactsModalProps {
 
 export default function ContactsModal({ open, onClose }: ContactsModalProps) {
   const { threads, setSelectedThreadId } = useStore();
+  const { addToast } = useToast();
   const [crew, setCrew] = useState<CrewMember[]>([]);
   const [investors, setInvestors] = useState<Investor[]>([]);
   const [loading, setLoading] = useState(false);
@@ -75,18 +77,18 @@ export default function ContactsModal({ open, onClose }: ContactsModalProps) {
         body: JSON.stringify({ source: 'contact_directory' })
       });
       if (res.ok) {
-        alert('Pipedrive sync complete.');
+        addToast('Pipedrive sync complete.', 'success');
       } else {
         const err = await res.json();
         if (err.error === 'adapter_offline') {
-          alert('Integration Offline: ' + err.message);
+          addToast('Integration Offline: ' + err.message, 'warning');
         } else {
-          alert('Pipedrive sync failed: ' + (err.error || err.message || 'Unknown error'));
+          addToast('Pipedrive sync failed: ' + (err.error || err.message || 'Unknown error'), 'error');
         }
       }
     } catch (e) {
       console.error('Pipedrive sync error', e);
-      alert('Error connecting to sync endpoint.');
+      addToast('Error connecting to sync endpoint.', 'error');
     } finally {
       setSyncing(false);
     }

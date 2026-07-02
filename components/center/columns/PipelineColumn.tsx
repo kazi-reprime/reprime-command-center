@@ -252,7 +252,7 @@ export function useColumnCount(): number {
     refetchInterval: REFETCH_MS,
     staleTime: REFETCH_MS,
   })
-  return calendar.data?.events.length ?? 0
+  return calendar.data?.events?.length ?? 0
 }
 
 // ── Component ────────────────────────────────────────────────────────────────

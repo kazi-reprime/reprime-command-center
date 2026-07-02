@@ -80,7 +80,7 @@ export default function TopStrip() {
     retry: 1,
   })
 
-  const coldCount = cadence.data?.items.filter(i => i.status === 'cold').length ?? 0
+  const coldCount = (cadence.data?.items ?? []).filter(i => i.status === 'cold').length
   const meetingCount = briefing.data?.meetings?.count ?? 0
   const unreadMsg = briefing.data?.threads?.total_unread ?? 0
 

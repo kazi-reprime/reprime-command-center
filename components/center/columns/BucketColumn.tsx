@@ -485,7 +485,7 @@ export function useColumnCount(): number {
     refetchInterval: REFETCH_MS,
     staleTime: REFETCH_MS,
   })
-  return list.data?.items.length ?? 0
+  return list.data?.items?.length ?? 0
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -665,7 +665,7 @@ export default function BucketColumn() {
       .filter((g) => g.items.length > 0)
   }, [list.data])
 
-  const total = list.data?.items.length ?? 0
+  const total = list.data?.items?.length ?? 0
 
   return (
     <div

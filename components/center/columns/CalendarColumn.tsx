@@ -156,9 +156,9 @@ export default function CalendarColumn() {
               <div style={{ color: '#F5EFD8', fontSize: 12, fontWeight: 500, marginBottom: 2, lineHeight: 1.3 }}>
                 {m.title}
               </div>
-              {m.attendees.length > 0 && (
+              {(m.attendees?.length ?? 0) > 0 && (
                 <div style={{ color: 'rgba(255,204,51,0.35)', fontSize: 10, marginBottom: 4 }}>
-                  {m.attendees.slice(0, 3).join(', ')}{m.attendees.length > 3 ? ` +${m.attendees.length - 3}` : ''}
+                  {(m.attendees ?? []).slice(0, 3).join(', ')}{(m.attendees?.length ?? 0) > 3 ? ` +${(m.attendees?.length ?? 0) - 3}` : ''}
                 </div>
               )}
               {m.zoomLink && (

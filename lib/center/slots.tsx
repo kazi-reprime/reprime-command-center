@@ -71,18 +71,65 @@ export const COLUMN_SLOTS: ColumnSlot[] = [
 ]
 
 /**
+ * Per-column error boundary so one column crash doesn't nuke the page.
+ */
+import React from 'react'
+
+class ColumnErrorBoundary extends React.Component<
+  { label: string; children: React.ReactNode },
+  { error: Error | null }
+> {
+  constructor(props: { label: string; children: React.ReactNode }) {
+    super(props)
+    this.state = { error: null }
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { error }
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <Column label={this.props.label}>
+          <div style={{ padding: 16, color: '#EF4444', fontSize: 11 }}>
+            ⚠ {this.props.label} crashed: {this.state.error.message}
+            <br />
+            <button
+              type="button"
+              onClick={() => this.setState({ error: null })}
+              style={{ marginTop: 8, fontSize: 10, background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 4, padding: '4px 8px', color: '#EF4444', cursor: 'pointer' }}
+            >
+              Retry
+            </button>
+          </div>
+        </Column>
+      )
+    }
+    return this.props.children
+  }
+}
+
+/**
  * ColumnSlot renderer — calls each slot's count hook (so the badge updates
  * live) and wraps the column component in <Column>. Lives here so
  * page.tsx stays dumb layout chrome and slots.tsx remains the single
  * mount-point file for the kiosk.
  */
 export function ColumnSlotRenderer({ slot }: { slot: ColumnSlot }) {
-  const count = slot.useCount ? slot.useCount() : undefined
+  // Wrap useCount in try/catch — if the hook throws during render,
+  // the error boundary will catch it.
+  let count: number | undefined
+  try {
+    count = slot.useCount ? slot.useCount() : undefined
+  } catch {
+    count = undefined
+  }
   const Component = slot.component
   return (
-    <Column label={slot.label} fullBleed={slot.fullBleed} count={count}>
-      {Component ? <Component /> : null}
-    </Column>
+    <ColumnErrorBoundary label={slot.label}>
+      <Column label={slot.label} fullBleed={slot.fullBleed} count={count}>
+        {Component ? <Component /> : null}
+      </Column>
+    </ColumnErrorBoundary>
   )
 }
 

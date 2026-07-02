@@ -3,18 +3,30 @@ import Column, { type ColumnProps } from '@/components/center/Column'
 import type { ComponentRegistry } from '@/components/center/windows/WindowManager'
 import type { InvestorProfileData } from '@/components/panels/InvestorProfile'
 
-import CrewColumn, {
-  useColumnCount as useCrewCount,
-} from '@/components/center/columns/CrewColumn'
-import InboxColumn, {
-  useColumnCount as useInboxCount,
-} from '@/components/center/columns/InboxColumn'
+import CalendarColumn, {
+  useColumnCount as useCalendarCount,
+} from '@/components/center/columns/CalendarColumn'
 import PipelineColumn, {
   useColumnCount as usePipelineCount,
 } from '@/components/center/columns/PipelineColumn'
+import InboxColumn, {
+  useColumnCount as useInboxCount,
+} from '@/components/center/columns/InboxColumn'
+import NotesColumn, {
+  useColumnCount as useNotesCount,
+} from '@/components/center/columns/NotesColumn'
+import CommsColumn, {
+  useColumnCount as useCommsCount,
+} from '@/components/center/columns/CommsColumn'
 import BucketColumn, {
   useColumnCount as useBucketCount,
 } from '@/components/center/columns/BucketColumn'
+import CrewColumn, {
+  useColumnCount as useCrewCount,
+} from '@/components/center/columns/CrewColumn'
+import NoraDeskColumn, {
+  useColumnCount as useNoraCount,
+} from '@/components/center/columns/NoraDeskColumn'
 
 import BucketItemDetail from '@/components/center/BucketItemDetail'
 import InvestorCadenceWindow from '@/components/center/InvestorCadenceWindow'
@@ -29,9 +41,11 @@ import SettingsApplier from '@/components/center/SettingsApplier'
 /**
  * Mount points for the /center kiosk.
  *
+ * Layout matches the screenshot: Calendar → Pipeline/Brief → Email Triage →
+ * Notes → Comms (305/718/Staff/Investors) → Bucket/Tasks → Crew → Nora's Desk
+ *
  * app/center/page.tsx is intentionally dumb layout chrome. Add a new
- * column, window, or overlay HERE — never in page.tsx. Wave 2-5 tracks
- * collided on page.tsx every time; this file is the merge surface.
+ * column, window, or overlay HERE — never in page.tsx.
  */
 
 export type ColumnSlot = {
@@ -46,10 +60,14 @@ export type ColumnSlot = {
 }
 
 export const COLUMN_SLOTS: ColumnSlot[] = [
+  { label: 'Calendar', component: CalendarColumn, fullBleed: true, useCount: useCalendarCount },
   { label: 'Pipeline', component: PipelineColumn, fullBleed: true, useCount: usePipelineCount },
   { label: 'Inbox', component: InboxColumn, fullBleed: true, useCount: useInboxCount },
+  { label: 'Notes', component: NotesColumn, fullBleed: true, useCount: useNotesCount },
+  { label: 'Comms', component: CommsColumn, fullBleed: true, useCount: useCommsCount },
   { label: 'Bucket', component: BucketColumn, fullBleed: true, useCount: useBucketCount },
   { label: 'Crew', component: CrewColumn, useCount: useCrewCount },
+  { label: "Nora's Desk", component: NoraDeskColumn, fullBleed: true, useCount: useNoraCount },
 ]
 
 /**

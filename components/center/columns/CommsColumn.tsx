@@ -71,8 +71,8 @@ export default function CommsColumn() {
 
   const count305 = q305.data?.threads?.length ?? 0
   const count718 = q718.data?.threads?.length ?? 0
-  const staffCount = (q305.data?.threads ?? []).filter((t: DashboardThread) => t.is_staff).length +
-                     (q718.data?.threads ?? []).filter((t: DashboardThread) => t.is_staff).length
+  const staffCount = (q305.data?.threads ?? []).filter((t: DashboardThread) => t.is_group).length +
+                     (q718.data?.threads ?? []).filter((t: DashboardThread) => t.is_group).length
   const investorCount = (q305.data?.threads ?? []).filter((t: DashboardThread) => t.is_investor).length +
                         (q718.data?.threads ?? []).filter((t: DashboardThread) => t.is_investor).length
 
@@ -169,7 +169,7 @@ function StaffList({ threads305, threads718, loading, selectedId, onSelect }: {
 }) {
   const staff = useMemo(() => {
     return [...threads305, ...threads718]
-      .filter(t => t.is_staff || t.is_family)
+      .filter(t => t.is_group)
       .sort((a, b) => {
         const at = a.last_message_at ? new Date(a.last_message_at).getTime() : 0
         const bt = b.last_message_at ? new Date(b.last_message_at).getTime() : 0

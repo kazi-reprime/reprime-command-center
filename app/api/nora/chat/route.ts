@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user || user.email !== 'g@reprime.com') {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    // Kiosk mode: allow unauthenticated access for Command Center
   }
 
   let body: ChatRequestBody

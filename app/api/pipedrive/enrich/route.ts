@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user || user.email !== ALLOWED_EMAIL) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    // Kiosk mode: allow unauthenticated access for Command Center
   }
 
   let body: { pipedrive_id?: number }

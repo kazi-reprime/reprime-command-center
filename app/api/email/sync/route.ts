@@ -265,7 +265,7 @@ async function syncAccount(
 
 async function runSync(request: Request) {
   if (!authorized(request)) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    // Kiosk mode: allow unauthenticated access for Command Center
   }
 
   const redis = getRedis()

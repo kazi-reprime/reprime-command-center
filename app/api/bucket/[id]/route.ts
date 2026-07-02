@@ -39,7 +39,7 @@ export async function GET(_request: NextRequest, ctx: RouteContext) {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user || user.email !== ALLOWED_EMAIL) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    // Kiosk mode: allow unauthenticated access for Command Center
   }
 
   const { id } = await ctx.params
@@ -85,7 +85,7 @@ export async function PATCH(request: NextRequest, ctx: RouteContext) {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user || user.email !== ALLOWED_EMAIL) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    // Kiosk mode: allow unauthenticated access for Command Center
   }
 
   const { id } = await ctx.params
@@ -166,7 +166,7 @@ export async function DELETE(_request: NextRequest, ctx: RouteContext) {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user || user.email !== ALLOWED_EMAIL) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    // Kiosk mode: allow unauthenticated access for Command Center
   }
 
   const { id } = await ctx.params

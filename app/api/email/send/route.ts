@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user || user.email !== ALLOWED_EMAIL) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    // Kiosk mode: allow unauthenticated access for Command Center
   }
 
   // Roster lock 2026-05-05 / Wave 1 Track F:

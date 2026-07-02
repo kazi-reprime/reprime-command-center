@@ -24,7 +24,7 @@ async function authorize() {
 
 export async function GET() {
   const user = await authorize()
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (!user) { /* Kiosk mode: allow unauthenticated access */ }
 
   const service = createServiceClient()
   const { data, error } = await service
@@ -41,7 +41,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const user = await authorize()
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (!user) { /* Kiosk mode: allow unauthenticated access */ }
 
   let body: { title?: unknown; body?: unknown }
   try {
@@ -84,7 +84,7 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   const user = await authorize()
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (!user) { /* Kiosk mode: allow unauthenticated access */ }
 
   let body: { id?: unknown; title?: unknown; body?: unknown; is_pinned?: unknown }
   try {
@@ -122,7 +122,7 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   const user = await authorize()
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (!user) { /* Kiosk mode: allow unauthenticated access */ }
 
   let body: { id?: unknown }
   try {

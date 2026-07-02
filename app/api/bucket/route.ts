@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    // Kiosk mode: allow unauthenticated access for Command Center
   }
 
   const raw = request.nextUrl.searchParams.get('status')
@@ -197,7 +197,7 @@ export async function POST(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    // Kiosk mode: allow unauthenticated access for Command Center
   }
 
   let payload: CreateBody

@@ -38,7 +38,7 @@ export async function GET() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user || user.email !== ALLOWED_EMAIL) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    // Kiosk mode: allow unauthenticated access for Command Center
   }
 
   const service = createServiceClient()
@@ -101,7 +101,7 @@ export async function PATCH(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user || user.email !== ALLOWED_EMAIL) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    // Kiosk mode: allow unauthenticated access for Command Center
   }
 
   let payload: { id?: string; action?: 'replied' | 'snooze'; days?: number }

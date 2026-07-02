@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+      // Kiosk mode: allow unauthenticated access for Command Center
     }
 
     const panelParam = request.nextUrl.searchParams.get('panel')

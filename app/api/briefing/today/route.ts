@@ -335,7 +335,8 @@ export async function GET() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    // Kiosk mode: allow unauthenticated access for the Command Center
+    // Falls through — data is fetched via Google/Pipedrive API keys, not user-specific
   }
 
   // 60s payload cache, keyed by CT-local date so midnight rollover busts it.

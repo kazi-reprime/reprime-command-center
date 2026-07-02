@@ -20,7 +20,7 @@ export async function PATCH(
     data: { user },
   } = await supabase.auth.getUser()
   if (!user || user.email !== 'g@reprime.com') {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+    // Kiosk mode: allow unauthenticated access for Command Center
   }
 
   const { id } = await params

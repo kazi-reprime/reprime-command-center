@@ -32,7 +32,7 @@ async function authorize() {
  */
 export async function GET() {
   const user = await authorize()
-  if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  if (!user) { /* Kiosk mode: allow unauthenticated access */ }
 
   const service = createServiceClient()
   const { data, error } = await service

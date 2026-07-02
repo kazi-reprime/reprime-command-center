@@ -7,14 +7,18 @@ import type { ReactNode } from 'react'
  * palette in app/globals.css. Keys mirror the column labels.
  */
 const ACCENT: Record<string, string> = {
-  Pipeline: 'var(--rp-gold)',         // #FFCC33 — meetings, brand
-  Inbox:    'var(--c-warn)',          // #F59E0B — heads-up, triage
-  Bucket:   'var(--c-live-now)',      // #A855F7 — in-progress projects
-  Crew:     'var(--c-channel-718)',   // #25D366 — team / OK
+  Calendar:     'var(--rp-gold)',         // #FFCC33 — meetings, brand
+  Pipeline:     'var(--rp-gold)',         // #FFCC33 — meetings, brand
+  Inbox:        'var(--c-warn)',          // #F59E0B — heads-up, triage
+  Notes:        'var(--c-channel-305, #00A980)',  // green — notes
+  Comms:        'var(--c-channel-305, #25D366)',  // green — comms
+  Bucket:       'var(--c-live-now)',      // #A855F7 — in-progress projects
+  Crew:         'var(--c-channel-718)',   // #25D366 — team / OK
+  "Nora's Desk": '#A855F7',             // purple — AI
 }
 
 export type ColumnProps = {
-  label: 'Pipeline' | 'Inbox' | 'Bucket' | 'Crew'
+  label: string
   children?: ReactNode
   /**
    * When true, the column body skips its own padding + scroll so a column-

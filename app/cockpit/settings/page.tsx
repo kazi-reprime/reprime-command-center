@@ -1,223 +1,252 @@
 'use client'
 
-import React, { useState } from 'react'
-import { Card, ActionButton, FormInput, FormSelect } from '@/components/ui/shared'
+import React, { useState, useEffect, useCallback } from 'react'
+import { Card, ActionButton, StatusBadge } from '@/components/ui/shared'
+import { LoadingState } from '@/components/ui/LiveStatus'
+import { useToast } from '@/lib/contexts/ToastContext'
 
-const integrations = [
-  { id: 'supabase', name: 'Supabase', icon: '🗄️', category: 'Database', status: 'connected', keys: ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY'] },
-  { id: 'anthropic', name: 'Anthropic (Claude)', icon: '🧠', category: 'AI', status: 'connected', keys: ['ANTHROPIC_API_KEY'] },
-  { id: 'openai', name: 'OpenAI', icon: '🤖', category: 'AI', status: 'optional', keys: ['OPENAI_API_KEY'] },
-  { id: 'google', name: 'Google (Calendar/Gmail)', icon: '📅', category: 'Communication', status: 'connected', keys: ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REFRESH_TOKEN'] },
-  { id: 'timelines', name: 'Timelines.ai (WhatsApp)', icon: '💬', category: 'Communication', status: 'connected', keys: ['TIMELINES_API_KEY'] },
-  { id: 'pipedrive', name: 'Pipedrive CRM', icon: '📊', category: 'CRM', status: 'connected', keys: ['PIPEDRIVE_API_TOKEN'] },
-  { id: 'sendgrid', name: 'SendGrid', icon: '📨', category: 'Email', status: 'connected', keys: ['SENDGRID_API_KEY'] },
-  { id: 'elevenlabs', name: 'ElevenLabs', icon: '🔊', category: 'Voice', status: 'optional', keys: ['ELEVENLABS_API_KEY'] },
-  { id: 'redis', name: 'Upstash Redis', icon: '⚡', category: 'Caching', status: 'connected', keys: ['UPSTASH_REDIS_REST_URL', 'UPSTASH_REDIS_REST_TOKEN'] },
-  { id: 'stripe', name: 'Stripe', icon: '💳', category: 'Billing', status: 'not_connected', keys: ['STRIPE_SECRET_KEY'] },
-  { id: 'slack', name: 'Slack', icon: '🔔', category: 'Notifications', status: 'not_connected', keys: ['SLACK_WEBHOOK_URL'] },
-  { id: 'zoom', name: 'Zoom', icon: '📹', category: 'Meetings', status: 'optional', keys: ['ZOOM_API_KEY'] },
-]
+interface IntegrationStatus {
+  name: string
+  status: 'connected' | 'missing' | 'error'
+  message?: string
+}
+
+interface SettingsState {
+  businessName: string
+  ownerName: string
+  timezone: string
+  notifications: boolean
+  aiAutoSummarize: boolean
+  autoFollowUp: boolean
+}
+
+const DEFAULT_SETTINGS: SettingsState = {
+  businessName: 'RePrime Capital',
+  ownerName: 'Gideon Gratsiani',
+  timezone: 'America/New_York',
+  notifications: true,
+  aiAutoSummarize: true,
+  autoFollowUp: true,
+}
 
 export default function SettingsPage() {
-  const [activeSection, setActiveSection] = useState('general')
-  const [saved, setSaved] = useState(false)
+  const { addToast } = useToast()
+  const [integrations, setIntegrations] = useState<IntegrationStatus[]>([])
+  const [loading, setLoading] = useState(true)
+  const [testing, setTesting] = useState<string | null>(null)
+  const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS)
+  const [dirty, setDirty] = useState(false)
 
-  const [settings, setSettings] = useState({
-    businessName: 'RePrime Group',
-    ownerName: 'Gideon',
-    email: 'g@reprime.com',
-    timezone: 'America/New_York',
-    currency: 'USD',
-    language: 'en',
-    theme: 'dark',
-    aiModel: 'claude-sonnet-4-20250514',
-    aiTemperature: '0.7',
-    emailNotifications: true,
-    slackNotifications: false,
-    dailyBriefing: true,
-    briefingTime: '08:00',
-  })
+  // Load settings from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('cockpit_settings')
+      if (saved) {
+        setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(saved) })
+      }
+    } catch {
+      // Use defaults
+    }
+  }, [])
 
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2000) }
+  const fetchIntegrations = useCallback(async () => {
+    try {
+      const res = await fetch('/api/integrations/test')
+      const data = await res.json()
+      setIntegrations(data.integrations || [])
+    } catch {
+      addToast('Failed to check integration status', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }, [addToast])
 
-  const sections = [
-    { key: 'general', label: 'General', icon: '⚙️' },
-    { key: 'integrations', label: 'Integrations', icon: '🔗' },
-    { key: 'ai', label: 'AI Configuration', icon: '🧠' },
-    { key: 'notifications', label: 'Notifications', icon: '🔔' },
-    { key: 'team', label: 'Team', icon: '👥' },
-  ]
+  useEffect(() => { fetchIntegrations() }, [fetchIntegrations])
 
-  const statusColors: Record<string, { bg: string; text: string; label: string }> = {
-    connected: { bg: 'rgba(0,169,128,0.15)', text: '#00A980', label: 'Connected' },
-    optional: { bg: 'rgba(245,158,11,0.15)', text: '#F59E0B', label: 'Optional' },
-    not_connected: { bg: 'rgba(107,114,128,0.15)', text: '#6B7280', label: 'Not Connected' },
+  const handleTestIntegration = async (integration: string) => {
+    setTesting(integration)
+    try {
+      const res = await fetch('/api/integrations/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ integration }),
+      })
+      const data = await res.json()
+      addToast(
+        `${data.name}: ${data.status === 'connected' ? 'Connected successfully' : data.message || 'Not configured'}`,
+        data.status === 'connected' ? 'success' : data.status === 'error' ? 'error' : 'warning'
+      )
+      // Refresh all integrations
+      fetchIntegrations()
+    } catch {
+      addToast('Test failed', 'error')
+    } finally {
+      setTesting(null)
+    }
   }
+
+  const handleSaveSettings = () => {
+    try {
+      localStorage.setItem('cockpit_settings', JSON.stringify(settings))
+      setDirty(false)
+      addToast('Settings saved successfully', 'success')
+    } catch {
+      addToast('Failed to save settings', 'error')
+    }
+  }
+
+  const updateSetting = <K extends keyof SettingsState>(key: K, value: SettingsState[K]) => {
+    setSettings(prev => ({ ...prev, [key]: value }))
+    setDirty(true)
+  }
+
+  const integrationTestMap: Record<string, string> = {
+    'Database': 'database',
+    'Email (SendGrid)': 'email',
+    'WhatsApp (Timelines)': 'whatsapp',
+    'CRM (Pipedrive)': 'crm',
+    'Google (Gmail/Calendar)': 'google',
+    'Redis (Upstash)': 'redis',
+    'Voice (ElevenLabs)': 'voice',
+    'Billing (Stripe)': 'stripe',
+    'Slack': 'slack',
+    'Zoom': 'zoom',
+  }
+
+  if (loading) return <LoadingState message="Loading settings..." />
 
   return (
     <div>
-      <h1 style={{ margin: '0 0 0.25rem', color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Settings & Integrations</h1>
-      <p style={{ margin: '0 0 1.5rem', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>Configure your Command Center</p>
+      <h1 style={{ margin: '0 0 0.25rem', color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Settings & Configuration</h1>
+      <p style={{ margin: '0 0 1.5rem', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+        Manage integrations, preferences, and system configuration
+      </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '1.5rem' }}>
-        {/* Section Nav */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-          {sections.map(s => (
-            <button
-              key={s.key}
-              onClick={() => setActiveSection(s.key)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.5rem',
-                padding: '0.6rem 0.75rem', borderRadius: 8, border: 'none',
-                background: activeSection === s.key ? 'rgba(255,204,51,0.1)' : 'transparent',
-                color: activeSection === s.key ? '#FFCC33' : 'rgba(255,204,51,0.5)',
-                cursor: 'pointer', fontSize: '0.8rem', fontWeight: 500,
-                textAlign: 'left', fontFamily: 'inherit',
-              }}
-            >
-              <span>{s.icon}</span>
-              <span>{s.label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* Content */}
-        <div>
-          {activeSection === 'general' && (
-            <Card title="General Settings">
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                <FormInput label="Business Name" value={settings.businessName} onChange={v => setSettings(s => ({ ...s, businessName: v }))} />
-                <FormInput label="Owner Name" value={settings.ownerName} onChange={v => setSettings(s => ({ ...s, ownerName: v }))} />
-                <FormInput label="Email" value={settings.email} onChange={v => setSettings(s => ({ ...s, email: v }))} type="email" />
-                <FormSelect label="Timezone" value={settings.timezone} onChange={v => setSettings(s => ({ ...s, timezone: v }))} options={[
-                  { value: 'America/New_York', label: 'Eastern (ET)' },
-                  { value: 'America/Chicago', label: 'Central (CT)' },
-                  { value: 'America/Los_Angeles', label: 'Pacific (PT)' },
-                  { value: 'Asia/Jerusalem', label: 'Israel (IST)' },
-                ]} />
-                <FormSelect label="Currency" value={settings.currency} onChange={v => setSettings(s => ({ ...s, currency: v }))} options={[
-                  { value: 'USD', label: 'USD ($)' }, { value: 'EUR', label: 'EUR (€)' }, { value: 'ILS', label: 'ILS (₪)' },
-                ]} />
-                <FormSelect label="Theme" value={settings.theme} onChange={v => setSettings(s => ({ ...s, theme: v }))} options={[
-                  { value: 'dark', label: 'Dark (Navy)' }, { value: 'light', label: 'Light' },
-                ]} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '1rem' }}>
+        {/* Business Settings */}
+        <Card title="Business Profile">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {[
+              { label: 'Business Name', key: 'businessName' as const, value: settings.businessName },
+              { label: 'Owner Name', key: 'ownerName' as const, value: settings.ownerName },
+              { label: 'Timezone', key: 'timezone' as const, value: settings.timezone },
+            ].map(field => (
+              <div key={field.key}>
+                <label style={{ display: 'block', color: 'rgba(255,204,51,0.6)', fontSize: '0.7rem', marginBottom: '0.25rem', fontWeight: 500 }}>{field.label}</label>
+                <input
+                  value={field.value}
+                  onChange={e => updateSetting(field.key, e.target.value)}
+                  style={{
+                    width: '100%', padding: '0.5rem 0.75rem', background: 'rgba(0,0,0,0.2)',
+                    border: '1px solid rgba(255,204,51,0.1)', borderRadius: 8,
+                    color: '#fff', fontSize: '0.85rem', outline: 'none', fontFamily: 'inherit',
+                    boxSizing: 'border-box',
+                  }}
+                />
               </div>
-              <div style={{ marginTop: '1.25rem', display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                <ActionButton label={saved ? '✓ Saved' : 'Save Changes'} onClick={handleSave} variant="primary" size="md" />
-              </div>
-            </Card>
-          )}
+            ))}
+          </div>
+        </Card>
 
-          {activeSection === 'integrations' && (
-            <Card title="Integration Management" noPad>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                {integrations.map(int => {
-                  const st = statusColors[int.status]
-                  return (
-                    <div key={int.id} style={{
-                      display: 'flex', alignItems: 'center', gap: '0.75rem',
-                      padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,204,51,0.04)',
-                    }}>
-                      <span style={{ fontSize: '1.25rem' }}>{int.icon}</span>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600 }}>{int.name}</div>
-                        <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.65rem' }}>{int.category} • Keys: {int.keys.join(', ')}</div>
-                      </div>
-                      <span style={{
-                        padding: '0.2rem 0.5rem', borderRadius: 999,
-                        background: st.bg, color: st.text, fontSize: '0.65rem', fontWeight: 600,
-                      }}>{st.label}</span>
-                    </div>
-                  )
-                })}
-              </div>
-            </Card>
-          )}
-
-          {activeSection === 'ai' && (
-            <Card title="AI Configuration">
-              <FormSelect label="Default AI Model" value={settings.aiModel} onChange={v => setSettings(s => ({ ...s, aiModel: v }))} options={[
-                { value: 'claude-sonnet-4-20250514', label: 'Claude Sonnet 4' },
-                { value: 'claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet' },
-                { value: 'gpt-4o', label: 'GPT-4o' },
-              ]} />
-              <FormInput label="Temperature" value={settings.aiTemperature} onChange={v => setSettings(s => ({ ...s, aiTemperature: v }))} type="number" placeholder="0.0 - 1.0" />
-              <div style={{ marginTop: '1rem' }}>
-                <ActionButton label={saved ? '✓ Saved' : 'Save Changes'} onClick={handleSave} variant="primary" size="md" />
-              </div>
-            </Card>
-          )}
-
-          {activeSection === 'notifications' && (
-            <Card title="Notification Preferences">
-              {[
-                { key: 'emailNotifications', label: 'Email Notifications', desc: 'Receive email alerts for important events' },
-                { key: 'slackNotifications', label: 'Slack Notifications', desc: 'Post updates to your Slack channel' },
-                { key: 'dailyBriefing', label: 'Daily Briefing', desc: 'Receive AI-generated daily briefing' },
-              ].map(item => (
-                <div key={item.key} style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '0.85rem 0', borderBottom: '1px solid rgba(255,204,51,0.04)',
-                }}>
-                  <div>
-                    <div style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 500 }}>{item.label}</div>
-                    <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.7rem' }}>{item.desc}</div>
-                  </div>
-                  <button
-                    onClick={() => setSettings(s => ({ ...s, [item.key]: !s[item.key as keyof typeof s] }))}
-                    style={{
-                      width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
-                      background: (settings[item.key as keyof typeof settings] as boolean) ? '#00A980' : 'rgba(255,204,51,0.1)',
-                      position: 'relative', transition: 'background 200ms',
-                    }}
-                  >
-                    <span style={{
-                      width: 18, height: 18, borderRadius: '50%', background: '#fff',
-                      position: 'absolute', top: 3,
-                      left: (settings[item.key as keyof typeof settings] as boolean) ? 23 : 3,
-                      transition: 'left 200ms',
-                    }} />
-                  </button>
+        {/* Feature Toggles */}
+        <Card title="Features & Preferences">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            {[
+              { label: 'Push Notifications', key: 'notifications' as const, desc: 'Receive alerts for important events' },
+              { label: 'AI Auto-Summarize', key: 'aiAutoSummarize' as const, desc: 'Generate AI summaries for new messages' },
+              { label: 'Auto Follow-Up Reminders', key: 'autoFollowUp' as const, desc: 'Automatic follow-up scheduling' },
+            ].map(toggle => (
+              <div key={toggle.key} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '0.6rem 0.75rem', background: 'rgba(0,0,0,0.1)', borderRadius: 8,
+              }}>
+                <div>
+                  <div style={{ color: '#e2e8f0', fontSize: '0.8rem', fontWeight: 500 }}>{toggle.label}</div>
+                  <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.65rem' }}>{toggle.desc}</div>
                 </div>
-              ))}
-              {settings.dailyBriefing && (
-                <div style={{ marginTop: '0.75rem' }}>
-                  <FormInput label="Briefing Time" value={settings.briefingTime} onChange={v => setSettings(s => ({ ...s, briefingTime: v }))} type="time" />
-                </div>
-              )}
-              <div style={{ marginTop: '1rem' }}>
-                <ActionButton label={saved ? '✓ Saved' : 'Save Changes'} onClick={handleSave} variant="primary" size="md" />
-              </div>
-            </Card>
-          )}
-
-          {activeSection === 'team' && (
-            <Card title="Team Members">
-              {[
-                { name: 'Gideon', role: 'Owner / CEO', email: 'g@reprime.com' },
-                { name: 'Kazi', role: 'Builder / Technology Lead', email: 'kazi@reprime.com' },
-                { name: 'Shirel', role: 'Operations', email: 'shirel@reprime.com' },
-                { name: 'Adir', role: 'Technology', email: 'adir@reprime.com' },
-                { name: 'Yaron', role: 'Finance', email: 'yaron@reprime.com' },
-              ].map(member => (
-                <div key={member.name} style={{
-                  display: 'flex', alignItems: 'center', gap: '0.75rem',
-                  padding: '0.75rem 0', borderBottom: '1px solid rgba(255,204,51,0.04)',
-                }}>
+                <button
+                  onClick={() => updateSetting(toggle.key, !settings[toggle.key])}
+                  style={{
+                    width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
+                    background: settings[toggle.key] ? '#00A980' : 'rgba(255,204,51,0.15)',
+                    position: 'relative', transition: 'background 200ms',
+                  }}
+                >
                   <div style={{
-                    width: 36, height: 36, borderRadius: '50%', background: 'rgba(255,204,51,0.1)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#FFCC33', fontSize: '0.75rem', fontWeight: 700,
-                  }}>{member.name[0]}</div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600 }}>{member.name}</div>
-                    <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.7rem' }}>{member.role} • {member.email}</div>
+                    width: 18, height: 18, borderRadius: '50%', background: '#fff',
+                    position: 'absolute', top: 3,
+                    left: settings[toggle.key] ? 23 : 3,
+                    transition: 'left 200ms',
+                  }} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Integration Status (Live) */}
+        <Card title="Integration Status (Live)" style={{ gridColumn: '1 / -1' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '0.5rem' }}>
+            {integrations.map(svc => {
+              const testKey = Object.entries(integrationTestMap).find(([name]) => svc.name.includes(name.split(' ')[0]))?.[1]
+              return (
+                <div key={svc.name} style={{
+                  display: 'flex', alignItems: 'center', gap: '0.6rem',
+                  padding: '0.6rem 0.75rem', background: 'rgba(0,0,0,0.1)', borderRadius: 8,
+                }}>
+                  <span style={{
+                    width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                    background: svc.status === 'connected' ? '#00A980' : svc.status === 'error' ? '#EF4444' : '#F59E0B',
+                  }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ color: '#e2e8f0', fontSize: '0.8rem', fontWeight: 500 }}>{svc.name}</div>
+                    {svc.message && <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.6rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{svc.message}</div>}
                   </div>
+                  <span style={{
+                    padding: '0.2rem 0.5rem', borderRadius: 999, fontSize: '0.6rem', fontWeight: 600,
+                    background: svc.status === 'connected' ? 'rgba(0,169,128,0.15)' : svc.status === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)',
+                    color: svc.status === 'connected' ? '#00A980' : svc.status === 'error' ? '#EF4444' : '#F59E0B',
+                  }}>
+                    {svc.status === 'connected' ? 'Connected' : svc.status === 'error' ? 'Error' : 'Missing'}
+                  </span>
+                  {testKey && (
+                    <ActionButton
+                      label={testing === testKey ? '...' : 'Test'}
+                      variant="ghost"
+                      onClick={() => handleTestIntegration(testKey)}
+                    />
+                  )}
                 </div>
-              ))}
-            </Card>
-          )}
-        </div>
+              )
+            })}
+          </div>
+        </Card>
+      </div>
+
+      {/* Save Button */}
+      <div style={{
+        position: 'sticky', bottom: 20, display: 'flex', justifyContent: 'flex-end',
+        marginTop: '1.5rem', gap: '0.5rem',
+      }}>
+        {dirty && (
+          <div style={{
+            padding: '0.75rem 1.25rem', background: 'rgba(14,52,112,0.95)',
+            border: '1px solid rgba(255,204,51,0.15)', borderRadius: 10,
+            display: 'flex', alignItems: 'center', gap: '0.75rem',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)',
+          }}>
+            <span style={{ color: '#F59E0B', fontSize: '0.8rem' }}>Unsaved changes</span>
+            <ActionButton label="Save Changes" variant="primary" size="md" onClick={handleSaveSettings} />
+            <ActionButton label="Discard" variant="ghost" size="md" onClick={() => {
+              try {
+                const saved = localStorage.getItem('cockpit_settings')
+                if (saved) setSettings({ ...DEFAULT_SETTINGS, ...JSON.parse(saved) })
+                else setSettings(DEFAULT_SETTINGS)
+              } catch { setSettings(DEFAULT_SETTINGS) }
+              setDirty(false)
+            }} />
+          </div>
+        )}
       </div>
     </div>
   )

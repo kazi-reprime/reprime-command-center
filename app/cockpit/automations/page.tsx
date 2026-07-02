@@ -2,21 +2,28 @@
 
 import React, { useState } from 'react'
 import { Card, StatusBadge, ActionButton, SearchInput, TabGroup, EmptyState } from '@/components/ui/shared'
-import { seedAutomations } from '@/lib/data/seed'
+import { LoadingState } from '@/components/ui/LiveStatus'
+import { useCockpitQuery, useCockpitMutation } from '@/hooks/useCockpitData'
+import { seedAutomations, type SeedAutomation } from '@/lib/data/seed'
+import { useToast } from '@/lib/contexts/ToastContext'
+import { useRouter } from 'next/navigation'
 
 export default function AutomationsPage() {
-  const [automations, setAutomations] = useState(seedAutomations)
+  const { addToast } = useToast()
+  const router = useRouter()
+  const automationsQ = useCockpitQuery<SeedAutomation[]>('automations', '/api/cockpit/automations')
+  const toggleMutation = useCockpitMutation<{ id: string; action: string }>('/api/cockpit/automations', {
+    method: 'PATCH',
+    invalidateKeys: ['automations'],
+  })
+
+  const automations = automationsQ.data?.data ?? seedAutomations
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
 
-  const toggleAuto = (id: string, action: 'enable' | 'disable' | 'retry') => {
-    setAutomations(prev => prev.map(a => {
-      if (a.id !== id) return a
-      if (action === 'enable') return { ...a, status: 'active' as const }
-      if (action === 'disable') return { ...a, status: 'paused' as const }
-      if (action === 'retry') return { ...a, status: 'active' as const, failureCount: 0, configWarning: null }
-      return a
-    }))
+  const handleToggle = (id: string, action: 'enable' | 'disable' | 'retry') => {
+    toggleMutation.mutate({ id, action })
+    addToast(`Automation ${action === 'enable' ? 'enabled' : action === 'disable' ? 'disabled' : 'retried'} successfully`, 'success')
   }
 
   const filtered = automations.filter(a => {
@@ -24,6 +31,8 @@ export default function AutomationsPage() {
     if (filter !== 'all' && a.status !== filter) return false
     return true
   })
+
+  if (automationsQ.isLoading) return <LoadingState message="Loading automations..." />
 
   return (
     <div>
@@ -82,10 +91,10 @@ export default function AutomationsPage() {
             )}
 
             <div style={{ display: 'flex', gap: '0.35rem' }}>
-              {auto.status === 'active' && <ActionButton label="Disable" onClick={() => toggleAuto(auto.id, 'disable')} variant="ghost" />}
-              {auto.status === 'paused' && <ActionButton label="Enable" onClick={() => toggleAuto(auto.id, 'enable')} variant="default" />}
-              {auto.status === 'error' && <ActionButton label="Retry" onClick={() => toggleAuto(auto.id, 'retry')} variant="danger" />}
-              {auto.status === 'not_configured' && <ActionButton label="Configure" onClick={() => {}} variant="default" />}
+              {auto.status === 'active' && <ActionButton label="Disable" onClick={() => handleToggle(auto.id, 'disable')} variant="ghost" />}
+              {auto.status === 'paused' && <ActionButton label="Enable" onClick={() => handleToggle(auto.id, 'enable')} variant="default" />}
+              {auto.status === 'error' && <ActionButton label="Retry" onClick={() => handleToggle(auto.id, 'retry')} variant="danger" />}
+              {auto.status === 'not_configured' && <ActionButton label="Configure" onClick={() => router.push('/cockpit/settings')} variant="default" />}
             </div>
           </div>
         ))}

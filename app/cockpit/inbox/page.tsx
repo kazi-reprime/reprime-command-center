@@ -1,16 +1,28 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Card, ActionButton, SearchInput, TabGroup, EmptyState } from '@/components/ui/shared'
-import { seedMessages } from '@/lib/data/seed'
+import { Card, ActionButton, SearchInput, TabGroup, EmptyState, Modal } from '@/components/ui/shared'
+import { LoadingState } from '@/components/ui/LiveStatus'
+import { useCockpitQuery, useCockpitMutation } from '@/hooks/useCockpitData'
+import { seedMessages, type SeedMessage } from '@/lib/data/seed'
+import { useToast } from '@/lib/contexts/ToastContext'
 
 export default function InboxPage() {
+  const { addToast } = useToast()
+  const messagesQ = useCockpitQuery<SeedMessage[]>('messages', '/api/cockpit/messages')
+  const markReadMutation = useCockpitMutation<{ id: string }>('/api/cockpit/messages', {
+    method: 'PATCH',
+    invalidateKeys: ['messages'],
+  })
+
+  const messages = messagesQ.data?.data ?? seedMessages
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
-  const [messages, setMessages] = useState(seedMessages)
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [showReply, setShowReply] = useState(false)
+  const [replyText, setReplyText] = useState('')
 
-  const markRead = (id: string) => setMessages(prev => prev.map(m => m.id === id ? { ...m, isRead: true } : m))
+  const markRead = (id: string) => markReadMutation.mutate({ id })
 
   const filtered = messages.filter(m => {
     if (search && !m.sender.toLowerCase().includes(search.toLowerCase()) && !m.preview.toLowerCase().includes(search.toLowerCase())) return false
@@ -21,6 +33,69 @@ export default function InboxPage() {
 
   const selected = messages.find(m => m.id === selectedId)
   const channelIcons: Record<string, string> = { email: '📧', whatsapp: '💬', sms: '📱', slack: '🔔' }
+
+  const handleReply = async () => {
+    if (!replyText.trim() || !selected) return
+
+    if (selected.channel === 'email') {
+      try {
+        const res = await fetch('/api/cockpit/email/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            to: selected.sender,
+            subject: `Re: ${selected.subject || 'Your message'}`,
+            text: replyText,
+          }),
+        })
+        const data = await res.json()
+        if (data.success) {
+          addToast(`Reply sent to ${selected.sender}`, 'success')
+        } else if (data.configured === false) {
+          addToast(data.error, 'warning')
+        } else {
+          addToast(`Send failed: ${data.error}`, 'error')
+        }
+      } catch (err) {
+        addToast('Failed to send reply', 'error')
+      }
+    } else if (selected.channel === 'whatsapp') {
+      try {
+        const res = await fetch('/api/cockpit/whatsapp/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            phone: selected.sender,
+            message: replyText,
+          }),
+        })
+        const data = await res.json()
+        if (data.success) {
+          addToast(`WhatsApp reply sent to ${selected.sender}`, 'success')
+        } else if (data.configured === false) {
+          addToast(data.error, 'warning')
+        } else {
+          addToast(`Send failed: ${data.error}`, 'error')
+        }
+      } catch (err) {
+        addToast('Failed to send WhatsApp reply', 'error')
+      }
+    } else {
+      addToast(`${selected.channel} reply is not yet configured`, 'warning')
+    }
+
+    setShowReply(false)
+    setReplyText('')
+  }
+
+  const handleArchive = () => {
+    if (selected) {
+      addToast(`Archived message from ${selected.sender}`, 'info')
+      setSelectedId(null)
+    }
+  }
+
+  if (messagesQ.isLoading) return <LoadingState message="Loading messages..." />
 
   return (
     <div>
@@ -95,13 +170,38 @@ export default function InboxPage() {
               </p>
             </div>
             <div style={{ display: 'flex', gap: '0.35rem' }}>
-              <ActionButton label="Reply" variant="primary" />
-              <ActionButton label="Forward" variant="default" />
-              <ActionButton label="Archive" variant="ghost" />
+              <ActionButton label="Reply" variant="primary" onClick={() => { setShowReply(true); setReplyText('') }} />
+              <ActionButton label="Forward" variant="default" onClick={() => addToast('Forward: compose a new message with the original content', 'info')} />
+              <ActionButton label="Archive" variant="ghost" onClick={handleArchive} />
             </div>
           </Card>
         )}
       </div>
+
+      {/* Reply Modal */}
+      <Modal isOpen={showReply} onClose={() => setShowReply(false)} title={`Reply to ${selected?.sender || ''}`} width={500}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(0,0,0,0.15)', borderRadius: 6, fontSize: '0.7rem', color: 'rgba(255,204,51,0.4)' }}>
+            Replying via {selected?.channel || 'email'} to {selected?.sender}
+          </div>
+          <textarea
+            value={replyText}
+            onChange={e => setReplyText(e.target.value)}
+            placeholder="Type your reply..."
+            rows={6}
+            style={{
+              width: '100%', padding: '0.75rem', background: 'rgba(0,0,0,0.2)',
+              border: '1px solid rgba(255,204,51,0.1)', borderRadius: 8,
+              color: '#fff', fontSize: '0.85rem', outline: 'none', fontFamily: 'inherit',
+              resize: 'vertical', boxSizing: 'border-box',
+            }}
+          />
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <ActionButton label="Send Reply" variant="primary" size="md" onClick={handleReply} />
+            <ActionButton label="Cancel" variant="ghost" size="md" onClick={() => setShowReply(false)} />
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

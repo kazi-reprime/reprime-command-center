@@ -2,13 +2,21 @@
 
 import React, { useState } from 'react'
 import { Card, StatusBadge, ActionButton, SearchInput, TabGroup, Modal, EmptyState } from '@/components/ui/shared'
-import { seedAgents } from '@/lib/data/seed'
+import { LoadingState } from '@/components/ui/LiveStatus'
+import { useCockpitQuery, useCockpitMutation } from '@/hooks/useCockpitData'
+import { seedAgents, type SeedAgent } from '@/lib/data/seed'
 
 export default function AgentsPage() {
+  const agentsQ = useCockpitQuery<SeedAgent[]>('agents', '/api/cockpit/agents')
+  const toggleMutation = useCockpitMutation<{ id: string; action: string }>('/api/cockpit/agents', {
+    method: 'PATCH',
+    invalidateKeys: ['agents'],
+  })
+
+  const agents = agentsQ.data?.data ?? seedAgents
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
-  const [selectedAgent, setSelectedAgent] = useState<typeof seedAgents[0] | null>(null)
-  const [agents, setAgents] = useState(seedAgents)
+  const [selectedAgent, setSelectedAgent] = useState<SeedAgent | null>(null)
 
   const filtered = agents.filter(a => {
     if (search && !a.name.toLowerCase().includes(search.toLowerCase())) return false
@@ -16,15 +24,11 @@ export default function AgentsPage() {
     return true
   })
 
-  const toggleAgent = (id: string, action: 'pause' | 'resume' | 'retry') => {
-    setAgents(prev => prev.map(a => {
-      if (a.id !== id) return a
-      if (action === 'pause') return { ...a, status: 'paused' as const, currentTask: null }
-      if (action === 'resume') return { ...a, status: 'running' as const, currentTask: 'Resuming operations...' }
-      if (action === 'retry') return { ...a, status: 'running' as const, errorCount: 0, currentTask: 'Retrying last operation...' }
-      return a
-    }))
+  const handleToggle = (id: string, action: 'pause' | 'resume' | 'retry') => {
+    toggleMutation.mutate({ id, action })
   }
+
+  if (agentsQ.isLoading) return <LoadingState message="Loading agents..." />
 
   return (
     <div>
@@ -99,10 +103,10 @@ export default function AgentsPage() {
                 {agent.errorCount > 0 && <span style={{ color: '#EF4444' }}>❌ {agent.errorCount}</span>}
               </div>
               <div style={{ display: 'flex', gap: '0.25rem' }} onClick={e => e.stopPropagation()}>
-                {agent.status === 'running' && <ActionButton label="Pause" onClick={() => toggleAgent(agent.id, 'pause')} variant="ghost" />}
-                {agent.status === 'paused' && <ActionButton label="Resume" onClick={() => toggleAgent(agent.id, 'resume')} variant="default" />}
-                {agent.status === 'error' && <ActionButton label="Retry" onClick={() => toggleAgent(agent.id, 'retry')} variant="danger" />}
-                {agent.status === 'idle' && <ActionButton label="Run" onClick={() => toggleAgent(agent.id, 'resume')} variant="primary" />}
+                {agent.status === 'running' && <ActionButton label="Pause" onClick={() => handleToggle(agent.id, 'pause')} variant="ghost" />}
+                {agent.status === 'paused' && <ActionButton label="Resume" onClick={() => handleToggle(agent.id, 'resume')} variant="default" />}
+                {agent.status === 'error' && <ActionButton label="Retry" onClick={() => handleToggle(agent.id, 'retry')} variant="danger" />}
+                {agent.status === 'idle' && <ActionButton label="Run" onClick={() => handleToggle(agent.id, 'resume')} variant="primary" />}
               </div>
             </div>
           </div>
@@ -135,9 +139,9 @@ export default function AgentsPage() {
               </Card>
             </div>
             <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
-              {selectedAgent.status === 'running' && <ActionButton label="Pause Agent" onClick={() => { toggleAgent(selectedAgent.id, 'pause'); setSelectedAgent(null) }} variant="default" size="md" />}
-              {selectedAgent.status === 'paused' && <ActionButton label="Resume Agent" onClick={() => { toggleAgent(selectedAgent.id, 'resume'); setSelectedAgent(null) }} variant="primary" size="md" />}
-              {selectedAgent.status === 'error' && <ActionButton label="Retry" onClick={() => { toggleAgent(selectedAgent.id, 'retry'); setSelectedAgent(null) }} variant="danger" size="md" />}
+              {selectedAgent.status === 'running' && <ActionButton label="Pause Agent" onClick={() => { handleToggle(selectedAgent.id, 'pause'); setSelectedAgent(null) }} variant="default" size="md" />}
+              {selectedAgent.status === 'paused' && <ActionButton label="Resume Agent" onClick={() => { handleToggle(selectedAgent.id, 'resume'); setSelectedAgent(null) }} variant="primary" size="md" />}
+              {selectedAgent.status === 'error' && <ActionButton label="Retry" onClick={() => { handleToggle(selectedAgent.id, 'retry'); setSelectedAgent(null) }} variant="danger" size="md" />}
             </div>
           </div>
         )}

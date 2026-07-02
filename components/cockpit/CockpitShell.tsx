@@ -11,7 +11,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: 'Command Center',
     items: [
-      { href: '/center', label: 'Kiosk View', icon: '🖥️', shortLabel: 'Kiosk' },
+      { href: '/center', label: 'Command Center', icon: '🖥️', shortLabel: 'Center' },
       { href: '/cockpit', label: 'Dashboard', icon: '📊', shortLabel: 'Home' },
     ],
   },
@@ -164,7 +164,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
                 <div style={{ height: 1, background: 'rgba(255,204,51,0.06)', margin: '0.3rem 0.5rem' }} />
               )}
               {section.items.map(item => {
-                const isKiosk = item.href === '/center'
+                const isCenter = item.href === '/center'
                 const isActive = item.href === '/cockpit'
                   ? pathname === '/cockpit'
                   : item.href === '/center'
@@ -179,16 +179,16 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
                       display: 'flex', alignItems: 'center', gap: '0.65rem',
                       padding: collapsed ? '0.5rem' : '0.4rem 0.75rem',
                       borderRadius: 8, textDecoration: 'none', transition: 'all 150ms',
-                      background: isKiosk
+                      background: isCenter
                         ? (isActive ? 'rgba(255,204,51,0.2)' : 'rgba(255,204,51,0.08)')
                         : (isActive ? 'rgba(255,204,51,0.12)' : 'transparent'),
                       color: isActive ? '#FFCC33' : 'rgba(255,204,51,0.55)',
-                      fontSize: isKiosk ? '0.82rem' : '0.78rem',
-                      fontWeight: isKiosk ? 700 : (isActive ? 600 : 500),
+                      fontSize: isCenter ? '0.82rem' : '0.78rem',
+                      fontWeight: isCenter ? 700 : (isActive ? 600 : 500),
                       justifyContent: collapsed ? 'center' : 'flex-start',
                       position: 'relative',
-                      border: isKiosk ? '1px solid rgba(255,204,51,0.15)' : 'none',
-                      marginBottom: isKiosk ? '0.15rem' : 0,
+                      border: isCenter ? '1px solid rgba(255,204,51,0.15)' : 'none',
+                      marginBottom: isCenter ? '0.15rem' : 0,
                     }}
                     title={collapsed ? item.label : undefined}
                   >
@@ -200,7 +200,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
                     )}
                     <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>{item.icon}</span>
                     {!collapsed && <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>}
-                    {isKiosk && !collapsed && (
+                    {isCenter && !collapsed && (
                       <span style={{
                         marginLeft: 'auto', fontSize: '0.5rem', padding: '0.1rem 0.3rem',
                         background: 'rgba(255,204,51,0.15)', color: '#FFCC33',
@@ -308,7 +308,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
               fontWeight: 600,
             }}
           >
-            🖥️ Open Kiosk ↗
+            🖥️ Command Center ↗
           </a>
         </header>
 

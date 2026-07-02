@@ -264,7 +264,7 @@ export default function CommsPage() {
                   <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💬</div>
                   <div style={{ fontSize: '0.85rem' }}>Select a thread to view</div>
                   <div style={{ fontSize: '0.7rem', marginTop: '0.25rem', color: 'rgba(255,204,51,0.15)' }}>
-                    For full message history, use the Kiosk View
+                    For full message history, use the Command Center
                   </div>
                 </div>
               </div>
@@ -289,12 +289,12 @@ export default function CommsPage() {
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '0.3rem' }}>
-                      <ActionButton label="Open in Kiosk" variant="primary" size="sm" onClick={() => window.open('/center', '_blank')} />
+                      <ActionButton label="Open Command Center" variant="primary" size="sm" onClick={() => window.open('/center', '_blank')} />
                     </div>
                   </div>
                   <div style={{ flex: 1, padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <div style={{ textAlign: 'center', color: 'rgba(255,204,51,0.25)' }}>
-                      <p style={{ fontSize: '0.8rem', margin: 0 }}>Message history is available in the Kiosk View</p>
+                      <p style={{ fontSize: '0.8rem', margin: 0 }}>Message history is available in the Command Center</p>
                       <p style={{ fontSize: '0.7rem', margin: '0.25rem 0 0', color: 'rgba(255,204,51,0.15)' }}>
                         Last activity: {t.last_message_at ? new Date(t.last_message_at).toLocaleString() : 'Unknown'}
                       </p>

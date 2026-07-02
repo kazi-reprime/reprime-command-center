@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import type { ReactNode } from 'react'
 
 export const metadata: Metadata = {
-  title: 'RePrime Command Center — Kiosk',
-  description: 'Single-window kiosk view for the right monitor. 5120×1440.',
+  title: 'RePrime Command Center',
+  description: 'Live operations dashboard. Calendar, Email, WhatsApp, Notes, AI Assistant.',
 }
 
 /**

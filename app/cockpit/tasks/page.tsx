@@ -4,12 +4,12 @@ import React, { useState, useMemo } from 'react'
 import { Card, StatusBadge, ActionButton, SearchInput, TabGroup, Modal, EmptyState, PriorityBadge } from '@/components/ui/shared'
 import { DataSourceBanner, LoadingState } from '@/components/ui/LiveStatus'
 import { useCockpitQuery, useCockpitMutation } from '@/hooks/useCockpitData'
-import { seedTasks, type SeedTask } from '@/lib/data/seed'
+// Seed data removed — live data only
 import { useToast } from '@/lib/contexts/ToastContext'
 
 export default function TasksPage() {
   const { addToast } = useToast()
-  const tasksQ = useCockpitQuery<SeedTask[]>('tasks', '/api/cockpit/tasks')
+  const tasksQ = useCockpitQuery<any[]>('tasks', '/api/cockpit/tasks')
   const createMutation = useCockpitMutation<{ title: string; priority: number; projectTag: string; dueDate: string | null }>('/api/cockpit/tasks', {
     invalidateKeys: ['tasks'],
     successMessage: 'Task created successfully',
@@ -19,8 +19,8 @@ export default function TasksPage() {
     invalidateKeys: ['tasks'],
   })
 
-  const tasks = tasksQ.data?.data ?? seedTasks
-  const dataSource = tasksQ.data?.source ?? 'seed'
+  const tasks = tasksQ.data?.data ?? []
+  const dataSource = tasksQ.data?.source ?? 'unavailable'
   const dataWarning = tasksQ.data?.warning
 
   const [search, setSearch] = useState('')

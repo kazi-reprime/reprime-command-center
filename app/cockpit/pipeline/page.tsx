@@ -33,7 +33,7 @@ export default function PipelinePage() {
   const { addToast } = useToast()
   const [deals, setDeals] = useState<Deal[]>([])
   const [loading, setLoading] = useState(true)
-  const [source, setSource] = useState('seed')
+  const [source, setSource] = useState('loading')
 
   const fetchDeals = useCallback(async () => {
     setLoading(true)

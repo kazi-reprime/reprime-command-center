@@ -4,16 +4,16 @@ import React, { useState } from 'react'
 import { Card, StatusBadge, ActionButton, SearchInput, TabGroup, Modal, EmptyState } from '@/components/ui/shared'
 import { LoadingState } from '@/components/ui/LiveStatus'
 import { useCockpitQuery, useCockpitMutation } from '@/hooks/useCockpitData'
-import { seedAgents, type SeedAgent } from '@/lib/data/seed'
+// Seed data removed — live data only
 
 export default function AgentsPage() {
-  const agentsQ = useCockpitQuery<SeedAgent[]>('agents', '/api/cockpit/agents')
+  const agentsQ = useCockpitQuery<any[]>('agents', '/api/cockpit/agents')
   const toggleMutation = useCockpitMutation<{ id: string; action: string }>('/api/cockpit/agents', {
     method: 'PATCH',
     invalidateKeys: ['agents'],
   })
 
-  const agents = agentsQ.data?.data ?? seedAgents
+  const agents = agentsQ.data?.data ?? []
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
   const [selectedAgent, setSelectedAgent] = useState<SeedAgent | null>(null)

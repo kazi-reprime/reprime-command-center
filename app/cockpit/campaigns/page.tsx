@@ -14,7 +14,7 @@ export default function CampaignsPage() {
   const { addToast } = useToast()
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [loading, setLoading] = useState(true)
-  const [source, setSource] = useState('seed')
+  const [source, setSource] = useState('loading')
   const [warning, setWarning] = useState<string | undefined>()
 
   const fetchData = useCallback(async () => {

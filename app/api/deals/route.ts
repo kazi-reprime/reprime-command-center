@@ -18,34 +18,7 @@ export async function GET() {
     }
     
     if (!allDeals || allDeals.length === 0) {
-      // Mock data for prototyping if table is empty
-      console.warn('Deals table is empty, returning mock data for prototyping');
-      return NextResponse.json([
-        {
-          id: '1',
-          name: 'Bay Valley Shopping Center',
-          address: '123 Bay Valley Rd, FL',
-          assetType: 'Retail',
-          purchasePrice: 4200000,
-          loanAmount: 2500000,
-          equityNeeded: 1700000,
-          status: 'under_contract',
-          priority: 1,
-          riskScore: 3,
-        },
-        {
-          id: '2',
-          name: 'Downtown Office Plaza',
-          address: '456 Main St, NY',
-          assetType: 'Office',
-          purchasePrice: 15000000,
-          loanAmount: 10000000,
-          equityNeeded: 5000000,
-          status: 'evaluating',
-          priority: 2,
-          riskScore: 5,
-        }
-      ]);
+      return NextResponse.json([]);
     }
 
     // Map column names to camelCase for the UI

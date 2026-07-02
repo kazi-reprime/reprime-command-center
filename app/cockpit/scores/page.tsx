@@ -23,7 +23,7 @@ export default function ScoresPage() {
   const { addToast } = useToast()
   const [scores, setScores] = useState<DealScore[]>([])
   const [loading, setLoading] = useState(true)
-  const [source, setSource] = useState('seed')
+  const [source, setSource] = useState('loading')
   const [warning, setWarning] = useState<string | undefined>()
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)

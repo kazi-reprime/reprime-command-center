@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react'
 import { Card, StatusBadge, ActionButton, SearchInput, TabGroup, Modal, EmptyState, PriorityBadge } from '@/components/ui/shared'
 import { DataSourceBanner, LoadingState } from '@/components/ui/LiveStatus'
 import { useCockpitQuery, useCockpitMutation } from '@/hooks/useCockpitData'
-import { seedLeads, type SeedLead } from '@/lib/data/seed'
+// Seed data removed — live data only
 import { useToast } from '@/lib/contexts/ToastContext'
 
 const STAGES: { key: SeedLead['stage']; label: string; color: string }[] = [
@@ -20,7 +20,7 @@ const STAGES: { key: SeedLead['stage']; label: string; color: string }[] = [
 
 export default function LeadsPage() {
   const { addToast } = useToast()
-  const leadsQ = useCockpitQuery<SeedLead[]>('leads', '/api/cockpit/leads')
+  const leadsQ = useCockpitQuery<any[]>('leads', '/api/cockpit/leads')
   const createMutation = useCockpitMutation<Partial<SeedLead>>('/api/cockpit/leads', {
     invalidateKeys: ['leads'],
     successMessage: 'Lead created successfully',
@@ -31,8 +31,8 @@ export default function LeadsPage() {
     successMessage: 'Lead stage updated',
   })
 
-  const leads = leadsQ.data?.data ?? seedLeads
-  const dataSource = leadsQ.data?.source ?? 'seed'
+  const leads = leadsQ.data?.data ?? []
+  const dataSource = leadsQ.data?.source ?? 'unavailable'
   const dataWarning = leadsQ.data?.warning
 
   const [search, setSearch] = useState('')

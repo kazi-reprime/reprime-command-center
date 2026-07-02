@@ -4,18 +4,18 @@ import React, { useState } from 'react'
 import { Card, ActionButton, SearchInput, TabGroup, EmptyState, Modal } from '@/components/ui/shared'
 import { LoadingState } from '@/components/ui/LiveStatus'
 import { useCockpitQuery, useCockpitMutation } from '@/hooks/useCockpitData'
-import { seedMessages, type SeedMessage } from '@/lib/data/seed'
+// Seed data removed — live data only
 import { useToast } from '@/lib/contexts/ToastContext'
 
 export default function InboxPage() {
   const { addToast } = useToast()
-  const messagesQ = useCockpitQuery<SeedMessage[]>('messages', '/api/cockpit/messages')
+  const messagesQ = useCockpitQuery<any[]>('messages', '/api/cockpit/messages')
   const markReadMutation = useCockpitMutation<{ id: string }>('/api/cockpit/messages', {
     method: 'PATCH',
     invalidateKeys: ['messages'],
   })
 
-  const messages = messagesQ.data?.data ?? seedMessages
+  const messages = messagesQ.data?.data ?? []
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
   const [selectedId, setSelectedId] = useState<string | null>(null)

@@ -4,20 +4,20 @@ import React, { useState } from 'react'
 import { Card, StatusBadge, ActionButton, SearchInput, TabGroup, EmptyState } from '@/components/ui/shared'
 import { LoadingState } from '@/components/ui/LiveStatus'
 import { useCockpitQuery, useCockpitMutation } from '@/hooks/useCockpitData'
-import { seedAutomations, type SeedAutomation } from '@/lib/data/seed'
+// Seed data removed — live data only
 import { useToast } from '@/lib/contexts/ToastContext'
 import { useRouter } from 'next/navigation'
 
 export default function AutomationsPage() {
   const { addToast } = useToast()
   const router = useRouter()
-  const automationsQ = useCockpitQuery<SeedAutomation[]>('automations', '/api/cockpit/automations')
+  const automationsQ = useCockpitQuery<any[]>('automations', '/api/cockpit/automations')
   const toggleMutation = useCockpitMutation<{ id: string; action: string }>('/api/cockpit/automations', {
     method: 'PATCH',
     invalidateKeys: ['automations'],
   })
 
-  const automations = automationsQ.data?.data ?? seedAutomations
+  const automations = automationsQ.data?.data ?? []
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
 

@@ -4,24 +4,24 @@ import React, { useState, useMemo } from 'react'
 import { Card, StatusBadge, ActionButton, SearchInput, TabGroup, Modal, EmptyState } from '@/components/ui/shared'
 import { DataSourceBanner, LoadingState } from '@/components/ui/LiveStatus'
 import { useCockpitQuery, useCockpitMutation } from '@/hooks/useCockpitData'
-import { seedClients, type SeedClient } from '@/lib/data/seed'
+// Seed data removed — live data only
 import { useToast } from '@/lib/contexts/ToastContext'
 
 export default function ClientsPage() {
   const { addToast } = useToast()
-  const clientsQ = useCockpitQuery<SeedClient[]>('clients', '/api/cockpit/clients')
-  const createMutation = useCockpitMutation<Partial<SeedClient>>('/api/cockpit/clients', {
+  const clientsQ = useCockpitQuery<any[]>('clients', '/api/cockpit/clients')
+  const createMutation = useCockpitMutation<any>('/api/cockpit/clients', {
     invalidateKeys: ['clients'],
     successMessage: 'Client created successfully',
   })
 
-  const clients = clientsQ.data?.data ?? seedClients
-  const dataSource = clientsQ.data?.source ?? 'seed'
+  const clients = clientsQ.data?.data ?? []
+  const dataSource = clientsQ.data?.source ?? 'unavailable'
   const dataWarning = clientsQ.data?.warning
 
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
-  const [selectedClient, setSelectedClient] = useState<SeedClient | null>(null)
+  const [selectedClient, setSelectedClient] = useState<any | null>(null)
   const [showCreate, setShowCreate] = useState(false)
 
   // Create form state

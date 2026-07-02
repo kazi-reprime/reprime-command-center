@@ -15,7 +15,7 @@ export default function InvestorsPage() {
   const { addToast } = useToast()
   const [investors, setInvestors] = useState<Investor[]>([])
   const [loading, setLoading] = useState(true)
-  const [source, setSource] = useState('seed')
+  const [source, setSource] = useState('loading')
   const [warning, setWarning] = useState<string | undefined>()
 
   const fetchData = useCallback(async () => {

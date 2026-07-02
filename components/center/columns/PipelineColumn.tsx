@@ -141,10 +141,10 @@ function formatCurrency(value: number, currency: string): string {
 
 function buildNarrative(b: BriefingPayload | undefined): string {
   if (!b) return ''
-  const meetings = b.meetings.count
-  const investor = b.unread.by_panel.investors
-  const unread = b.unread.total
-  const expiring = b.expiring_invitations.count
+  const meetings = b.meetings?.count ?? 0
+  const investor = b.unread?.by_panel?.investors ?? 0
+  const unread = b.unread?.total ?? 0
+  const expiring = b.expiring_invitations?.count ?? 0
   const deals = b.active_deals?.length ?? 0
 
   const parts: string[] = []
@@ -296,7 +296,7 @@ export default function PipelineColumn() {
   const narrative = useMemo(() => buildNarrative(briefing.data), [briefing.data])
   const events = calendar.data?.events ?? []
   const deals = briefing.data?.active_deals ?? []
-  const expiring = briefing.data?.expiring_invitations.items ?? []
+  const expiring = briefing.data?.expiring_invitations?.items ?? []
   const tenantFilings = useMemo(() => briefing.data?.tenant_filings_today ?? [], [briefing.data?.tenant_filings_today])
   const tenantCounts = useMemo(() => {
     const counts: Record<string, number> = {}

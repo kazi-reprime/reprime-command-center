@@ -4,20 +4,64 @@ import React, { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-const NAV_ITEMS = [
-  { href: '/cockpit', label: 'Dashboard', icon: '📊', shortLabel: 'Home' },
-  { href: '/cockpit/agents', label: 'AI Agents', icon: '🤖', shortLabel: 'Agents' },
-  { href: '/cockpit/clients', label: 'Clients', icon: '👥', shortLabel: 'CRM' },
-  { href: '/cockpit/leads', label: 'Lead Pipeline', icon: '🎯', shortLabel: 'Leads' },
-  { href: '/cockpit/tasks', label: 'Tasks', icon: '✅', shortLabel: 'Tasks' },
-  { href: '/cockpit/automations', label: 'Automations', icon: '⚡', shortLabel: 'Auto' },
-  { href: '/cockpit/inbox', label: 'Inbox', icon: '💬', shortLabel: 'Inbox' },
-  { href: '/cockpit/analytics', label: 'Analytics', icon: '📈', shortLabel: 'Data' },
-  { href: '/cockpit/projects', label: 'Projects', icon: '📁', shortLabel: 'Projects' },
-  { href: '/cockpit/files', label: 'Files', icon: '🗄️', shortLabel: 'Files' },
-  { href: '/cockpit/health', label: 'System Health', icon: '🏥', shortLabel: 'Health' },
-  { href: '/cockpit/settings', label: 'Settings', icon: '⚙️', shortLabel: 'Config' },
+type NavItem = { href: string; label: string; icon: string; shortLabel: string }
+type NavSection = { title: string; items: NavItem[] }
+
+const NAV_SECTIONS: NavSection[] = [
+  {
+    title: 'Overview',
+    items: [
+      { href: '/cockpit', label: 'Dashboard', icon: '📊', shortLabel: 'Home' },
+    ],
+  },
+  {
+    title: 'Deal Flow',
+    items: [
+      { href: '/cockpit/properties', label: 'Properties', icon: '🏢', shortLabel: 'Props' },
+      { href: '/cockpit/pipeline', label: 'Pipeline', icon: '🎯', shortLabel: 'Pipeline' },
+      { href: '/cockpit/investors', label: 'Investors', icon: '💰', shortLabel: 'Invest' },
+      { href: '/cockpit/scores', label: 'Scores', icon: '⭐', shortLabel: 'Scores' },
+      { href: '/cockpit/brokers', label: 'Brokers', icon: '🤝', shortLabel: 'Brokers' },
+    ],
+  },
+  {
+    title: 'Stealth',
+    items: [
+      { href: '/cockpit/automations', label: 'Automations', icon: '⚡', shortLabel: 'Auto' },
+      { href: '/cockpit/loi', label: 'LOI Creator', icon: '📄', shortLabel: 'LOI' },
+    ],
+  },
+  {
+    title: 'Outreach',
+    items: [
+      { href: '/cockpit/campaigns', label: 'Campaigns', icon: '📡', shortLabel: 'Campaigns' },
+    ],
+  },
+  {
+    title: 'Communications',
+    items: [
+      { href: '/cockpit/comms', label: 'Unified Inbox', icon: '💬', shortLabel: 'Comms' },
+    ],
+  },
+  {
+    title: 'Operations',
+    items: [
+      { href: '/cockpit/tasks', label: 'Tasks', icon: '✅', shortLabel: 'Tasks' },
+      { href: '/cockpit/agents', label: 'AI Agents', icon: '🤖', shortLabel: 'Agents' },
+      { href: '/cockpit/analytics', label: 'Analytics', icon: '📈', shortLabel: 'Data' },
+    ],
+  },
+  {
+    title: 'System',
+    items: [
+      { href: '/cockpit/health', label: 'System Health', icon: '🏥', shortLabel: 'Health' },
+      { href: '/cockpit/settings', label: 'Settings', icon: '⚙️', shortLabel: 'Config' },
+    ],
+  },
 ]
+
+// Flatten for command palette search
+const NAV_ITEMS = NAV_SECTIONS.flatMap(s => s.items)
 
 export default function CockpitShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
@@ -105,39 +149,58 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
         </div>
 
         {/* Navigation */}
-        <nav style={{ flex: 1, padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-          {NAV_ITEMS.map(item => {
-            const isActive = item.href === '/cockpit'
-              ? pathname === '/cockpit'
-              : pathname.startsWith(item.href)
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setMobileOpen(false)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.65rem',
-                  padding: collapsed ? '0.6rem' : '0.55rem 0.75rem',
-                  borderRadius: 8, textDecoration: 'none', transition: 'all 150ms',
-                  background: isActive ? 'rgba(255,204,51,0.12)' : 'transparent',
-                  color: isActive ? '#FFCC33' : 'rgba(255,204,51,0.55)',
-                  fontSize: '0.8rem', fontWeight: isActive ? 600 : 500,
-                  justifyContent: collapsed ? 'center' : 'flex-start',
-                  position: 'relative',
-                }}
-                title={collapsed ? item.label : undefined}
-              >
-                {isActive && (
-                  <div style={{
-                    position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3,
-                    background: '#FFCC33', borderRadius: '0 3px 3px 0',
-                  }} />
-                )}
-                <span style={{ fontSize: '1rem', flexShrink: 0 }}>{item.icon}</span>
-                {!collapsed && <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>}
-              </Link>
-            )
-          })}
+        <nav style={{ flex: 1, padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.1rem', overflowY: 'auto' }}>
+          {NAV_SECTIONS.map(section => (
+            <div key={section.title}>
+              {!collapsed && (
+                <div style={{
+                  padding: '0.6rem 0.75rem 0.2rem',
+                  color: 'rgba(255,204,51,0.25)',
+                  fontSize: '0.55rem',
+                  fontWeight: 700,
+                  letterSpacing: '0.1em',
+                  textTransform: 'uppercase',
+                }}>
+                  {section.title}
+                </div>
+              )}
+              {collapsed && section.title !== 'Overview' && (
+                <div style={{ height: 1, background: 'rgba(255,204,51,0.06)', margin: '0.3rem 0.5rem' }} />
+              )}
+              {section.items.map(item => {
+                const isActive = item.href === '/cockpit'
+                  ? pathname === '/cockpit'
+                  : pathname.startsWith(item.href)
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileOpen(false)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.65rem',
+                      padding: collapsed ? '0.5rem' : '0.4rem 0.75rem',
+                      borderRadius: 8, textDecoration: 'none', transition: 'all 150ms',
+                      background: isActive ? 'rgba(255,204,51,0.12)' : 'transparent',
+                      color: isActive ? '#FFCC33' : 'rgba(255,204,51,0.55)',
+                      fontSize: '0.78rem', fontWeight: isActive ? 600 : 500,
+                      justifyContent: collapsed ? 'center' : 'flex-start',
+                      position: 'relative',
+                    }}
+                    title={collapsed ? item.label : undefined}
+                  >
+                    {isActive && (
+                      <div style={{
+                        position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3,
+                        background: '#FFCC33', borderRadius: '0 3px 3px 0',
+                      }} />
+                    )}
+                    <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>{item.icon}</span>
+                    {!collapsed && <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>}
+                  </Link>
+                )
+              })}
+            </div>
+          ))}
         </nav>
 
         {/* Collapse toggle */}

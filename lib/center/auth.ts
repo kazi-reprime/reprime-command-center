@@ -1,6 +1,6 @@
-// Simple shared-password gate for the Command Center. Gideon: password sbh770.
-// (Override via CENTER_PASSWORD env in Vercel; rotate later — see source-of-truth doc.)
-export const CENTER_PASS = process.env.CENTER_PASSWORD || 'sbh770'
+// Shared-password gate for the Command Center kiosk view.
+// Set CENTER_PASSWORD in your .env.local or Vercel environment variables.
+export const CENTER_PASS = process.env.CENTER_PASSWORD || 'changeme'
 
 export function centerAuthed(req: Request): boolean {
   const p = req.headers.get('x-center-pass') || ''

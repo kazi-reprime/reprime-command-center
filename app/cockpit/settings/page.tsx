@@ -195,6 +195,7 @@ export default function SettingsPage() {
             <Card title="Team Members">
               {[
                 { name: 'Gideon', role: 'Owner / CEO', email: 'g@reprime.com' },
+                { name: 'Kazi', role: 'Builder / Technology Lead', email: 'kazi@reprime.com' },
                 { name: 'Shirel', role: 'Operations', email: 'shirel@reprime.com' },
                 { name: 'Adir', role: 'Technology', email: 'adir@reprime.com' },
                 { name: 'Yaron', role: 'Finance', email: 'yaron@reprime.com' },

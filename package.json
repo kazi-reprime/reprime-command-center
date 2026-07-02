@@ -1,7 +1,14 @@
 {
-  "name": "temp-reprime",
+  "name": "reprime-command-center",
   "version": "0.1.0",
-  "private": true,
+  "description": "AI Business Operating System for RePrime Group — CRM, communications, AI agents, analytics, and business operations in one command center.",
+  "author": "Kazi <kazi@reprime.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kazi-reprime/reprime-command-center.git"
+  },
+  "license": "MIT",
+  "private": false,
   "scripts": {
     "dev": "next dev",
     "build": "next build",

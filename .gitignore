@@ -35,6 +35,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# scratch files (may contain credentials)
+scratch/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

@@ -8,9 +8,10 @@ import { useToast } from '@/lib/contexts/ToastContext'
 type Channel = 'all' | 'whatsapp' | 'email' | 'imessage' | 'sms'
 interface Thread {
   id: string; contact_name?: string; phone?: string; email?: string;
-  channel: string; last_message_at?: string; last_message_preview?: string;
-  unread_count?: number; is_investor?: boolean; is_priority?: boolean;
-  panel?: string;
+  channel_type?: string; channel?: string; last_message_at?: string;
+  last_message_preview?: string; unread_count?: number;
+  is_investor?: boolean; is_priority?: boolean; panel?: string;
+  investor_tier?: string | null;
 }
 
 const CHANNEL_CONFIG: Record<string, { label: string; color: string; icon: string }> = {
@@ -26,50 +27,78 @@ export default function CommsPage() {
   const [loading, setLoading] = useState(true)
   const [channel, setChannel] = useState<Channel>('all')
   const [selected, setSelected] = useState<string | null>(null)
+  const [errors, setErrors] = useState<string[]>([])
 
   const fetchThreads = useCallback(async () => {
     setLoading(true)
     const allThreads: Thread[] = []
+    const fetchErrors: string[] = []
 
     // Fetch WhatsApp threads from both panels
-    try {
-      const [r305, r718] = await Promise.allSettled([
-        fetch('/api/whatsapp/threads?panel=305'),
-        fetch('/api/whatsapp/threads?panel=718'),
-      ])
-      if (r305.status === 'fulfilled' && r305.value.ok) {
-        const d = await r305.value.json()
-        ;(d.threads || []).forEach((t: any) => allThreads.push({
-          id: t.id, contact_name: t.contact_name, phone: t.phone,
-          channel: t.channel_type || 'whatsapp', last_message_at: t.last_message_at,
-          last_message_preview: t.last_message_preview, unread_count: t.unread_count,
-          is_investor: t.is_investor, is_priority: t.is_priority, panel: '305',
+    for (const panel of ['305', '718'] as const) {
+      try {
+        const res = await fetch(`/api/whatsapp/threads?panel=${panel}`, {
+          credentials: 'include', // Include auth cookies
+          headers: { 'Content-Type': 'application/json' },
+        })
+        if (res.status === 401) {
+          fetchErrors.push(`WhatsApp ${panel}: Not authenticated — sign in at /login first`)
+          continue
+        }
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}))
+          fetchErrors.push(`WhatsApp ${panel}: ${body.error || body.message || `HTTP ${res.status}`}`)
+          continue
+        }
+        const data = await res.json()
+        const panelThreads = data.threads || []
+        panelThreads.forEach((t: any) => allThreads.push({
+          id: `${panel}-${t.id}`,
+          contact_name: t.contact_name,
+          phone: t.phone,
+          channel_type: t.channel_type || 'whatsapp',
+          channel: t.channel_type || 'whatsapp',
+          last_message_at: t.last_message_at,
+          last_message_preview: t.last_message_preview,
+          unread_count: t.unread_count,
+          is_investor: t.is_investor,
+          is_priority: t.is_priority,
+          investor_tier: t.investor_tier,
+          panel,
         }))
+      } catch (err) {
+        fetchErrors.push(`WhatsApp ${panel}: Network error — ${(err as Error).message}`)
       }
-      if (r718.status === 'fulfilled' && r718.value.ok) {
-        const d = await r718.value.json()
-        ;(d.threads || []).forEach((t: any) => allThreads.push({
-          id: t.id, contact_name: t.contact_name, phone: t.phone,
-          channel: t.channel_type || 'whatsapp', last_message_at: t.last_message_at,
-          last_message_preview: t.last_message_preview, unread_count: t.unread_count,
-          is_investor: t.is_investor, is_priority: t.is_priority, panel: '718',
-        }))
-      }
-    } catch { /* WhatsApp unavailable */ }
+    }
 
     // Fetch Gmail threads
     try {
-      const res = await fetch('/api/gmail')
-      if (res.ok) {
+      const res = await fetch('/api/gmail', {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+      })
+      if (res.status === 401) {
+        fetchErrors.push('Gmail: Not authenticated — configure Gmail in Settings')
+      } else if (res.ok) {
         const data = await res.json()
-        ;(data.emails || data || []).slice(0, 50).forEach((e: any) => allThreads.push({
-          id: e.id || e.threadId, contact_name: e.from?.name || e.from,
-          email: e.from?.email || e.from, channel: 'email',
-          last_message_at: e.date || e.internalDate, last_message_preview: e.snippet || e.subject,
+        const emails = data.emails || data || []
+        ;(Array.isArray(emails) ? emails : []).slice(0, 50).forEach((e: any) => allThreads.push({
+          id: `email-${e.id || e.threadId}`,
+          contact_name: e.from?.name || e.from,
+          email: e.from?.email || e.from,
+          channel_type: 'email',
+          channel: 'email',
+          last_message_at: e.date || e.internalDate,
+          last_message_preview: e.snippet || e.subject,
           unread_count: e.unread ? 1 : 0,
         }))
+      } else {
+        const body = await res.json().catch(() => ({}))
+        fetchErrors.push(`Gmail: ${body.error || `HTTP ${res.status}`}`)
       }
-    } catch { /* Gmail unavailable */ }
+    } catch (err) {
+      fetchErrors.push(`Gmail: ${(err as Error).message}`)
+    }
 
     // Sort by recency
     allThreads.sort((a, b) => {
@@ -79,13 +108,22 @@ export default function CommsPage() {
     })
 
     setThreads(allThreads)
+    setErrors(fetchErrors)
     setLoading(false)
   }, [])
 
   useEffect(() => { fetchThreads() }, [fetchThreads])
 
-  const filtered = channel === 'all' ? threads : threads.filter(t => t.channel === channel)
+  const getChannel = (t: Thread) => t.channel_type || t.channel || 'whatsapp'
+  const filtered = channel === 'all' ? threads : threads.filter(t => getChannel(t) === channel)
   const totalUnread = threads.reduce((s, t) => s + (t.unread_count || 0), 0)
+
+  const channelCounts = {
+    whatsapp: threads.filter(t => getChannel(t) === 'whatsapp').length,
+    email: threads.filter(t => getChannel(t) === 'email').length,
+    imessage: threads.filter(t => getChannel(t) === 'imessage').length,
+    sms: threads.filter(t => getChannel(t) === 'sms').length,
+  }
 
   const timeAgo = (d?: string) => {
     if (!d) return ''
@@ -103,13 +141,28 @@ export default function CommsPage() {
         All channels consolidated · {threads.length} threads · {totalUnread} unread
       </p>
 
+      {/* Connection Errors */}
+      {errors.length > 0 && (
+        <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+          {errors.map((err, i) => (
+            <div key={i} style={{
+              padding: '0.5rem 0.75rem', borderRadius: 8,
+              background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)',
+              color: '#F59E0B', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '0.4rem',
+            }}>
+              <span>⚠️</span> {err}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Channel Tabs */}
       <div style={{ display: 'flex', gap: '0.3rem', marginBottom: '1rem', overflowX: 'auto' }}>
         {[
           { key: 'all' as Channel, label: `All (${threads.length})`, color: '#FFCC33' },
           ...Object.entries(CHANNEL_CONFIG).map(([k, v]) => ({
             key: k as Channel,
-            label: `${v.icon} ${v.label} (${threads.filter(t => t.channel === k).length})`,
+            label: `${v.icon} ${v.label} (${channelCounts[k as keyof typeof channelCounts]})`,
             color: v.color,
           })),
         ].map(tab => (
@@ -123,6 +176,8 @@ export default function CommsPage() {
             }}
           >{tab.label}</button>
         ))}
+        <div style={{ flex: 1 }} />
+        <ActionButton label="↻ Refresh" variant="ghost" size="sm" onClick={fetchThreads} />
       </div>
 
       {loading ? <LoadingState message="Loading communications..." /> : (
@@ -135,11 +190,15 @@ export default function CommsPage() {
             <div style={{ maxHeight: 600, overflowY: 'auto' }}>
               {filtered.length === 0 && (
                 <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(255,204,51,0.3)', fontSize: '0.8rem' }}>
-                  No threads available. Configure WhatsApp and/or Gmail to see messages.
+                  {errors.length > 0
+                    ? 'Could not connect to messaging services. Check the warnings above.'
+                    : 'No threads found. Check WhatsApp and Gmail connections in Settings.'
+                  }
                 </div>
               )}
               {filtered.slice(0, 100).map(t => {
-                const cfg = CHANNEL_CONFIG[t.channel] || { label: t.channel, color: '#888', icon: '💬' }
+                const ch = getChannel(t)
+                const cfg = CHANNEL_CONFIG[ch] || { label: ch, color: '#888', icon: '💬' }
                 return (
                   <div key={t.id} onClick={() => setSelected(t.id)}
                     style={{
@@ -159,7 +218,11 @@ export default function CommsPage() {
                         }}>
                           {t.contact_name || t.phone || t.email || 'Unknown'}
                         </span>
-                        {t.is_investor && <span style={{ fontSize: '0.5rem', padding: '0.05rem 0.2rem', borderRadius: 3, background: 'rgba(255,204,51,0.15)', color: '#FFCC33' }}>INV</span>}
+                        {t.is_investor && (
+                          <span style={{ fontSize: '0.5rem', padding: '0.05rem 0.2rem', borderRadius: 3, background: 'rgba(255,204,51,0.15)', color: '#FFCC33' }}>
+                            INV{t.investor_tier ? ` ${t.investor_tier}` : ''}
+                          </span>
+                        )}
                         {t.is_priority && <span style={{ fontSize: '0.5rem', padding: '0.05rem 0.2rem', borderRadius: 3, background: 'rgba(239,68,68,0.15)', color: '#EF4444' }}>!</span>}
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
@@ -200,12 +263,16 @@ export default function CommsPage() {
                 <div style={{ textAlign: 'center', color: 'rgba(255,204,51,0.2)' }}>
                   <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💬</div>
                   <div style={{ fontSize: '0.85rem' }}>Select a thread to view</div>
+                  <div style={{ fontSize: '0.7rem', marginTop: '0.25rem', color: 'rgba(255,204,51,0.15)' }}>
+                    For full message history, use the Kiosk View
+                  </div>
                 </div>
               </div>
             ) : (() => {
               const t = threads.find(th => th.id === selected)
               if (!t) return null
-              const cfg = CHANNEL_CONFIG[t.channel] || { label: t.channel, color: '#888', icon: '💬' }
+              const ch = getChannel(t)
+              const cfg = CHANNEL_CONFIG[ch] || { label: ch, color: '#888', icon: '💬' }
               return (
                 <>
                   <div style={{
@@ -218,19 +285,29 @@ export default function CommsPage() {
                       </div>
                       <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.65rem' }}>
                         {cfg.icon} {cfg.label} · {t.phone || t.email || ''}
+                        {t.panel && ` · Panel ${t.panel}`}
                       </div>
                     </div>
                     <div style={{ display: 'flex', gap: '0.3rem' }}>
-                      <ActionButton label="Reply" variant="primary" size="sm" onClick={() => addToast('Reply composer opening...', 'info')} />
-                      <ActionButton label="Call" variant="ghost" size="sm" onClick={() => addToast('Initiating call...', 'info')} />
+                      <ActionButton label="Open in Kiosk" variant="primary" size="sm" onClick={() => window.open('/center', '_blank')} />
                     </div>
                   </div>
                   <div style={{ flex: 1, padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <div style={{ textAlign: 'center', color: 'rgba(255,204,51,0.25)' }}>
-                      <p style={{ fontSize: '0.8rem', margin: 0 }}>Message history loads from the live channel API</p>
+                      <p style={{ fontSize: '0.8rem', margin: 0 }}>Message history is available in the Kiosk View</p>
                       <p style={{ fontSize: '0.7rem', margin: '0.25rem 0 0', color: 'rgba(255,204,51,0.15)' }}>
                         Last activity: {t.last_message_at ? new Date(t.last_message_at).toLocaleString() : 'Unknown'}
                       </p>
+                      {t.is_investor && (
+                        <span style={{
+                          display: 'inline-block', marginTop: '0.5rem',
+                          padding: '0.2rem 0.5rem', borderRadius: 4,
+                          background: 'rgba(255,204,51,0.1)', color: '#FFCC33',
+                          fontSize: '0.65rem', fontWeight: 600,
+                        }}>
+                          Investor{t.investor_tier ? ` · Tier ${t.investor_tier}` : ''}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </>

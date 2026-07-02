@@ -9,8 +9,9 @@ type NavSection = { title: string; items: NavItem[] }
 
 const NAV_SECTIONS: NavSection[] = [
   {
-    title: 'Overview',
+    title: 'Command Center',
     items: [
+      { href: '/center', label: 'Kiosk View', icon: '🖥️', shortLabel: 'Kiosk' },
       { href: '/cockpit', label: 'Dashboard', icon: '📊', shortLabel: 'Home' },
     ],
   },
@@ -35,11 +36,6 @@ const NAV_SECTIONS: NavSection[] = [
     title: 'Outreach',
     items: [
       { href: '/cockpit/campaigns', label: 'Campaigns', icon: '📡', shortLabel: 'Campaigns' },
-    ],
-  },
-  {
-    title: 'Communications',
-    items: [
       { href: '/cockpit/comms', label: 'Unified Inbox', icon: '💬', shortLabel: 'Comms' },
     ],
   },
@@ -164,13 +160,16 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
                   {section.title}
                 </div>
               )}
-              {collapsed && section.title !== 'Overview' && (
+              {collapsed && section.title !== 'Command Center' && (
                 <div style={{ height: 1, background: 'rgba(255,204,51,0.06)', margin: '0.3rem 0.5rem' }} />
               )}
               {section.items.map(item => {
+                const isKiosk = item.href === '/center'
                 const isActive = item.href === '/cockpit'
                   ? pathname === '/cockpit'
-                  : pathname.startsWith(item.href)
+                  : item.href === '/center'
+                    ? pathname === '/center'
+                    : pathname.startsWith(item.href)
                 return (
                   <Link
                     key={item.href}
@@ -180,11 +179,16 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
                       display: 'flex', alignItems: 'center', gap: '0.65rem',
                       padding: collapsed ? '0.5rem' : '0.4rem 0.75rem',
                       borderRadius: 8, textDecoration: 'none', transition: 'all 150ms',
-                      background: isActive ? 'rgba(255,204,51,0.12)' : 'transparent',
+                      background: isKiosk
+                        ? (isActive ? 'rgba(255,204,51,0.2)' : 'rgba(255,204,51,0.08)')
+                        : (isActive ? 'rgba(255,204,51,0.12)' : 'transparent'),
                       color: isActive ? '#FFCC33' : 'rgba(255,204,51,0.55)',
-                      fontSize: '0.78rem', fontWeight: isActive ? 600 : 500,
+                      fontSize: isKiosk ? '0.82rem' : '0.78rem',
+                      fontWeight: isKiosk ? 700 : (isActive ? 600 : 500),
                       justifyContent: collapsed ? 'center' : 'flex-start',
                       position: 'relative',
+                      border: isKiosk ? '1px solid rgba(255,204,51,0.15)' : 'none',
+                      marginBottom: isKiosk ? '0.15rem' : 0,
                     }}
                     title={collapsed ? item.label : undefined}
                   >
@@ -196,6 +200,13 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
                     )}
                     <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>{item.icon}</span>
                     {!collapsed && <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>}
+                    {isKiosk && !collapsed && (
+                      <span style={{
+                        marginLeft: 'auto', fontSize: '0.5rem', padding: '0.1rem 0.3rem',
+                        background: 'rgba(255,204,51,0.15)', color: '#FFCC33',
+                        borderRadius: 4, fontWeight: 700, letterSpacing: '0.05em',
+                      }}>LIVE</span>
+                    )}
                   </Link>
                 )
               })}
@@ -284,17 +295,21 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
             }}>⌘K</kbd>
           </button>
 
-          {/* Center link */}
-          <Link
+          {/* Open Center in new tab */}
+          <a
             href="/center"
+            target="_blank"
+            rel="noopener noreferrer"
             style={{
-              color: 'rgba(255,204,51,0.5)', fontSize: '0.7rem', textDecoration: 'none',
+              color: '#FFCC33', fontSize: '0.7rem', textDecoration: 'none',
               padding: '0.35rem 0.6rem', borderRadius: 6,
-              border: '1px solid rgba(255,204,51,0.1)',
+              background: 'rgba(255,204,51,0.1)',
+              border: '1px solid rgba(255,204,51,0.2)',
+              fontWeight: 600,
             }}
           >
-            Kiosk ↗
-          </Link>
+            🖥️ Open Kiosk ↗
+          </a>
         </header>
 
         {/* Page Content */}

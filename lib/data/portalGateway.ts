@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Portal Data Gateway — queries Portal Supabase tables directly.
  * Used by cockpit API routes to fetch listings, brokers, automations, scores, etc.

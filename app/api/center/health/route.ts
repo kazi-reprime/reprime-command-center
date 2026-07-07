@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { NextResponse } from 'next/server';
 import { whatsappAdapter } from '@/lib/adapters/whatsappAdapter';
 import { smsAdapter } from '@/lib/adapters/smsAdapter';

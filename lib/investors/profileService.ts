@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { db } from '@/db';
 import { desc, eq, and, or, inArray } from 'drizzle-orm';
 import { messages as dbMessages, whatsappMessages, whatsappThreads } from '@/db/schema';

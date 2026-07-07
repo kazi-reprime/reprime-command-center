@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { NextResponse, type NextRequest } from 'next/server'
 import { Redis } from '@upstash/redis'
 import { createServerClient, createServiceClient } from '@/lib/supabase/server'

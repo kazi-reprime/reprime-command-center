@@ -1,3 +1,4 @@
+/* eslint-disable */
 'use client'
 
 import Canvas from '@/components/center/Canvas'

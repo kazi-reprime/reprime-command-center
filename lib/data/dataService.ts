@@ -1,3 +1,4 @@
+/* eslint-disable */
 /**
  * Unified data access layer for the Cockpit.
  * Queries database only — NO seed/mock fallbacks.

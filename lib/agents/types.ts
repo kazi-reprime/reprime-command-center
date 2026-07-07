@@ -203,8 +203,49 @@ export async function executeAgent(
   // Tool-use loop using Anthropic directly (primary AI provider)
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
+    // Fallback to OpenAI or Groq when Anthropic is unavailable
+    const openaiKey = process.env.OPENAI_API_KEY
+    const groqKey = process.env.GROQ_API_KEY
+    const fallbackKey = (openaiKey?.startsWith('sk-') ? openaiKey : null) || groqKey
+    
+    if (!fallbackKey) {
+      return {
+        reply: 'AI provider not configured. Please add ANTHROPIC_API_KEY, OPENAI_API_KEY, or GROQ_API_KEY.',
+        language: 'en',
+        agentId: agentDef.id,
+        toolTrace: context.toolTrace,
+      }
+    }
+
+    // Use OpenAI/Groq as fallback (no tool-use, plain chat)
+    const isGroq = !openaiKey?.startsWith('sk-')
+    const endpoint = isGroq
+      ? 'https://api.groq.com/openai/v1/chat/completions'
+      : 'https://api.openai.com/v1/chat/completions'
+    const model = isGroq ? 'llama-3.1-70b-versatile' : 'gpt-4o-mini'
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${fallbackKey}` },
+        body: JSON.stringify({ model, messages }),
+      })
+      if (res.ok) {
+        const json = await res.json()
+        const reply = json.choices?.[0]?.message?.content || ''
+        return {
+          reply,
+          language: HEBREW_RE.test(reply) ? 'he' : 'en',
+          agentId: agentDef.id,
+          toolTrace: context.toolTrace,
+        }
+      }
+    } catch (err) {
+      console.error(`[agent:${agentDef.id}] fallback AI failed:`, (err as Error).message)
+    }
+
     return {
-      reply: 'AI provider not configured. Please add ANTHROPIC_API_KEY.',
+      reply: 'All AI providers are currently unavailable. Please try again.',
       language: 'en',
       agentId: agentDef.id,
       toolTrace: context.toolTrace,

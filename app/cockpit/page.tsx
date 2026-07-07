@@ -52,7 +52,11 @@ export default function CockpitDashboard() {
       { label: 'WhatsApp', status: 'Checking...', color: 'text-text-muted', bg: 'bg-surface-raised' },
       { label: 'Gmail', status: 'Checking...', color: 'text-text-muted', bg: 'bg-surface-raised' },
       { label: 'Database', status: 'Checking...', color: 'text-text-muted', bg: 'bg-surface-raised' },
+      { label: 'Zoom', status: 'Checking...', color: 'text-text-muted', bg: 'bg-surface-raised' },
     ]
+
+    // Health API returns data directly OR wrapped in .data depending on the query hook
+    const h = healthData?.data || healthData
 
     const getStatus = (label: string, isOk: boolean) => ({
       label,
@@ -62,10 +66,11 @@ export default function CockpitDashboard() {
     })
 
     return [
-      getStatus('Nora AI', !!healthData?.data?.env?.ANTHROPIC_API_KEY),
-      getStatus('WhatsApp', healthData?.data?.adapters?.whatsapp?.isConfigured),
-      getStatus('Gmail', !!healthData?.data?.env?.GOOGLE_REFRESH_TOKEN),
-      getStatus('Database', healthData?.data?.db?.reachable),
+      getStatus('Nora AI', !!(h?.env?.ANTHROPIC_API_KEY || h?.env?.OPENAI_API_KEY)),
+      getStatus('WhatsApp', !!(h?.adapters?.whatsapp?.isConfigured)),
+      getStatus('Gmail', !!(h?.env?.GOOGLE_REFRESH_TOKEN)),
+      getStatus('Database', !!(h?.db?.reachable)),
+      getStatus('Zoom', !!(h?.env?.ZOOM_ACCOUNT_ID || h?.adapters?.zoom?.isConfigured)),
     ]
   })()
 

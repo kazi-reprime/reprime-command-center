@@ -7,7 +7,8 @@ import { usePathname, useRouter } from 'next/navigation'
 import { 
   Home, Activity, MessageSquare, Mail, Calendar, Users, Briefcase, 
   CheckSquare, FileText, Bell, Search, Plus, Mic, Settings, 
-  ChevronLeft, ChevronRight, Menu, Hexagon, UserCircle
+  ChevronLeft, ChevronRight, Menu, Hexagon, UserCircle, Bot, Languages,
+  Video, BarChart3
 } from 'lucide-react'
 import { ThreeDLogo } from '@/components/ui/ThreeDLogo'
 import { ThemeSwitcher } from '@/components/cockpit/ThemeSwitcher'
@@ -24,26 +25,28 @@ const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
+    title: 'Communications',
+    items: [
+      { href: '/cockpit/comms', label: 'WhatsApp', icon: <MessageSquare className="w-5 h-5" /> },
+      { href: '/cockpit/email', label: 'Gmail', icon: <Mail className="w-5 h-5" /> },
+      { href: '/cockpit/inbox', label: 'Inbox', icon: <Mail className="w-5 h-5" /> },
+      { href: '/cockpit/calendar', label: 'Calendar / Zoom', icon: <Calendar className="w-5 h-5" /> },
+    ],
+  },
+  {
     title: 'Intelligence',
     items: [
       { href: '/cockpit/pipeline', label: 'Pipeline', icon: <Activity className="w-5 h-5" /> },
       { href: '/cockpit/investors', label: 'Investors', icon: <Users className="w-5 h-5" /> },
       { href: '/cockpit/properties', label: 'Properties', icon: <Briefcase className="w-5 h-5" /> },
-    ],
-  },
-  {
-    title: 'Communications',
-    items: [
-      { href: '/cockpit/comms', label: 'WhatsApp', icon: <MessageSquare className="w-5 h-5" /> },
-      { href: '/cockpit/email', label: 'Gmail', icon: <Mail className="w-5 h-5" /> },
-      { href: '/cockpit/calendar', label: 'Calendar', icon: <Calendar className="w-5 h-5" /> },
+      { href: '/cockpit/analytics', label: 'Analytics', icon: <BarChart3 className="w-5 h-5" /> },
     ],
   },
   {
     title: 'Operations',
     items: [
-      { href: '/cockpit/tasks', label: 'Tasks', icon: <CheckSquare className="w-5 h-5" /> },
       { href: '/cockpit/notes', label: 'Notes', icon: <FileText className="w-5 h-5" /> },
+      { href: '/cockpit/tasks', label: 'Tasks', icon: <CheckSquare className="w-5 h-5" /> },
       { href: '/cockpit/health', label: 'System Health', icon: <Activity className="w-5 h-5" /> },
       { href: '/cockpit/settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
     ],
@@ -237,6 +240,34 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">New Action</span>
+            </button>
+
+            {/* Hebrew / English Toggle */}
+            <button
+              onClick={() => {
+                const html = document.documentElement
+                const isHe = html.getAttribute('lang') === 'he'
+                html.setAttribute('lang', isHe ? 'en' : 'he')
+                html.setAttribute('dir', isHe ? 'ltr' : 'rtl')
+              }}
+              className="h-10 px-3 rounded-full bg-surface-raised hover:bg-surface-hover border border-border flex items-center gap-1.5 text-text-secondary hover:text-text-primary text-sm font-semibold transition-all cursor-pointer"
+              title="Toggle Hebrew / English"
+            >
+              <Languages className="w-4 h-4" />
+              <span className="hidden sm:inline text-xs">EN/עב</span>
+            </button>
+
+            {/* Nora AI Button */}
+            <button
+              onClick={() => window.open('/center', '_blank')}
+              className="h-10 px-4 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-sm font-semibold transition-all flex items-center gap-2 shadow-lg shadow-purple-500/20 group cursor-pointer relative"
+              title="Talk to Nora"
+            >
+              <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-surface">
+                <span className="absolute inset-0 rounded-full bg-green-400 animate-ping opacity-75" />
+              </span>
+              <Bot className="w-4 h-4 group-hover:scale-110 transition-transform" />
+              <span className="hidden sm:inline">Nora</span>
             </button>
 
             <button

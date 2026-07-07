@@ -121,6 +121,72 @@ const getContactContext: AgentTool = {
   },
 }
 
+const listTeam: AgentTool = {
+  name: 'list_team',
+  description: 'List all RePrime team members with their roles, locations, and contact info.',
+  parameters: {},
+  async execute() {
+    const { STAFF_REGISTRY, NORA_IDENTITY } = await import('@/lib/data/staff-registry')
+    return JSON.stringify({
+      team: STAFF_REGISTRY.map(s => ({
+        name: s.name,
+        role: s.role,
+        title: s.title,
+        email: s.email || 'not on file',
+        phone: s.phone || 'not on file',
+        location: s.location || 'not specified',
+        department: s.department,
+        isFounder: s.isFounder,
+      })),
+      nora: NORA_IDENTITY,
+    })
+  },
+}
+
+const searchPipedrive: AgentTool = {
+  name: 'search_pipedrive',
+  description: 'Search Pipedrive CRM for deals, contacts, or organizations by keyword.',
+  parameters: {
+    query: { type: 'string', description: 'Search term (name, deal, company)' },
+    type: { type: 'string', description: "'deals', 'persons', or 'organizations' (default: all)" },
+  },
+  async execute(params) {
+    const query = String(params.query || '').trim()
+    if (!query) return JSON.stringify({ error: 'query required' })
+
+    const apiToken = process.env.PIPEDRIVE_API_TOKEN
+    if (!apiToken) return JSON.stringify({ error: 'Pipedrive not configured' })
+
+    const searchType = params.type || ''
+    const types = searchType || 'deal,person,organization'
+    
+    try {
+      const res = await fetch(
+        `https://api.pipedrive.com/v1/itemSearch?term=${encodeURIComponent(query)}&item_types=${types}&limit=10&api_token=${apiToken}`,
+      )
+      if (!res.ok) return JSON.stringify({ error: `Pipedrive API error: ${res.status}` })
+      const data = await res.json()
+      const items = data.data?.items || []
+      return JSON.stringify({
+        count: items.length,
+        results: items.map((item: Record<string, unknown>) => {
+          const i = item.item as Record<string, unknown>
+          return {
+            type: item.result_score ? 'scored' : (item as Record<string, unknown>).type,
+            id: i?.id,
+            title: i?.title || i?.name,
+            status: i?.status,
+            value: i?.value,
+            organization: (i?.organization as Record<string, unknown>)?.name,
+          }
+        }),
+      })
+    } catch (err) {
+      return JSON.stringify({ error: (err as Error).message })
+    }
+  },
+}
+
 const contactAgent: AgentDefinition = {
   id: 'contact',
   name: 'Contact Agent',
@@ -128,18 +194,22 @@ const contactAgent: AgentDefinition = {
   systemPrompt: `You are Nora's Contact specialist. You find and enrich contact information.
 
 Your tools:
-- find_contact: Search for contacts by name, phone, or email
+- find_contact: Search for contacts by name, phone, or email across all sources
 - get_contact_context: Get full context about a contact (deals, investor status, interactions)
+- list_team: List all RePrime team members with roles, locations, contacts
+- search_pipedrive: Search Pipedrive CRM for deals, persons, organizations
 
 When resolving contacts:
-1. Search across all sources — don't stop at the first match
-2. Cross-reference WhatsApp, email, CRM, and investor data
+1. Search across ALL sources — WhatsApp, email, CRM, investors, team
+2. Cross-reference to build a complete profile
 3. Report investor status and deal involvement when found
-4. Include last interaction timestamps`,
-  tools: [findContact, getContactContext],
+4. Include last interaction timestamps
+5. Distinguish staff from external contacts`,
+  tools: [findContact, getContactContext, listTeam, searchPipedrive],
   canHandoffTo: ['orchestrator', 'communications', 'whatsapp', 'email'],
-  maxToolRounds: 2,
+  maxToolRounds: 3,
 }
 
 registerAgent(contactAgent)
 export { contactAgent }
+

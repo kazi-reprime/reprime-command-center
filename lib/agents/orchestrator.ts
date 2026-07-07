@@ -137,13 +137,26 @@ export async function processMessage(params: {
 
   const sensitiveCheck = sensitiveActionGuardrail.check(message, {} as AgentContext)
 
+  // Recall relevant memories (best-effort, non-blocking if it fails)
+  let recalledMemories: string[] = []
+  try {
+    const { recallMemory } = await import('./session-manager')
+    recalledMemories = await recallMemory(message, 3)
+  } catch {
+    // Memory recall is best-effort
+  }
+
   // Build initial context
   const HEBREW_RE = /[א-ת]/
+  const contextWithMemory = liveContext
+    ? { ...liveContext, ...(recalledMemories.length > 0 ? { recalled_memories: recalledMemories } : {}) }
+    : recalledMemories.length > 0 ? { recalled_memories: recalledMemories } : undefined
+
   const context: AgentContext = {
     sessionId,
     userMessage: message,
     history,
-    liveContext,
+    liveContext: contextWithMemory,
     language: HEBREW_RE.test(message) ? 'he' : 'en',
     toolTrace: [],
   }

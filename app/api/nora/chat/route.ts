@@ -235,6 +235,52 @@ const NORA_TOOLS: Anthropic.Messages.Tool[] = [
       required: ['thread_id'],
     },
   },
+  {
+    name: 'create_reminder',
+    description:
+      'Create a reminder for Gideon. Similar to a task but specifically time-based.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        title: {
+          type: 'string',
+          description: 'Reminder title / what to remember.',
+        },
+        due_at: {
+          type: 'string',
+          description: 'When to remind (ISO 8601 datetime or relative like "tomorrow 9am").',
+        },
+        priority: {
+          type: 'number',
+          description: 'Priority 1-5 (default 2 for reminders).',
+        },
+      },
+      required: ['title'],
+    },
+  },
+  {
+    name: 'draft_email',
+    description:
+      'Draft an email for Gideon to review. Does NOT send. Returns the draft for approval.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        to: {
+          type: 'string',
+          description: 'Recipient email address.',
+        },
+        subject: {
+          type: 'string',
+          description: 'Email subject line.',
+        },
+        body: {
+          type: 'string',
+          description: 'Full email body text.',
+        },
+      },
+      required: ['to', 'subject', 'body'],
+    },
+  },
 ]
 
 // ---------------------------------------------------------------------------
@@ -469,6 +515,42 @@ async function executeTool(
         return JSON.stringify({ count: messages.length, messages })
       }
 
+      // ── Create reminder ──────────────────────────────────────────────
+      case 'create_reminder': {
+        const title = String(toolInput.title || '').trim()
+        if (!title) return JSON.stringify({ error: 'title is required' })
+        const priority = Math.max(1, Math.min(5, Number(toolInput.priority) || 2))
+        const dueAt = toolInput.due_at ? String(toolInput.due_at) : null
+        const { data, error } = await service
+          .from('bucket_items')
+          .insert({
+            title,
+            priority,
+            source_type: 'nora-reminder',
+            status: 'open',
+            ...(dueAt ? { due_date: dueAt } : {}),
+          })
+          .select('id')
+          .single()
+        if (error) return JSON.stringify({ error: error.message })
+        return JSON.stringify({
+          success: true,
+          id: data?.id,
+          message: `Reminder "${title}" created${dueAt ? ` for ${dueAt}` : ''}.`,
+        })
+      }
+
+      // ── Draft email (no send) ─────────────────────────────────────────
+      case 'draft_email': {
+        return JSON.stringify({
+          draft: true,
+          to: String(toolInput.to || ''),
+          subject: String(toolInput.subject || ''),
+          body: String(toolInput.body || ''),
+          message: 'Draft ready for review. Say "send it" to send, or suggest edits.',
+        })
+      }
+
       default:
         return JSON.stringify({ error: `Unknown tool: ${toolName}` })
     }
@@ -671,7 +753,7 @@ export async function POST(request: NextRequest) {
   try {
     let response = await client.messages.create({
       model,
-      max_tokens: 1024,
+      max_tokens: 2048,
       system,
       messages,
       tools: NORA_TOOLS,
@@ -704,7 +786,7 @@ export async function POST(request: NextRequest) {
 
       response = await client.messages.create({
         model,
-        max_tokens: 1024,
+        max_tokens: 2048,
         system,
         messages,
         tools: NORA_TOOLS,

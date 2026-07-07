@@ -145,27 +145,83 @@ const markEmailRead: AgentTool = {
   },
 }
 
+const draftEmail: AgentTool = {
+  name: 'draft_email',
+  description: 'Draft an email for Gideon to review before sending. Returns the draft for approval — does NOT send it. Use this when Gideon asks you to "draft" or "write" an email.',
+  parameters: {
+    to: { type: 'string', description: 'Recipient email address' },
+    subject: { type: 'string', description: 'Email subject line' },
+    body: { type: 'string', description: 'Full email body text' },
+    thread_id: { type: 'string', description: 'Thread ID if replying (optional)', required: false },
+  },
+  async execute(params) {
+    // Draft doesn't send — just returns the composed email for approval
+    return JSON.stringify({
+      draft: true,
+      to: String(params.to || ''),
+      subject: String(params.subject || ''),
+      body: String(params.body || ''),
+      threadId: params.thread_id || null,
+      message: 'Draft ready for review. Say "send it" to send, or suggest edits.',
+    })
+  },
+}
+
+const summarizeThread: AgentTool = {
+  name: 'summarize_email_thread',
+  description: 'Read and summarize an email thread. Useful when Gideon wants a quick overview of a conversation.',
+  parameters: {
+    thread_id: { type: 'string', description: 'Gmail thread ID' },
+    account: { type: 'string', description: 'Gmail account key (optional)', required: false },
+  },
+  async execute(params) {
+    const threadId = String(params.thread_id || '')
+    if (!threadId) return JSON.stringify({ error: 'thread_id required' })
+
+    const { fetchThread } = await import('@/lib/email/unified-inbox')
+    const thread = await fetchThread(threadId, params.account as string | undefined)
+
+    if (!thread) return JSON.stringify({ error: 'Thread not found' })
+
+    // Return full thread data for the LLM to summarize
+    return JSON.stringify({
+      threadId: thread.threadId,
+      subject: thread.subject,
+      messageCount: thread.messageCount,
+      messages: thread.messages.map(m => ({
+        from: m.fromName || m.from,
+        body: m.body.slice(0, 1500),
+        receivedAt: m.receivedAt,
+      })),
+    })
+  },
+}
+
 const emailAgent: AgentDefinition = {
   id: 'email',
   name: 'Email Agent',
-  description: 'Handles all email operations — inbox, threads, search, send, reply',
-  systemPrompt: `You are Nora's Email specialist. You manage Gideon's Gmail.
+  description: 'Handles all email operations — inbox, threads, search, send, reply, draft',
+  systemPrompt: `You are Nora's Email specialist. You manage Gideon's Gmail (g@reprime.com + g@floridastatetrust.com).
 
 Your tools:
 - read_inbox: Get latest emails from inbox
 - read_email_thread: Read a full email conversation
 - search_emails: Search Gmail (supports Gmail search syntax)
-- send_email: Send or reply to an email (GET APPROVAL FIRST)
+- draft_email: Compose a draft for Gideon's review (does NOT send)
+- send_email: Send or reply to an email (GET APPROVAL FIRST — use draft_email instead if unsure)
 - mark_email_read: Mark an email as read
+- summarize_email_thread: Read and summarize a full thread
 
 CRITICAL RULES:
-1. NEVER send an email without presenting the draft to Gideon first
-2. Always use tools to fetch real data — never invent email content
-3. When summarizing emails, include sender, subject, key points
-4. For replies, maintain the thread (use thread_id and in_reply_to)
-5. Detect calendar invites and mention them
-6. Note attachments when present`,
-  tools: [readInbox, readThread, searchEmails, sendEmail, markEmailRead],
+1. NEVER send an email without presenting the draft to Gideon first — use draft_email
+2. When Gideon says "draft" or "write" → use draft_email
+3. When Gideon says "send it" after reviewing a draft → use send_email
+4. Always use tools to fetch real data — never invent email content
+5. When summarizing emails, include sender, subject, key points
+6. For replies, maintain the thread (use thread_id and in_reply_to)
+7. Detect calendar invites and mention them
+8. Note attachments when present`,
+  tools: [readInbox, readThread, searchEmails, draftEmail, sendEmail, markEmailRead, summarizeThread],
   canHandoffTo: ['orchestrator', 'calendar'],
   requiresApproval: true,
   maxToolRounds: 3,

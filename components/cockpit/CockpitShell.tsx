@@ -1,4 +1,4 @@
-/* eslint-disable */
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client'
 
 import React, { useState, useCallback, useEffect, useRef } from 'react'
@@ -6,15 +6,16 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { 
   Home, Activity, MessageSquare, Mail, Calendar, Users, Briefcase, 
-  CheckSquare, FileText, Bell, Search, Plus, Mic, Settings, 
+  CheckSquare, FileText, Search, Plus, Mic, Settings, 
   ChevronLeft, ChevronRight, Menu, Hexagon, UserCircle, Bot, Languages,
-  Video, BarChart3
+  BarChart3
 } from 'lucide-react'
 import { ThreeDLogo } from '@/components/ui/ThreeDLogo'
 import { ThemeSwitcher } from '@/components/cockpit/ThemeSwitcher'
 import NoraFloating from '@/components/nora/NoraFloating'
 import NotificationCenter from '@/components/cockpit/NotificationCenter'
 import { useStore } from '@/lib/store/useStore'
+import { useNora } from '@/hooks/useNora'
 
 type NavItem = { href: string; label: string; icon: React.ReactNode }
 type NavSection = { title: string; items: NavItem[] }
@@ -71,7 +72,10 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
   const [commandOpen, setCommandOpen] = useState(false)
   const [commandQuery, setCommandQuery] = useState('')
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [noraReply, setNoraReply] = useState<string | null>(null)
+  const [noraAsking, setNoraAsking] = useState(false)
   const commandInputRef = useRef<HTMLInputElement>(null)
+  const { sendMessage: noraSend } = useNora()
 
   const [dateStr, setDateStr] = useState('')
   const [greeting, setGreeting] = useState('Good Morning')
@@ -119,19 +123,31 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
   const handleCommandKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setSelectedIndex(i => Math.min(i + 1, filteredNav.length - 1))
+      // +1 for the "Ask Nora" option when there's a query with no nav matches
+      const maxIndex = filteredNav.length > 0 ? filteredNav.length - 1 : 0
+      setSelectedIndex(i => Math.min(i + 1, maxIndex))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
       setSelectedIndex(i => Math.max(i - 1, 0))
-    } else if (e.key === 'Enter' && filteredNav.length > 0) {
+    } else if (e.key === 'Enter') {
       e.preventDefault()
-      const item = filteredNav[selectedIndex]
-      if (item) {
-        router.push(item.href)
-        setCommandOpen(false)
+      if (filteredNav.length > 0 && selectedIndex < filteredNav.length) {
+        const item = filteredNav[selectedIndex]
+        if (item) {
+          router.push(item.href)
+          setCommandOpen(false)
+        }
+      } else if (commandQuery.trim()) {
+        // No nav match — route to Nora
+        setNoraAsking(true)
+        setNoraReply(null)
+        noraSend(commandQuery.trim()).then(reply => {
+          setNoraReply(reply || 'No response from Nora.')
+          setNoraAsking(false)
+        })
       }
     }
-  }, [filteredNav, selectedIndex, router])
+  }, [filteredNav, selectedIndex, router, commandQuery, noraSend])
 
   // Auto-focus command palette input
   useEffect(() => {
@@ -382,10 +398,52 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
                   </span>
                 </Link>
               ))}
-              {filteredNav.length === 0 && (
+              {filteredNav.length === 0 && commandQuery.trim() && (
+                <div className="p-2">
+                  {/* Ask Nora option */}
+                  <button
+                    onClick={() => {
+                      setNoraAsking(true)
+                      setNoraReply(null)
+                      noraSend(commandQuery.trim()).then(reply => {
+                        setNoraReply(reply || 'No response from Nora.')
+                        setNoraAsking(false)
+                      })
+                    }}
+                    className={`flex items-center gap-4 p-4 rounded-2xl transition-colors group w-full text-left ${
+                      selectedIndex === 0 ? 'bg-purple-500/10 text-purple-500' : 'text-text-secondary hover:bg-surface-hover hover:text-purple-500'
+                    }`}
+                  >
+                    <div className={`p-2 rounded-xl shadow-sm transition-colors ${
+                      selectedIndex === 0 ? 'bg-purple-500/20' : 'bg-surface-raised group-hover:bg-surface'
+                    }`}>
+                      <Bot className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="font-semibold text-text-primary">Ask Nora</span>
+                      <div className="text-xs text-text-muted mt-0.5">&quot;{commandQuery}&quot;</div>
+                    </div>
+                    <span className="text-[10px] font-bold tracking-widest uppercase text-purple-400">↵ Enter</span>
+                  </button>
+
+                  {/* Nora response inline */}
+                  {noraAsking && (
+                    <div className="mt-2 p-4 rounded-2xl bg-purple-500/5 border border-purple-500/10 text-sm text-purple-400 animate-pulse">
+                      Nora is thinking...
+                    </div>
+                  )}
+                  {noraReply && (
+                    <div className="mt-2 p-4 rounded-2xl bg-purple-500/5 border border-purple-500/10">
+                      <div className="text-[9px] font-bold uppercase tracking-widest text-purple-400 mb-2">Nora</div>
+                      <div className="text-sm text-text-primary whitespace-pre-wrap leading-relaxed">{noraReply}</div>
+                    </div>
+                  )}
+                </div>
+              )}
+              {filteredNav.length === 0 && !commandQuery.trim() && (
                 <div className="py-12 text-center text-text-muted">
                   <Search className="w-8 h-8 mx-auto mb-3 opacity-20" />
-                  <p className="font-medium text-sm">No matching commands found.</p>
+                  <p className="font-medium text-sm">Type to search or ask Nora</p>
                 </div>
               )}
             </div>

@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { useQuery, useMutation } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { OrbPlaceholder } from '@/components/ui/OrbPlaceholder'
 import { useStore } from '@/lib/store/useStore'
+import { useNora } from '@/hooks/useNora'
 
 const REFETCH_MS = 30_000
 
@@ -16,11 +17,18 @@ export default function NoraDeskColumn() {
   const [filter, setFilter] = useState<'all' | 'overdue' | 'today' | 'upcoming'>('all')
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Shared Nora state from Zustand store
-  const noraMessages = useStore(s => s.noraMessages)
-  const addNoraMessage = useStore(s => s.addNoraMessage)
+  // Shared Nora state from unified hook
+  const {
+    messages: noraMessages,
+    isLoading,
+    toolTrace,
+    pendingApprovals,
+    sendMessage,
+    approve,
+    dismiss,
+  } = useNora()
+
   const setNoraMessages = useStore(s => s.setNoraMessages)
-  const setNoraStatus = useStore(s => s.setNoraStatus)
 
   // Load history into store on first mount (if store only has default greeting)
   const historyQ = useQuery<{ messages: { role: string; content: string }[] }>({
@@ -44,12 +52,12 @@ export default function NoraDeskColumn() {
     }
   }, [historyQ.data, noraMessages.length, setNoraMessages])
 
-  const asksQ = useQuery({
+  const asksQ = useQuery<{ asks: Array<{ title?: string; question?: string; due_at?: string }> }>({
     queryKey: ['secretary-asks'],
     queryFn: async () => {
       const res = await fetch('/api/secretary/asks', { cache: 'no-store' })
       if (!res.ok) return { asks: [] }
-      return res.json()
+      return res.json() as Promise<{ asks: Array<{ title?: string; question?: string; due_at?: string }> }>
     },
     refetchInterval: REFETCH_MS,
     staleTime: REFETCH_MS,
@@ -58,47 +66,16 @@ export default function NoraDeskColumn() {
 
   const asks = asksQ.data?.asks ?? []
 
-  const chatMut = useMutation({
-    mutationFn: async (query: string) => {
-      const res = await fetch('/api/nora/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: query }),
-      })
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err.error || `HTTP ${res.status}`)
-      }
-      return res.json()
-    },
-    onSuccess: (data) => {
-      const reply = data.reply || data.response || data.message || 'Done.'
-      const agentTag = data.agentId && data.agentId !== 'orchestrator' 
-        ? `[${data.agentId}] ` 
-        : ''
-      addNoraMessage({ sender: 'nora', text: `${agentTag}${reply}`, agentId: data.agentId, timestamp: new Date() })
-      setNoraStatus('idle')
-    },
-    onError: (err) => {
-      addNoraMessage({ sender: 'nora', text: `⚠️ ${(err as Error).message}`, timestamp: new Date() })
-      setNoraStatus('idle')
-    },
-  })
-
-  const handleSend = useCallback(() => {
-    if (!input.trim() || chatMut.isPending) return
+  const handleSend = useCallback(async () => {
+    if (!input.trim() || isLoading) return
     const msg = input.trim()
-    addNoraMessage({ sender: 'user', text: msg, timestamp: new Date() })
     setInput('')
-    setNoraStatus('thinking')
-    chatMut.mutate(msg)
-  }, [input, chatMut, addNoraMessage, setNoraStatus])
+    await sendMessage(msg)
+  }, [input, isLoading, sendMessage])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [noraMessages])
-
-  const noApiKey = !chatMut.isPending && noraMessages.length === 0
 
   return (
     <div className="flex flex-col h-full bg-surface text-text-primary font-sans">
@@ -156,13 +133,11 @@ export default function NoraDeskColumn() {
         </div>
       )}
 
-      {/* Chat Messages — reads from shared store */}
+      {/* Chat Messages — reads from shared store via useNora() */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         {noraMessages.length === 0 && (
           <div className="p-5 text-center text-text-muted text-xs font-bold whitespace-pre-wrap">
-            {noApiKey
-              ? 'No items need your attention right now.\nAsk Nora anything below.'
-              : 'Ask Nora anything...'}
+            Ask Nora anything...
           </div>
         )}
         
@@ -175,11 +150,46 @@ export default function NoraDeskColumn() {
                 : 'self-start bg-purple-50 text-purple-900 border-purple-100 rounded-bl-none'
             }`}
           >
+            {/* Agent ID badge */}
+            {m.sender === 'nora' && m.agentId && m.agentId !== 'orchestrator' && (
+              <div className="text-[9px] text-purple-500 font-bold uppercase tracking-wider mb-1">
+                via {m.agentId}
+              </div>
+            )}
             {m.text}
           </div>
         ))}
+
+        {/* Tool Trace */}
+        {toolTrace.length > 0 && (
+          <div className="self-start px-3 py-2 rounded-lg bg-purple-50/50 border border-purple-100 text-[10px] text-purple-500">
+            {toolTrace.map((t, i) => (
+              <div key={i} className="flex items-center gap-1">
+                <span>🔧</span>
+                <span className="font-bold">{t.toolName}</span>
+                <span className="opacity-40">({t.durationMs}ms)</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Pending Approvals */}
+        {pendingApprovals.map(a => (
+          <div key={a.id} className="self-start px-3 py-2 rounded-xl bg-amber-50 border border-amber-200 shadow-sm">
+            <div className="text-[10px] text-amber-700 font-bold mb-1">⚠️ Approval Required</div>
+            <div className="text-[11px] text-amber-900 mb-2">{a.description}</div>
+            <div className="flex gap-2">
+              <button onClick={() => approve(a.id)} className="px-3 py-1 rounded-md bg-green-100 border border-green-300 text-green-700 text-[10px] font-bold cursor-pointer hover:bg-green-200 transition-colors">
+                ✓ Approve
+              </button>
+              <button onClick={() => dismiss(a.id)} className="px-3 py-1 rounded-md bg-red-50 border border-red-200 text-red-600 text-[10px] font-bold cursor-pointer hover:bg-red-100 transition-colors">
+                ✕ Cancel
+              </button>
+            </div>
+          </div>
+        ))}
         
-        {chatMut.isPending && (
+        {isLoading && (
           <div className="self-start px-3 py-2 rounded-xl rounded-bl-none bg-purple-50 text-purple-400 border border-purple-100 text-xs font-bold shadow-sm animate-pulse">
             Nora is thinking...
           </div>
@@ -197,7 +207,7 @@ export default function NoraDeskColumn() {
         />
         <button
           onClick={handleSend}
-          disabled={!input.trim() || chatMut.isPending}
+          disabled={!input.trim() || isLoading}
           className={`px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest transition-all shadow-sm ${
             input.trim() 
               ? 'bg-purple-600 hover:bg-purple-700 text-text-primary cursor-pointer' 

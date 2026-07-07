@@ -1,33 +1,33 @@
-/* eslint-disable */
+/* eslint-disable react-hooks/exhaustive-deps */
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useStore } from '@/lib/store/useStore'
-import type { NoraMessage } from '@/lib/store/useStore'
+import { useEffect, useRef, useState } from 'react'
+import { useNora } from '@/hooks/useNora'
 
 /**
  * NoraFloating — Floating AI assistant accessible from anywhere in the cockpit.
  * Purple gradient bubble in bottom-right corner, expands to full chat panel.
- * Streams responses from /api/nora/chat.
  *
- * Uses the shared Zustand store for message history and status, so
- * conversations persist across route changes and sync with /center's
- * NoraDeskColumn.
+ * Uses the unified useNora() hook — all state is shared across
+ * NoraDeskColumn, VoiceShell, and Command Palette.
  */
 export default function NoraFloating() {
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState('')
-  const [lang, setLang] = useState<'en' | 'he'>('en')
   const [pendingQuickReply, setPendingQuickReply] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
-  // Read from shared store
-  const messages = useStore(s => s.noraMessages)
-  const noraStatus = useStore(s => s.noraStatus)
-  const addNoraMessage = useStore(s => s.addNoraMessage)
-  const setNoraStatus = useStore(s => s.setNoraStatus)
-  const loading = noraStatus === 'thinking'
+  const {
+    messages,
+    status,
+    isLoading,
+    toolTrace,
+    pendingApprovals,
+    sendMessage,
+    approve,
+    dismiss,
+  } = useNora()
 
   // Focus input when panel opens
   useEffect(() => {
@@ -59,71 +59,26 @@ export default function NoraFloating() {
     }
   }, [])
 
-  const sendMessage = useCallback(async (textOverride?: string) => {
+  const handleSend = async (textOverride?: string) => {
     const text = (textOverride || input).trim()
-    if (!text || loading) return
-
-    const userMsg: NoraMessage = { sender: 'user', text, timestamp: new Date() }
-    addNoraMessage(userMsg)
+    if (!text || isLoading) return
     setInput('')
-    setNoraStatus('thinking')
+    await sendMessage(text)
+  }
 
-    // Broadcast Nora status via CustomEvent for backwards compatibility
-    window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'thinking' } }))
-
-    try {
-      const res = await fetch('/api/nora/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: text,
-          lang,
-          history: messages.slice(-10).map(m => ({ role: m.sender === 'nora' ? 'assistant' : 'user', content: m.text })),
-        }),
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        const reply = data.reply || data.message || 'I couldn\'t process that. Try again.'
-        const assistantMsg: NoraMessage = { sender: 'nora', text: reply, timestamp: new Date() }
-        addNoraMessage(assistantMsg)
-
-        // Auto-save as note (fire and forget)
-        fetch('/api/notes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            title: 'Nora Chat: ' + text.slice(0, 40),
-            content: '**User:** ' + text + '\n\n**Nora:** ' + reply,
-            tags: ['nora-chat'],
-          }),
-        }).catch(() => {})
-      } else {
-        addNoraMessage({
-          sender: 'nora',
-          text: 'Something went wrong. Please try again.',
-          timestamp: new Date(),
-        })
-      }
-    } catch {
-      addNoraMessage({
-        sender: 'nora',
-        text: 'Network error. Check your connection.',
-        timestamp: new Date(),
-      })
-    }
-
-    setNoraStatus('idle')
-    window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
-  }, [input, loading, lang, messages, addNoraMessage, setNoraStatus])
-
-  // Handle quick-reply: set input and send in one go (fixes unreliable setTimeout approach)
+  // Handle quick-reply
   useEffect(() => {
     if (pendingQuickReply) {
-      sendMessage(pendingQuickReply)
+      handleSend(pendingQuickReply)
       setPendingQuickReply(null)
     }
-  }, [pendingQuickReply, sendMessage])
+  }, [pendingQuickReply])
+
+  // Status label
+  const statusLabel = status === 'thinking' ? 'Thinking...'
+    : status === 'speaking' ? 'Speaking...'
+    : status === 'listening' ? 'Listening...'
+    : 'AI Executive Assistant'
 
   if (!open) {
     return (
@@ -183,18 +138,9 @@ export default function NoraFloating() {
         <div style={{ flex: 1 }}>
           <div style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>Nora</div>
           <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10 }}>
-            {loading ? 'Thinking...' : 'AI Executive Assistant'}
+            {statusLabel}
           </div>
         </div>
-        {/* Language toggle */}
-        <button onClick={() => setLang(l => l === 'en' ? 'he' : 'en')}
-          style={{
-            background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)',
-            borderRadius: 6, padding: '3px 8px', color: '#A855F7',
-            fontSize: 10, fontWeight: 700, cursor: 'pointer',
-          }}>
-          {lang === 'en' ? 'EN' : 'עב'}
-        </button>
         {/* Close */}
         <button onClick={() => setOpen(false)} style={{
           background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)',
@@ -216,11 +162,16 @@ export default function NoraFloating() {
             <div style={{ fontSize: 40 }}>🤖</div>
             <div style={{ fontSize: 13, fontWeight: 600 }}>Hi, I&apos;m Nora</div>
             <div style={{ fontSize: 11 }}>
-              Ask me anything about the command center,<br />
-              send messages, schedule meetings, or search contacts.
+              Your AI executive assistant. Ask me anything,<br />
+              send messages, schedule meetings, or draft emails.
             </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginTop: 8 }}>
-              {['What meetings today?', 'Show unread WhatsApp', 'Draft an email', 'Search Pipedrive'].map(q => (
+              {[
+                '📅 Today\'s schedule',
+                '📧 Unread emails',
+                '💬 WhatsApp unreads',
+                '📝 Create a task',
+              ].map(q => (
                 <button key={q} onClick={() => setPendingQuickReply(q)}
                   style={{
                     background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.15)',
@@ -245,6 +196,15 @@ export default function NoraFloating() {
                 ? '1px solid rgba(168,85,247,0.3)'
                 : '1px solid rgba(255,255,255,0.05)',
             }}>
+              {/* Agent ID badge */}
+              {msg.sender === 'nora' && msg.agentId && msg.agentId !== 'orchestrator' && (
+                <div style={{
+                  fontSize: 9, color: '#A855F7', fontWeight: 700,
+                  marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.05em',
+                }}>
+                  via {msg.agentId} agent
+                </div>
+              )}
               <div style={{
                 color: 'rgba(255,255,255,0.85)', fontSize: 13,
                 lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
@@ -257,7 +217,55 @@ export default function NoraFloating() {
             </div>
           </div>
         ))}
-        {loading && (
+
+        {/* Tool Trace (show what tools Nora used) */}
+        {toolTrace.length > 0 && (
+          <div style={{
+            padding: '6px 10px', borderRadius: 8,
+            background: 'rgba(168,85,247,0.05)',
+            border: '1px solid rgba(168,85,247,0.1)',
+            fontSize: 10, color: 'rgba(168,85,247,0.6)',
+          }}>
+            {toolTrace.map((t, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 2 }}>
+                <span>🔧</span>
+                <span style={{ fontWeight: 600 }}>{t.toolName}</span>
+                <span style={{ color: 'rgba(255,255,255,0.2)' }}>({t.durationMs}ms)</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Pending Approvals */}
+        {pendingApprovals.length > 0 && pendingApprovals.map(a => (
+          <div key={a.id} style={{
+            padding: '10px 12px', borderRadius: 10,
+            background: 'rgba(245,158,11,0.08)',
+            border: '1px solid rgba(245,158,11,0.2)',
+          }}>
+            <div style={{ fontSize: 11, color: '#F59E0B', fontWeight: 600, marginBottom: 6 }}>
+              ⚠️ Approval Required
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', marginBottom: 8 }}>
+              {a.description}
+            </div>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button onClick={() => approve(a.id)} style={{
+                background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)',
+                borderRadius: 6, padding: '4px 12px', color: '#22C55E',
+                fontSize: 11, fontWeight: 600, cursor: 'pointer',
+              }}>✓ Approve</button>
+              <button onClick={() => dismiss(a.id)} style={{
+                background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
+                borderRadius: 6, padding: '4px 12px', color: '#EF4444',
+                fontSize: 11, fontWeight: 600, cursor: 'pointer',
+              }}>✕ Cancel</button>
+            </div>
+          </div>
+        ))}
+
+        {/* Loading indicator */}
+        {isLoading && (
           <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
             <div style={{
               padding: '10px 16px', borderRadius: '12px 12px 12px 4px',
@@ -283,9 +291,8 @@ export default function NoraFloating() {
           ref={inputRef}
           value={input}
           onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && sendMessage()}
-          placeholder={lang === 'en' ? 'Ask Nora anything...' : '...שאלו את נורה'}
-          dir={lang === 'he' ? 'rtl' : 'ltr'}
+          onKeyDown={e => e.key === 'Enter' && handleSend()}
+          placeholder="Ask Nora anything..."
           style={{
             flex: 1, background: 'rgba(255,255,255,0.05)',
             border: '1px solid rgba(168,85,247,0.15)', borderRadius: 12,
@@ -293,15 +300,15 @@ export default function NoraFloating() {
             outline: 'none', fontFamily: 'inherit',
           }}
         />
-        <button onClick={() => sendMessage()} disabled={loading || !input.trim()}
+        <button onClick={() => handleSend()} disabled={isLoading || !input.trim()}
           style={{
             background: input.trim() ? 'linear-gradient(135deg, #A855F7, #7C3AED)' : 'rgba(168,85,247,0.1)',
             border: 'none', borderRadius: 10, width: 38, height: 38,
-            color: '#fff', cursor: input.trim() && !loading ? 'pointer' : 'default',
+            color: '#fff', cursor: input.trim() && !isLoading ? 'pointer' : 'default',
             fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
             opacity: input.trim() ? 1 : 0.4,
           }}>
-          {loading ? '⏳' : '➤'}
+          {isLoading ? '⏳' : '➤'}
         </button>
       </div>
 

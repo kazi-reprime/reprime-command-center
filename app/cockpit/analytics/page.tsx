@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { StatCard, Card } from '@/components/ui/shared'
 import { DataSourceBanner, LoadingState } from '@/components/ui/LiveStatus'
 import { useCockpitQuery } from '@/hooks/useCockpitData'

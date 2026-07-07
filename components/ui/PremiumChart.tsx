@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState } from 'react'
 import {
   AreaChart,
   Area,
@@ -11,6 +11,8 @@ import {
   ResponsiveContainer
 } from 'recharts'
 
+// Sample/placeholder chart data — no real API backs this yet.
+// Replace with live data once an analytics endpoint is available.
 const data = [
   { name: 'Jan', value: 4000 },
   { name: 'Feb', value: 3000 },
@@ -22,13 +24,19 @@ const data = [
 ]
 
 export function PremiumChart({ title = "Growth Metrics" }: { title?: string }) {
+  const [timeRange, setTimeRange] = useState('last7')
+
   return (
     <div className="p-5 rounded-3xl bg-white border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-sm font-bold text-slate-800">{title}</h3>
-        <select className="bg-slate-50 border border-slate-200 text-slate-600 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-100">
-          <option>Last 7 Months</option>
-          <option>Year to Date</option>
+        <select
+          value={timeRange}
+          onChange={(e) => setTimeRange(e.target.value)}
+          className="bg-slate-50 border border-slate-200 text-slate-600 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-100"
+        >
+          <option value="last7">Last 7 Months</option>
+          <option value="ytd">Year to Date</option>
         </select>
       </div>
       

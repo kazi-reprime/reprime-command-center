@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { 
   Home, Activity, MessageSquare, Mail, Calendar, Users, Briefcase, 
   CheckSquare, FileText, Bell, Search, Plus, Mic, Settings, 
@@ -52,15 +52,19 @@ const NAV_ITEMS = NAV_SECTIONS.flatMap(s => s.items)
 
 export default function CockpitShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
   const [collapsed, setCollapsed] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [commandOpen, setCommandOpen] = useState(false)
   const [commandQuery, setCommandQuery] = useState('')
 
   const [dateStr, setDateStr] = useState('')
+  const [greeting, setGreeting] = useState('Good Morning')
 
   useEffect(() => {
     setDateStr(new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }))
+    const hour = new Date().getHours()
+    setGreeting(hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening')
   }, [])
 
   // Keyboard shortcut for command palette
@@ -184,7 +188,6 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
       {/* Main Content Area */}
       <div 
         className="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out w-full"
-        style={{ paddingLeft: '0', '@media (min-width: 1024px)': { paddingLeft: sidebarWidth } } as any}
       >
         {/* Top Executive Bar */}
         <header className="sticky top-0 z-30 flex items-center justify-between h-20 px-4 lg:px-8 glass-panel border-b border-slate-100/50" style={{ marginLeft: sidebarWidth }}>
@@ -198,7 +201,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
               <Menu className="w-6 h-6" />
             </button>
             <div className="hidden sm:block">
-              <h1 className="text-lg font-semibold text-slate-900">Good Morning, Gideon.</h1>
+              <h1 className="text-lg font-semibold text-slate-900">{greeting}, Gideon.</h1>
               <p className="text-xs font-medium text-slate-500">{dateStr} • APEX Priority: Normal</p>
             </div>
           </div>
@@ -214,17 +217,29 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
               <kbd className="hidden lg:inline-flex items-center h-5 px-1.5 bg-white rounded border border-slate-200 text-[10px] font-semibold text-slate-400">⌘K</kbd>
             </button>
 
-            <button className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200/70 flex items-center justify-center text-slate-500 transition-colors relative">
+            <button
+              onClick={() => router.push('/cockpit/inbox')}
+              className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200/70 flex items-center justify-center text-slate-500 transition-colors relative cursor-pointer"
+              title="Notifications"
+            >
               <Bell className="w-4 h-4" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full border-2 border-white" />
             </button>
 
-            <button className="h-10 px-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm">
+            <button
+              onClick={() => { setCommandOpen(true); setCommandQuery(''); }}
+              className="h-10 px-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm cursor-pointer"
+              title="New Action"
+            >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">New Action</span>
             </button>
 
-            <button className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 border border-blue-100 flex items-center justify-center text-blue-600 transition-all shadow-sm group">
+            <button
+              onClick={() => window.open('/center', '_blank')}
+              className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 border border-blue-100 flex items-center justify-center text-blue-600 transition-all shadow-sm group cursor-pointer"
+              title="Voice Command Center"
+            >
               <Mic className="w-4 h-4 group-hover:scale-110 transition-transform" />
             </button>
           </div>

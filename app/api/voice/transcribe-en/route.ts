@@ -23,16 +23,32 @@ export async function POST(request: Request) {
   // Uses the existing openai SDK pointed at Groq's OpenAI-compatible endpoint —
   // no extra package needed. Falls back to OpenAI if GROQ_API_KEY is absent.
   const useGroq = !!process.env.GROQ_API_KEY
+  const apiKey = useGroq ? process.env.GROQ_API_KEY : process.env.OPENAI_API_KEY
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: `Missing ${useGroq ? 'GROQ_API_KEY' : 'OPENAI_API_KEY'} environment variable` },
+      { status: 500 }
+    )
+  }
+
   const client = useGroq
-    ? new OpenAI({ apiKey: process.env.GROQ_API_KEY!, baseURL: 'https://api.groq.com/openai/v1' })
-    : new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
+    ? new OpenAI({ apiKey, baseURL: 'https://api.groq.com/openai/v1' })
+    : new OpenAI({ apiKey })
 
-  const result = await client.audio.transcriptions.create({
-    file: audio,
-    model: useGroq ? 'whisper-large-v3' : 'whisper-1',
-    language: 'en',
-    response_format: 'json',
-  })
+  try {
+    const result = await client.audio.transcriptions.create({
+      file: audio,
+      model: useGroq ? 'whisper-large-v3' : 'whisper-1',
+      language: 'en',
+      response_format: 'json',
+    })
 
-  return NextResponse.json({ text: result.text, language: 'en', rtl: false })
+    return NextResponse.json({ text: result.text, language: 'en', rtl: false })
+  } catch (err) {
+    console.error('[transcribe-en] Transcription failed:', err)
+    return NextResponse.json(
+      { error: 'Transcription failed', detail: err instanceof Error ? err.message : String(err) },
+      { status: 500 }
+    )
+  }
 }

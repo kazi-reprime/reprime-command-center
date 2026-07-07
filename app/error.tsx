@@ -15,17 +15,20 @@ export default function GlobalError({
   }, [error]);
 
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center bg-black text-white">
-      <div className="max-w-md p-6 bg-zinc-900 border border-zinc-800 rounded-lg text-center shadow-xl">
-        <h2 className="text-xl font-bold text-rose-500 mb-4">Something went wrong!</h2>
-        <p className="text-sm text-zinc-400 mb-6 break-words">
+    <div className="flex h-screen w-full flex-col items-center justify-center bg-[#fdfdfd]">
+      <div className="max-w-md p-8 glass-card rounded-3xl text-center shadow-xl border border-slate-200">
+        <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-red-50 flex items-center justify-center">
+          <span className="text-2xl">⚠️</span>
+        </div>
+        <h2 className="text-xl font-bold text-slate-900 mb-3">Something went wrong</h2>
+        <p className="text-sm text-slate-500 mb-6 break-words leading-relaxed">
           {error.message || 'An unexpected error occurred in the application.'}
         </p>
         <button
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded text-sm font-semibold transition-colors"
+          className="px-6 py-3 bg-blue-600 hover:bg-blue-700 rounded-2xl text-sm font-bold text-white transition-all shadow-lg shadow-blue-500/30 cursor-pointer"
           onClick={() => reset()}
         >
-          Try again
+          Try Again
         </button>
       </div>
     </div>

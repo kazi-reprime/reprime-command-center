@@ -5,7 +5,7 @@ import { Card, StatusBadge, ActionButton, SearchInput, TabGroup, EmptyState } fr
 import { DataSourceBanner, LoadingState } from '@/components/ui/LiveStatus'
 import { useCockpitQuery, useCockpitMutation } from '@/hooks/useCockpitData'
 import { useToast } from '@/lib/contexts/ToastContext'
-import { useRouter } from 'next/navigation'
+
 
 interface CockpitAutomation {
   id: string; name: string; trigger: string; action: string;
@@ -16,7 +16,6 @@ interface CockpitAutomation {
 
 export default function AutomationsPage() {
   const { addToast } = useToast()
-  const router = useRouter()
   const automationsQ = useCockpitQuery<CockpitAutomation[]>('automations', '/api/cockpit/automations')
   const toggleMutation = useCockpitMutation<{ id: string; action: string }>('/api/cockpit/automations', {
     method: 'PATCH',
@@ -31,8 +30,14 @@ export default function AutomationsPage() {
   const [filter, setFilter] = useState('all')
 
   const handleToggle = (id: string, action: 'enable' | 'disable' | 'retry') => {
-    toggleMutation.mutate({ id, action })
-    addToast(`Automation ${action === 'enable' ? 'enabled' : action === 'disable' ? 'disabled' : 'retried'} successfully`, 'success')
+    toggleMutation.mutate({ id, action }, {
+      onSuccess: () => {
+        addToast(`Automation ${action === 'enable' ? 'enabled' : action === 'disable' ? 'disabled' : 'retried'} successfully`, 'success')
+      },
+      onError: () => {
+        addToast(`Failed to ${action} automation`, 'error')
+      },
+    })
   }
 
   const filtered = automations.filter(a => {

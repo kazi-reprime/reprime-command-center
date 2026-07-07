@@ -10,7 +10,6 @@ import {
   type AgentContext,
   type AgentResult,
   type AgentMessage,
-  type ToolTraceEntry,
   registerAgent,
   getAgent,
   executeAgent,

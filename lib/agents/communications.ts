@@ -5,7 +5,7 @@
  * All sends go through the Integration Gateway for failover.
  */
 
-import { type AgentDefinition, type AgentTool, type AgentContext, registerAgent } from './types'
+import { type AgentDefinition, type AgentTool, registerAgent } from './types'
 import { createServiceClient } from '@/lib/supabase/server'
 
 // ── Tools ──────────────────────────────────────────────────────────────────────

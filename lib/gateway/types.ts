@@ -84,7 +84,7 @@ export interface ProviderHealth {
   errorMessage?: string
 }
 
-export interface ProviderAdapter<TConfig = unknown> {
+export interface ProviderAdapter {
   /** Unique provider identifier e.g. 'timelines', 'twilio', 'anthropic' */
   readonly id: string
   /** Human-readable name e.g. 'Timelines.ai', 'Twilio' */

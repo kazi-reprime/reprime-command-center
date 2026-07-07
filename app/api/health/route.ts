@@ -6,23 +6,29 @@ import { whatsappAdapter } from '@/lib/adapters/whatsappAdapter'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
+// Core vars — system won't function without these
 const REQUIRED_ENVS = [
-  'CRON_SECRET',
   'ANTHROPIC_API_KEY',
   'OPENAI_API_KEY',
-  'ELEVENLABS_API_KEY',
   'TIMELINES_API_KEY',
-  'PIPEDRIVE_API_TOKEN',
   'GOOGLE_REFRESH_TOKEN',
+  'UPSTASH_REDIS_REST_URL',
+  'UPSTASH_REDIS_REST_TOKEN',
+  'CRON_SECRET',
+] as const
+
+// Optional vars — system degrades gracefully without these
+const OPTIONAL_ENVS = [
+  'ELEVENLABS_API_KEY',
+  'PIPEDRIVE_API_TOKEN',
   'SENDGRID_API_KEY',
   'INFORUPTCY_EMAIL',
   'INFORUPTCY_PASSWORD',
-  'UPSTASH_REDIS_REST_URL',
-  'UPSTASH_REDIS_REST_TOKEN',
 ] as const
 
 type RequiredEnv = (typeof REQUIRED_ENVS)[number]
-type EnvFlags = Record<RequiredEnv, boolean>
+type OptionalEnv = (typeof OPTIONAL_ENVS)[number]
+type EnvFlags = Record<RequiredEnv | OptionalEnv, boolean>
 
 const DB_TIMEOUT_MS = 5000
 
@@ -58,8 +64,9 @@ async function pingDb(): Promise<{ reachable: boolean; latencyMs: number }> {
 }
 
 export async function GET() {
+  const allEnvs = [...REQUIRED_ENVS, ...OPTIONAL_ENVS] as const
   const env = Object.fromEntries(
-    REQUIRED_ENVS.map((k) => [k, Boolean(process.env[k])])
+    allEnvs.map((k) => [k, Boolean(process.env[k])])
   ) as EnvFlags
 
   const db = await pingDb()
@@ -70,11 +77,11 @@ export async function GET() {
     whatsapp: whatsappAdapter.getStatus(),
   }
 
-  const missingEnv = REQUIRED_ENVS.some((k) => !env[k])
+  const missingRequired = REQUIRED_ENVS.some((k) => !env[k])
   const missingAdapter = Object.values(adapters).some(a => !a.isConfigured)
   
   const overall: 'ok' | 'degraded' | 'down' =
-    !db.reachable ? 'down' : (missingEnv || missingAdapter) ? 'degraded' : 'ok'
+    !db.reachable ? 'down' : (missingRequired || missingAdapter) ? 'degraded' : 'ok'
 
   return NextResponse.json(
     {

@@ -74,6 +74,8 @@ export function useNora() {
   const addNoraMessage = useStore(s => s.addNoraMessage)
   const setNoraStatus = useStore(s => s.setNoraStatus)
   const language = useStore(s => s.language)
+  const updateLastNoraMessage = useStore(s => s.updateLastNoraMessage)
+  const removeLastEmptyNoraMessage = useStore(s => s.removeLastEmptyNoraMessage)
 
   const isLoading = noraStatus === 'thinking'
 
@@ -81,9 +83,15 @@ export function useNora() {
 
   const sendMessage = useCallback(async (text: string): Promise<string | null> => {
     const trimmed = text.trim()
-    if (!trimmed || isLoading) return null
+    if (!trimmed) return null
 
-    // Abort any in-flight request
+    // If Nora is already responding, interrupt her first
+    if (isLoading) {
+      abortRef.current?.abort()
+      removeLastEmptyNoraMessage()
+    }
+
+    // Abort any in-flight request and start fresh
     abortRef.current?.abort()
     abortRef.current = new AbortController()
 
@@ -171,7 +179,7 @@ export function useNora() {
         window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
       }
     }
-  }, [isLoading, messages, language, addNoraMessage, setNoraStatus])
+  }, [isLoading, messages, language, addNoraMessage, setNoraStatus, removeLastEmptyNoraMessage])
 
   // ── Send Voice ─────────────────────────────────────────────────────────
 
@@ -298,20 +306,49 @@ export function useNora() {
     })
   }, [addNoraMessage])
 
-  // ── Cancel ─────────────────────────────────────────────────────────────
+  // ── Cancel / Interrupt ─────────────────────────────────────────────────
 
   const cancel = useCallback(() => {
+    // 1. Abort any in-flight HTTP request (chat or streaming)
     abortRef.current?.abort()
+    abortRef.current = null
+
+    // 2. Clean up empty streaming placeholder (if streaming hadn't produced text yet)
+    removeLastEmptyNoraMessage()
+
+    // 3. If the last Nora message has partial content, mark it as interrupted
+    const currentMessages = useStore.getState().noraMessages
+    const lastMsg = currentMessages[currentMessages.length - 1]
+    if (lastMsg && lastMsg.sender === 'nora' && lastMsg.text.length > 1) {
+      const updateLast = useStore.getState().updateLastNoraMessage
+      // Only add the marker if it doesn't already end with one
+      if (!lastMsg.text.endsWith('⏹')) {
+        updateLast(lastMsg.text.trimEnd() + ' ⏹')
+      }
+    }
+
+    // 4. Reset all status
     setNoraStatus('idle')
-  }, [setNoraStatus])
+    setActiveToolName(null)
+
+    // 5. Broadcast for any listeners
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
+      window.dispatchEvent(new CustomEvent('nora:interrupted'))
+    }
+  }, [setNoraStatus, removeLastEmptyNoraMessage])
 
   // ── Send Streaming Message (SSE) ───────────────────────────────────────
 
-  const updateLastNoraMessage = useStore(s => s.updateLastNoraMessage)
-
   const sendStreamingMessage = useCallback(async (text: string): Promise<string | null> => {
     const trimmed = text.trim()
-    if (!trimmed || isLoading) return null
+    if (!trimmed) return null
+
+    // Interrupt any in-progress response
+    if (isLoading) {
+      abortRef.current?.abort()
+      removeLastEmptyNoraMessage()
+    }
 
     abortRef.current?.abort()
     abortRef.current = new AbortController()
@@ -399,7 +436,7 @@ export function useNora() {
         window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
       }
     }
-  }, [isLoading, messages, addNoraMessage, setNoraStatus, updateLastNoraMessage, sendMessage])
+  }, [isLoading, messages, addNoraMessage, setNoraStatus, updateLastNoraMessage, sendMessage, removeLastEmptyNoraMessage])
 
   return {
     // State

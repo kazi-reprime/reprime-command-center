@@ -27,6 +27,7 @@ export default function NoraFloating() {
     sendMessage,
     approve,
     dismiss,
+    cancel,
   } = useNora()
 
   // Focus input when panel opens
@@ -291,7 +292,10 @@ export default function NoraFloating() {
           ref={inputRef}
           value={input}
           onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSend()}
+          onKeyDown={e => {
+            if (e.key === 'Enter') handleSend()
+            if (e.key === 'Escape' && isLoading) { cancel(); e.preventDefault() }
+          }}
           placeholder="Ask Nora anything..."
           style={{
             flex: 1, background: 'rgba(255,255,255,0.05)',
@@ -300,20 +304,35 @@ export default function NoraFloating() {
             outline: 'none', fontFamily: 'inherit',
           }}
         />
-        <button onClick={() => handleSend()} disabled={isLoading || !input.trim()}
-          style={{
-            background: input.trim() ? 'linear-gradient(135deg, #A855F7, #7C3AED)' : 'rgba(168,85,247,0.1)',
-            border: 'none', borderRadius: 10, width: 38, height: 38,
-            color: '#fff', cursor: input.trim() && !isLoading ? 'pointer' : 'default',
-            fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            opacity: input.trim() ? 1 : 0.4,
-          }}>
-          {isLoading ? '⏳' : '➤'}
-        </button>
+        {isLoading ? (
+          <button onClick={cancel}
+            title="Stop Nora (Esc)"
+            style={{
+              background: 'linear-gradient(135deg, #EF4444, #DC2626)',
+              border: 'none', borderRadius: 10, width: 38, height: 38,
+              color: '#fff', cursor: 'pointer',
+              fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              animation: 'pulse-stop 1.5s ease-in-out infinite',
+            }}>
+            ⏹
+          </button>
+        ) : (
+          <button onClick={() => handleSend()} disabled={!input.trim()}
+            style={{
+              background: input.trim() ? 'linear-gradient(135deg, #A855F7, #7C3AED)' : 'rgba(168,85,247,0.1)',
+              border: 'none', borderRadius: 10, width: 38, height: 38,
+              color: '#fff', cursor: input.trim() ? 'pointer' : 'default',
+              fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              opacity: input.trim() ? 1 : 0.4,
+            }}>
+            ➤
+          </button>
+        )}
       </div>
 
       <style>{`
         @keyframes blink { 0%, 100% { opacity: 0.2 } 50% { opacity: 1 } }
+        @keyframes pulse-stop { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.95); } }
       `}</style>
     </div>
   )

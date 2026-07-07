@@ -26,6 +26,7 @@ export default function NoraDeskColumn() {
     sendMessage,
     approve,
     dismiss,
+    cancel,
   } = useNora()
 
   const setNoraMessages = useStore(s => s.setNoraMessages)
@@ -67,11 +68,11 @@ export default function NoraDeskColumn() {
   const asks = asksQ.data?.asks ?? []
 
   const handleSend = useCallback(async () => {
-    if (!input.trim() || isLoading) return
+    if (!input.trim()) return
     const msg = input.trim()
     setInput('')
     await sendMessage(msg)
-  }, [input, isLoading, sendMessage])
+  }, [input, sendMessage])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
@@ -190,9 +191,13 @@ export default function NoraDeskColumn() {
         ))}
         
         {isLoading && (
-          <div className="self-start px-3 py-2 rounded-xl rounded-bl-none bg-purple-50 text-purple-400 border border-purple-100 text-xs font-bold shadow-sm animate-pulse">
-            Nora is thinking...
-          </div>
+          <button 
+            onClick={cancel}
+            className="self-start px-3 py-2 rounded-xl rounded-bl-none bg-red-50 text-red-500 border border-red-200 text-xs font-bold shadow-sm animate-pulse cursor-pointer hover:bg-red-100 transition-colors flex items-center gap-1.5"
+          >
+            <span className="w-2.5 h-2.5 bg-red-400 rounded-sm" />
+            Nora is thinking... tap to stop
+          </button>
         )}
       </div>
 
@@ -201,21 +206,34 @@ export default function NoraDeskColumn() {
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSend()}
-          placeholder="Ask Nora anything..."
+          onKeyDown={e => {
+            if (e.key === 'Enter') handleSend()
+            if (e.key === 'Escape' && isLoading) { cancel(); e.preventDefault() }
+          }}
+          placeholder={isLoading ? 'Type to interrupt Nora...' : 'Ask Nora anything...'}
           className="flex-1 bg-surface border border-border text-text-primary rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all shadow-sm"
         />
-        <button
-          onClick={handleSend}
-          disabled={!input.trim() || isLoading}
-          className={`px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest transition-all shadow-sm ${
-            input.trim() 
-              ? 'bg-purple-600 hover:bg-purple-700 text-text-primary cursor-pointer' 
-              : 'bg-surface-hover text-text-muted cursor-not-allowed'
-          }`}
-        >
-          →
-        </button>
+        {isLoading ? (
+          <button
+            onClick={cancel}
+            title="Stop Nora (Esc)"
+            className="px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest transition-all shadow-sm bg-red-500 hover:bg-red-600 text-white cursor-pointer animate-pulse"
+          >
+            ⏹
+          </button>
+        ) : (
+          <button
+            onClick={handleSend}
+            disabled={!input.trim()}
+            className={`px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest transition-all shadow-sm ${
+              input.trim() 
+                ? 'bg-purple-600 hover:bg-purple-700 text-text-primary cursor-pointer' 
+                : 'bg-surface-hover text-text-muted cursor-not-allowed'
+            }`}
+          >
+            →
+          </button>
+        )}
       </div>
     </div>
   )

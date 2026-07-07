@@ -162,6 +162,7 @@ interface CockpitState {
   addNoraMessage: (msg: NoraMessage) => void;
   setNoraMessages: (msgs: NoraMessage[]) => void;
   updateLastNoraMessage: (text: string) => void;
+  removeLastEmptyNoraMessage: () => void;
 
   // Tasks
   setTasks: (tasks: Task[]) => void;
@@ -255,6 +256,15 @@ export const useStore = create<CockpitState>((set) => ({
     const last = msgs[msgs.length - 1]
     if (last && last.sender === 'nora') {
       msgs[msgs.length - 1] = { ...last, text }
+    }
+    return { noraMessages: msgs }
+  }),
+  removeLastEmptyNoraMessage: () => set((state) => {
+    const msgs = [...state.noraMessages]
+    const last = msgs[msgs.length - 1]
+    // Remove if it's an empty or near-empty Nora placeholder from streaming
+    if (last && last.sender === 'nora' && last.text.trim().length < 2) {
+      msgs.pop()
     }
     return { noraMessages: msgs }
   }),

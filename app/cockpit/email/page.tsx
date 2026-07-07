@@ -20,6 +20,9 @@ interface EmailMessage {
   internalDate?: string
   unread?: boolean
   labels?: string[]
+  // Fields from triage endpoint
+  score?: number
+  isUnread?: boolean
 }
 
 interface GmailResponse {
@@ -36,21 +39,45 @@ export default function EmailPage() {
   const gmailQ = useQuery<{ emails: EmailMessage[]; error?: string }>({
     queryKey: ['gmail-emails'],
     queryFn: async () => {
-      const res = await fetch('/api/gmail', { cache: 'no-store' })
-      const data = await res.json()
-      // API returns either a flat array or { error, emails, message }
-      if (Array.isArray(data)) {
-        return { emails: data }
+      try {
+        const res = await fetch('/api/gmail', { cache: 'no-store' })
+        
+        // Handle non-JSON responses (HTML error pages, etc.)
+        const contentType = res.headers.get('content-type') || ''
+        if (!contentType.includes('application/json')) {
+          return { emails: [], error: 'gmail_unavailable' }
+        }
+
+        const data = await res.json()
+
+        // data could be null/undefined
+        if (!data) {
+          return { emails: [], error: 'gmail_unavailable' }
+        }
+
+        // API returns either a flat array or { error, emails, message }
+        if (Array.isArray(data)) {
+          return { emails: data }
+        }
+        if (data.error) {
+          return { emails: Array.isArray(data.emails) ? data.emails : [], error: data.error }
+        }
+        // Fallback: try .emails, .data, or treat as empty
+        const emailArr = data.emails || data.data
+        return { emails: Array.isArray(emailArr) ? emailArr : [] }
+      } catch (err) {
+        console.warn('[EmailPage] Failed to fetch emails:', err)
+        return { emails: [], error: 'gmail_unavailable' }
       }
-      if (data.error) {
-        return { emails: data.emails || [], error: data.error }
-      }
-      return { emails: data.emails || data.data || [] }
     },
+    retry: 1,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
   })
 
-  const emails = gmailQ.data?.emails ?? []
-  const apiError = gmailQ.data?.error
+  // Defensive: ensure emails is always a valid array
+  const emails = Array.isArray(gmailQ.data?.emails) ? gmailQ.data.emails : []
+  const apiError = gmailQ.data?.error || (gmailQ.isError ? 'gmail_unavailable' : undefined)
 
   // ─── State ──────────────────────────────────────────────────────────────────
   const [search, setSearch] = useState('')
@@ -71,6 +98,7 @@ export default function EmailPage() {
 
   // ─── Helpers ────────────────────────────────────────────────────────────────
   const getSenderName = (from: EmailMessage['from']): string => {
+    if (!from) return 'Unknown'
     if (typeof from === 'string') {
       // Extract name from "Name <email>" format
       const match = from.match(/^(.+?)\s*</)
@@ -80,6 +108,7 @@ export default function EmailPage() {
   }
 
   const getSenderEmail = (from: EmailMessage['from']): string => {
+    if (!from) return ''
     if (typeof from === 'string') {
       const match = from.match(/<(.+?)>/)
       return match ? match[1] : from
@@ -90,31 +119,47 @@ export default function EmailPage() {
   const formatDate = (email: EmailMessage): string => {
     const d = email.date || email.internalDate
     if (!d) return ''
-    const date = new Date(d)
-    const now = new Date()
-    const isToday = date.toDateString() === now.toDateString()
-    if (isToday) {
-      return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-    }
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    try {
+      const date = new Date(d)
+      if (isNaN(date.getTime())) return ''
+      const now = new Date()
+      const isToday = date.toDateString() === now.toDateString()
+      if (isToday) {
+        return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      }
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    } catch { return '' }
   }
 
   const formatFullDate = (email: EmailMessage): string => {
     const d = email.date || email.internalDate
     if (!d) return ''
-    return new Date(d).toLocaleString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
+    try {
+      const date = new Date(d)
+      if (isNaN(date.getTime())) return ''
+      return date.toLocaleString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    } catch { return '' }
+  }
+
+  // Normalize unread status (handles both .unread and .isUnread fields)
+  const isEmailUnread = (email: EmailMessage): boolean => {
+    if (typeof email.unread === 'boolean') return email.unread
+    if (typeof email.isUnread === 'boolean') return email.isUnread
+    return true // default to unread if unknown
   }
 
   // ─── Filtered ───────────────────────────────────────────────────────────────
   const filtered = useMemo(() => {
+    if (!Array.isArray(emails)) return []
     return emails.filter((email) => {
+      if (!email) return false
       const senderName = getSenderName(email.from).toLowerCase()
       const subject = (email.subject || '').toLowerCase()
       const snippet = (email.snippet || '').toLowerCase()
@@ -124,13 +169,13 @@ export default function EmailPage() {
         return false
       }
 
-      if (filter === 'unread') return email.unread !== false
-      if (filter === 'read') return email.unread === false
+      if (filter === 'unread') return isEmailUnread(email)
+      if (filter === 'read') return !isEmailUnread(email)
       return true
     })
   }, [emails, search, filter])
 
-  const unreadCount = emails.filter((e) => e.unread !== false).length
+  const unreadCount = Array.isArray(emails) ? emails.filter((e) => e && isEmailUnread(e)).length : 0
 
   // ─── Actions ────────────────────────────────────────────────────────────────
   const markReadUnread = useCallback(
@@ -237,10 +282,14 @@ export default function EmailPage() {
   }
 
   // ─── Loading ────────────────────────────────────────────────────────────────
-  if (gmailQ.isLoading) return <LoadingState message="Loading emails..." />
+  if (gmailQ.isLoading) return (
+    <div className="flex items-center justify-center" style={{ minHeight: 'calc(100vh - 10rem)' }}>
+      <LoadingState message="Loading emails..." />
+    </div>
+  )
 
   return (
-    <div className="animate-in fade-in duration-500">
+    <div className="animate-in" style={{ minHeight: 'calc(100vh - 10rem)' }}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex items-center gap-3">
@@ -283,7 +332,7 @@ export default function EmailPage() {
       </div>
 
       {/* Gmail Unavailable Warning */}
-      {apiError === 'gmail_unavailable' && (
+      {apiError && (
         <div className="flex items-center gap-3 p-4 mb-6 rounded-2xl bg-warning/10 border border-warning/20">
           <AlertTriangle className="w-5 h-5 text-warning shrink-0" />
           <div>
@@ -342,23 +391,24 @@ export default function EmailPage() {
       ) : (
         <div className="flex flex-col gap-2">
           {filtered.map((email) => {
+            if (!email || !email.id) return null
             const isExpanded = expandedId === email.id
             const senderName = getSenderName(email.from)
             const senderEmail = getSenderEmail(email.from)
-            const isUnread = email.unread !== false
+            const unread = isEmailUnread(email)
 
             return (
               <div
                 key={email.id}
                 onClick={() => {
                   setExpandedId(isExpanded ? null : email.id)
-                  if (!isExpanded && isUnread) {
+                  if (!isExpanded && unread) {
                     markReadUnread(email.id, true)
                   }
                 }}
                 className={`glass-card rounded-2xl transition-all duration-200 cursor-pointer group relative overflow-hidden ${
                   isExpanded ? 'ring-2 ring-blue-200 shadow-lg rounded-3xl' : 'hover:shadow-md'
-                } ${isUnread ? 'border-l-4 border-l-blue-500' : ''}`}
+                } ${unread ? 'border-l-4 border-l-blue-500' : ''}`}
               >
                 <div className="absolute -right-4 -top-4 w-24 h-24 bg-gradient-to-br from-blue-50 to-transparent rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
@@ -368,7 +418,7 @@ export default function EmailPage() {
                     {/* Avatar */}
                     <div
                       className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
-                        isUnread
+                        unread
                           ? 'bg-accent/20 text-accent'
                           : 'bg-surface-raised text-text-muted'
                       }`}
@@ -381,7 +431,7 @@ export default function EmailPage() {
                       <div className="flex items-center justify-between gap-2 mb-0.5">
                         <span
                           className={`text-sm truncate ${
-                            isUnread ? 'font-bold text-text-primary' : 'font-medium text-text-secondary'
+                            unread ? 'font-bold text-text-primary' : 'font-medium text-text-secondary'
                           }`}
                         >
                           {senderName}
@@ -398,7 +448,7 @@ export default function EmailPage() {
 
                       <div
                         className={`text-sm truncate mb-1 ${
-                          isUnread ? 'font-semibold text-text-primary' : 'text-text-secondary'
+                          unread ? 'font-semibold text-text-primary' : 'text-text-secondary'
                         }`}
                       >
                         {email.subject || '(No subject)'}
@@ -435,11 +485,11 @@ export default function EmailPage() {
                             <button
                               onClick={(e) => {
                                 e.stopPropagation()
-                                markReadUnread(email.id, !isUnread)
+                                markReadUnread(email.id, !unread)
                               }}
                               className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-raised text-text-secondary text-sm font-semibold hover:bg-surface-raised transition-colors border border-border cursor-pointer"
                             >
-                              {isUnread ? (
+                              {unread ? (
                                 <>
                                   <EyeOff className="w-3.5 h-3.5" />
                                   Mark Read
@@ -471,7 +521,7 @@ export default function EmailPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xl bg-surface/95 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(15,23,42,0.15)] animate-in fade-in zoom-in-95 duration-200"
+            className="w-full max-w-xl bg-surface/95 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(15,23,42,0.15)] fade-in zoom-in-95"
           >
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
               <div className="flex items-center gap-2">
@@ -551,7 +601,7 @@ export default function EmailPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xl bg-surface/95 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(15,23,42,0.15)] animate-in fade-in zoom-in-95 duration-200"
+            className="w-full max-w-xl bg-surface/95 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(15,23,42,0.15)] fade-in zoom-in-95"
           >
             <div className="flex items-center justify-between px-6 py-4 border-b border-border">
               <div className="flex items-center gap-2">

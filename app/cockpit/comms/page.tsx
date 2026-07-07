@@ -17,8 +17,9 @@ export default function CommsPage() {
 
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', height: '100%',
-      background: '#0B1426', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+      display: 'flex', flexDirection: 'column', height: 'calc(100vh - 10rem)',
+      background: 'var(--background, #0B1426)', fontFamily: 'inherit',
+      borderRadius: 16, overflow: 'hidden',
     }}>
       {/* Tab Bar */}
       <div style={{

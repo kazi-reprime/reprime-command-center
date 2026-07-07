@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useStore } from '@/lib/store/useStore'
 import HealthPill from './HealthPill'
 import IdentityPickerSlot from './IdentityPickerSlot'
 
@@ -29,21 +30,30 @@ function tzTime(tz: string, now: Date, format: 'short' | 'full' = 'short') {
 
 /**
  * TopStrip — premium command bar with dual timezone, Nora status, and live counters.
+ *
+ * Reads Nora status from the shared Zustand store for instant synchronization
+ * with both /center and /cockpit experiences.
  */
 export default function TopStrip() {
   const [now, setNow] = useState(new Date())
-  const [lang, setLang] = useState<'EN' | 'HE'>('EN')
-  const [noraStatus, setNoraStatus] = useState<'idle' | 'thinking' | 'speaking' | 'listening'>('idle')
+
+  // Shared state from Zustand store
+  const noraStatus = useStore(s => s.noraStatus)
+  const language = useStore(s => s.language)
+  const setLanguage = useStore(s => s.setLanguage)
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
 
+  // Bridge legacy CustomEvent listeners (for components not yet on Zustand)
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail
-      if (detail?.status) setNoraStatus(detail.status)
+      if (detail?.status) {
+        useStore.getState().setNoraStatus(detail.status)
+      }
     }
     window.addEventListener('nora:status', handler)
     window.addEventListener('nora-state-change', handler)
@@ -125,6 +135,8 @@ export default function TopStrip() {
           0%, 100% { box-shadow: 0 0 0 0 var(--nora-glow); }
           50% { box-shadow: 0 0 12px 4px var(--nora-glow); }
         }
+        .top-strip-scroll::-webkit-scrollbar { display: none; }
+        .top-strip-scroll { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
       <div style={{
         position: 'sticky', top: 0, zIndex: 40,
@@ -134,8 +146,9 @@ export default function TopStrip() {
         fontFamily: 'inherit',
       }}>
         {/* ── ROW 1: Main Header ────────────────────────────────────────── */}
-        <div style={{
+        <div className="top-strip-scroll" style={{
           display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12, height: 56,
+          overflowX: 'auto',
         }}>
           {/* Terminal Branding */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
@@ -154,19 +167,19 @@ export default function TopStrip() {
             </div>
           </div>
 
-          <div style={{ width: 1, height: 32, background: 'rgba(255,204,51,0.12)' }} />
+          <div style={{ width: 1, height: 32, background: 'rgba(255,204,51,0.12)', flexShrink: 0 }} />
 
           {/* Apex Task */}
           {apexTask ? (
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden', minWidth: 120 }}>
               <span style={{ fontSize: 8, padding: '2px 6px', borderRadius: 4, background: 'rgba(239,68,68,0.15)', color: '#EF4444', fontWeight: 800, letterSpacing: '0.1em', flexShrink: 0 }}>LIVE</span>
               <span style={{ fontSize: 12, color: 'rgba(255,204,51,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>
                 {apexTask}
               </span>
             </div>
-          ) : <div style={{ flex: 1 }} />}
+          ) : <div style={{ flex: 1, minWidth: 40 }} />}
 
-          <div style={{ width: 1, height: 32, background: 'rgba(255,204,51,0.12)' }} />
+          <div style={{ width: 1, height: 32, background: 'rgba(255,204,51,0.12)', flexShrink: 0 }} />
 
           {/* Live Counters */}
           <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
@@ -180,7 +193,7 @@ export default function TopStrip() {
             </div>
           </div>
 
-          <div style={{ width: 1, height: 32, background: 'rgba(255,204,51,0.12)' }} />
+          <div style={{ width: 1, height: 32, background: 'rgba(255,204,51,0.12)', flexShrink: 0 }} />
 
           {/* Nora Status — Bigger & Prominent */}
           <div
@@ -215,7 +228,7 @@ export default function TopStrip() {
             🎙 Talk to Nora
           </button>
 
-          <div style={{ width: 1, height: 32, background: 'rgba(255,204,51,0.12)' }} />
+          <div style={{ width: 1, height: 32, background: 'rgba(255,204,51,0.12)', flexShrink: 0 }} />
 
           {/* Action Pills */}
           <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
@@ -247,15 +260,15 @@ export default function TopStrip() {
             )}
           </div>
 
-          <div style={{ width: 1, height: 32, background: 'rgba(255,204,51,0.12)' }} />
+          <div style={{ width: 1, height: 32, background: 'rgba(255,204,51,0.12)', flexShrink: 0 }} />
 
           {/* Language + Settings */}
-          <button type="button" onClick={() => setLang(l => l === 'EN' ? 'HE' : 'EN')} style={{
+          <button type="button" onClick={() => setLanguage(language === 'EN' ? 'HE' : 'EN')} style={{
             background: 'rgba(255,204,51,0.08)', color: '#FFCC33',
             border: '1px solid rgba(255,204,51,0.2)', borderRadius: 6,
             padding: '4px 10px', fontFamily: 'inherit', fontSize: 11,
             fontWeight: 700, cursor: 'pointer', flexShrink: 0,
-          }}>{lang === 'EN' ? 'EN → עב' : 'עב → EN'}</button>
+          }}>{language === 'EN' ? 'EN → עב' : 'עב → EN'}</button>
 
           <button type="button" onClick={() => dispatch('settings')} title="Settings" style={{
             background: 'rgba(255,204,51,0.08)', color: '#FFCC33',

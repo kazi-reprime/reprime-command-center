@@ -2,22 +2,32 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-
-type Message = { role: 'user' | 'assistant'; content: string; timestamp: Date }
+import { useStore } from '@/lib/store/useStore'
+import type { NoraMessage } from '@/lib/store/useStore'
 
 /**
  * NoraFloating — Floating AI assistant accessible from anywhere in the cockpit.
  * Purple gradient bubble in bottom-right corner, expands to full chat panel.
  * Streams responses from /api/nora/chat.
+ *
+ * Uses the shared Zustand store for message history and status, so
+ * conversations persist across route changes and sync with /center's
+ * NoraDeskColumn.
  */
 export default function NoraFloating() {
   const [open, setOpen] = useState(false)
-  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
-  const [loading, setLoading] = useState(false)
   const [lang, setLang] = useState<'en' | 'he'>('en')
+  const [pendingQuickReply, setPendingQuickReply] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Read from shared store
+  const messages = useStore(s => s.noraMessages)
+  const noraStatus = useStore(s => s.noraStatus)
+  const addNoraMessage = useStore(s => s.addNoraMessage)
+  const setNoraStatus = useStore(s => s.setNoraStatus)
+  const loading = noraStatus === 'thinking'
 
   // Focus input when panel opens
   useEffect(() => {
@@ -49,16 +59,16 @@ export default function NoraFloating() {
     }
   }, [])
 
-  const sendMessage = useCallback(async () => {
-    const text = input.trim()
+  const sendMessage = useCallback(async (textOverride?: string) => {
+    const text = (textOverride || input).trim()
     if (!text || loading) return
 
-    const userMsg: Message = { role: 'user', content: text, timestamp: new Date() }
-    setMessages(prev => [...prev, userMsg])
+    const userMsg: NoraMessage = { sender: 'user', text, timestamp: new Date() }
+    addNoraMessage(userMsg)
     setInput('')
-    setLoading(true)
+    setNoraStatus('thinking')
 
-    // Broadcast Nora status
+    // Broadcast Nora status via CustomEvent for backwards compatibility
     window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'thinking' } }))
 
     try {
@@ -68,17 +78,17 @@ export default function NoraFloating() {
         body: JSON.stringify({
           message: text,
           lang,
-          history: messages.slice(-10).map(m => ({ role: m.role, content: m.content })),
+          history: messages.slice(-10).map(m => ({ role: m.sender === 'nora' ? 'assistant' : 'user', content: m.text })),
         }),
       })
 
       if (res.ok) {
         const data = await res.json()
         const reply = data.reply || data.message || 'I couldn\'t process that. Try again.'
-        const assistantMsg: Message = { role: 'assistant', content: reply, timestamp: new Date() }
-        setMessages(prev => [...prev, assistantMsg])
+        const assistantMsg: NoraMessage = { sender: 'nora', text: reply, timestamp: new Date() }
+        addNoraMessage(assistantMsg)
 
-        // Auto-save as note
+        // Auto-save as note (fire and forget)
         fetch('/api/notes', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -89,23 +99,31 @@ export default function NoraFloating() {
           }),
         }).catch(() => {})
       } else {
-        setMessages(prev => [...prev, {
-          role: 'assistant',
-          content: 'Something went wrong. Please try again.',
+        addNoraMessage({
+          sender: 'nora',
+          text: 'Something went wrong. Please try again.',
           timestamp: new Date(),
-        }])
+        })
       }
-    } catch (err) {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'Network error. Check your connection.',
+    } catch {
+      addNoraMessage({
+        sender: 'nora',
+        text: 'Network error. Check your connection.',
         timestamp: new Date(),
-      }])
+      })
     }
 
+    setNoraStatus('idle')
     window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
-    setLoading(false)
-  }, [input, loading, lang, messages])
+  }, [input, loading, lang, messages, addNoraMessage, setNoraStatus])
+
+  // Handle quick-reply: set input and send in one go (fixes unreliable setTimeout approach)
+  useEffect(() => {
+    if (pendingQuickReply) {
+      sendMessage(pendingQuickReply)
+      setPendingQuickReply(null)
+    }
+  }, [pendingQuickReply, sendMessage])
 
   if (!open) {
     return (
@@ -189,7 +207,7 @@ export default function NoraFloating() {
         flex: 1, overflowY: 'auto', padding: '12px 14px',
         display: 'flex', flexDirection: 'column', gap: 8,
       }}>
-        {messages.length === 0 && (
+        {messages.length <= 1 && messages[0]?.sender === 'nora' && (
           <div style={{
             flex: 1, display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center', gap: 12,
@@ -203,7 +221,7 @@ export default function NoraFloating() {
             </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'center', marginTop: 8 }}>
               {['What meetings today?', 'Show unread WhatsApp', 'Draft an email', 'Search Pipedrive'].map(q => (
-                <button key={q} onClick={() => { setInput(q); setTimeout(sendMessage, 100) }}
+                <button key={q} onClick={() => setPendingQuickReply(q)}
                   style={{
                     background: 'rgba(168,85,247,0.08)', border: '1px solid rgba(168,85,247,0.15)',
                     borderRadius: 8, padding: '5px 10px', color: '#A855F7',
@@ -215,15 +233,15 @@ export default function NoraFloating() {
         )}
         {messages.map((msg, i) => (
           <div key={i} style={{
-            display: 'flex', justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+            display: 'flex', justifyContent: msg.sender === 'user' ? 'flex-end' : 'flex-start',
           }}>
             <div style={{
               maxWidth: '85%', padding: '8px 12px',
-              borderRadius: msg.role === 'user' ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
-              background: msg.role === 'user'
+              borderRadius: msg.sender === 'user' ? '12px 12px 4px 12px' : '12px 12px 12px 4px',
+              background: msg.sender === 'user'
                 ? 'linear-gradient(135deg, rgba(168,85,247,0.2), rgba(124,58,237,0.15))'
                 : 'rgba(255,255,255,0.05)',
-              border: msg.role === 'user'
+              border: msg.sender === 'user'
                 ? '1px solid rgba(168,85,247,0.3)'
                 : '1px solid rgba(255,255,255,0.05)',
             }}>
@@ -231,10 +249,10 @@ export default function NoraFloating() {
                 color: 'rgba(255,255,255,0.85)', fontSize: 13,
                 lineHeight: 1.5, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
               }}>
-                {msg.content}
+                {msg.text}
               </div>
               <div style={{ color: 'rgba(255,255,255,0.15)', fontSize: 9, textAlign: 'right', marginTop: 4 }}>
-                {msg.timestamp.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                {(msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp)).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
               </div>
             </div>
           </div>
@@ -275,7 +293,7 @@ export default function NoraFloating() {
             outline: 'none', fontFamily: 'inherit',
           }}
         />
-        <button onClick={sendMessage} disabled={loading || !input.trim()}
+        <button onClick={() => sendMessage()} disabled={loading || !input.trim()}
           style={{
             background: input.trim() ? 'linear-gradient(135deg, #A855F7, #7C3AED)' : 'rgba(168,85,247,0.1)',
             border: 'none', borderRadius: 10, width: 38, height: 38,

@@ -4,6 +4,17 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 import { ToastProvider } from '@/lib/contexts/ToastContext'
 import { ThemeProvider } from 'next-themes'
+import { useSharedRealtime } from '@/hooks/useSharedRealtime'
+
+/**
+ * SharedRealtimeMount — mounts the shared realtime hook at the provider level.
+ * This ensures a single Supabase subscription and notification poll loop
+ * runs for the entire app, feeding both /center and /cockpit experiences.
+ */
+function SharedRealtimeMount({ children }: { children: React.ReactNode }) {
+  useSharedRealtime()
+  return <>{children}</>
+}
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [client] = useState(
@@ -28,7 +39,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     >
       <QueryClientProvider client={client}>
         <ToastProvider>
-          {children}
+          <SharedRealtimeMount>
+            {children}
+          </SharedRealtimeMount>
         </ToastProvider>
       </QueryClientProvider>
     </ThemeProvider>

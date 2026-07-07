@@ -1,21 +1,11 @@
-/* eslint-disable */
 'use client'
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { OrbPlaceholder } from '@/components/ui/OrbPlaceholder'
+import { useStore } from '@/lib/store/useStore'
 
 const REFETCH_MS = 30_000
-
-interface NoraMessage {
-  role: 'user' | 'assistant'
-  content: string
-  timestamp?: string
-}
-
-interface NoraHistoryPayload {
-  messages: NoraMessage[]
-}
 
 export function useColumnCount(): number {
   return 0 // Nora doesn't have a "count"
@@ -23,27 +13,36 @@ export function useColumnCount(): number {
 
 export default function NoraDeskColumn() {
   const [input, setInput] = useState('')
-  const [messages, setMessages] = useState<NoraMessage[]>([])
   const [filter, setFilter] = useState<'all' | 'overdue' | 'today' | 'upcoming'>('all')
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  const historyQ = useQuery<NoraHistoryPayload>({
+  // Shared Nora state from Zustand store
+  const noraMessages = useStore(s => s.noraMessages)
+  const addNoraMessage = useStore(s => s.addNoraMessage)
+  const setNoraMessages = useStore(s => s.setNoraMessages)
+  const setNoraStatus = useStore(s => s.setNoraStatus)
+
+  // Load history into store on first mount (if store only has default greeting)
+  const historyQ = useQuery<{ messages: { role: string; content: string }[] }>({
     queryKey: ['nora-history'],
     queryFn: async () => {
       const res = await fetch('/api/nora/history', { cache: 'no-store' })
       if (!res.ok) return { messages: [] }
       return res.json()
     },
-    refetchInterval: REFETCH_MS,
     staleTime: REFETCH_MS,
     retry: 1,
   })
 
   useEffect(() => {
-    if (historyQ.data?.messages) {
-      setMessages(historyQ.data.messages)
+    if (historyQ.data?.messages?.length && noraMessages.length <= 1) {
+      setNoraMessages(historyQ.data.messages.map(m => ({
+        sender: m.role === 'assistant' ? 'nora' as const : 'user' as const,
+        text: m.content,
+        timestamp: new Date(),
+      })))
     }
-  }, [historyQ.data])
+  }, [historyQ.data, noraMessages.length, setNoraMessages])
 
   const asksQ = useQuery({
     queryKey: ['secretary-asks'],
@@ -77,26 +76,29 @@ export default function NoraDeskColumn() {
       const agentTag = data.agentId && data.agentId !== 'orchestrator' 
         ? `[${data.agentId}] ` 
         : ''
-      setMessages(prev => [...prev, { role: 'assistant', content: `${agentTag}${reply}` }])
+      addNoraMessage({ sender: 'nora', text: `${agentTag}${reply}`, agentId: data.agentId, timestamp: new Date() })
+      setNoraStatus('idle')
     },
     onError: (err) => {
-      setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ ${(err as Error).message}` }])
+      addNoraMessage({ sender: 'nora', text: `⚠️ ${(err as Error).message}`, timestamp: new Date() })
+      setNoraStatus('idle')
     },
   })
 
   const handleSend = useCallback(() => {
     if (!input.trim() || chatMut.isPending) return
     const msg = input.trim()
-    setMessages(prev => [...prev, { role: 'user', content: msg }])
+    addNoraMessage({ sender: 'user', text: msg, timestamp: new Date() })
     setInput('')
+    setNoraStatus('thinking')
     chatMut.mutate(msg)
-  }, [input, chatMut])
+  }, [input, chatMut, addNoraMessage, setNoraStatus])
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages])
+  }, [noraMessages])
 
-  const noApiKey = !chatMut.isPending && messages.length === 0 && historyQ.data?.messages?.length === 0
+  const noApiKey = !chatMut.isPending && noraMessages.length === 0
 
   return (
     <div className="flex flex-col h-full bg-surface text-text-primary font-sans">
@@ -135,7 +137,7 @@ export default function NoraDeskColumn() {
             Nora + You ({asks.length})
           </div>
           <div className="flex flex-col gap-1">
-            {asks.slice(0, 5).map((ask: any, i: number) => (
+            {asks.slice(0, 5).map((ask: { title?: string; question?: string; due_at?: string }, i: number) => (
               <div 
                 key={i} 
                 className="px-3 py-2 bg-surface rounded-lg border border-border shadow-sm text-[10px] flex justify-between items-center"
@@ -154,9 +156,9 @@ export default function NoraDeskColumn() {
         </div>
       )}
 
-      {/* Chat Messages */}
+      {/* Chat Messages — reads from shared store */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
-        {messages.length === 0 && (
+        {noraMessages.length === 0 && (
           <div className="p-5 text-center text-text-muted text-xs font-bold whitespace-pre-wrap">
             {noApiKey
               ? 'No items need your attention right now.\nAsk Nora anything below.'
@@ -164,16 +166,16 @@ export default function NoraDeskColumn() {
           </div>
         )}
         
-        {messages.map((m, i) => (
+        {noraMessages.map((m, i) => (
           <div 
             key={i} 
             className={`px-3 py-2 rounded-xl max-w-[90%] text-xs leading-relaxed whitespace-pre-wrap shadow-sm border ${
-              m.role === 'user' 
+              m.sender === 'user' 
                 ? 'self-end bg-accent/10 text-accent border-accent/20 rounded-br-none' 
                 : 'self-start bg-purple-50 text-purple-900 border-purple-100 rounded-bl-none'
             }`}
           >
-            {m.content}
+            {m.text}
           </div>
         ))}
         

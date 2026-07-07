@@ -1,18 +1,9 @@
 /* eslint-disable */
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-
-type NotificationType = 'whatsapp' | 'email' | 'zoom' | 'task' | 'nora' | 'system'
-type Notification = {
-  id: string
-  type: NotificationType
-  title: string
-  body: string
-  time: Date
-  read: boolean
-  action?: string // URL or event to dispatch
-}
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useStore } from '@/lib/store/useStore'
+import type { NotificationType } from '@/lib/store/useStore'
 
 const TYPE_COLORS: Record<NotificationType, { icon: string; color: string; bg: string }> = {
   whatsapp: { icon: '💬', color: '#25D366', bg: 'rgba(37,211,102,0.1)' },
@@ -33,126 +24,50 @@ function timeAgo(d: Date): string {
   return `${Math.floor(hrs / 24)}d ago`
 }
 
+/**
+ * NotificationCenter — Uses the shared Zustand store for notifications.
+ * Both /center and /cockpit share the same notification state, fed by
+ * useSharedRealtime in Providers.
+ */
 export default function NotificationCenter() {
   const [open, setOpen] = useState(false)
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [lastCheck, setLastCheck] = useState<Record<string, number>>({})
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
-  // Poll for new events
-  const checkNotifications = useCallback(async () => {
-    const newNotifs: Notification[] = []
-
-    // Check WhatsApp unreads
-    try {
-      const [res305, res718] = await Promise.all([
-        fetch('/api/whatsapp/threads?panel=305', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch('/api/whatsapp/threads?panel=718', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).catch(() => null),
-      ])
-      for (const data of [res305, res718]) {
-        if (!data) continue
-        const threads = data.threads || data || []
-        for (const t of threads) {
-          if (t.unread_count > 0) {
-            const key = `wa-${t.id}`
-            if (!lastCheck[key]) {
-              newNotifs.push({
-                id: key, type: 'whatsapp' as NotificationType,
-                title: t.contact_name || t.phone,
-                body: t.last_message_preview || 'New message',
-                time: new Date(t.last_message_at || Date.now()),
-                read: false,
-              })
-            }
-          }
-        }
-      }
-    } catch {}
-
-    // Check upcoming meetings
-    try {
-      const res = await fetch('/api/briefing/today', { cache: 'no-store' })
-      if (res.ok) {
-        const data = await res.json()
-        const meetings = data.meetings?.items || []
-        for (const m of meetings) {
-          const start = new Date(m.startTime)
-          const minsUntil = (start.getTime() - Date.now()) / 60000
-          if (minsUntil > 0 && minsUntil <= 15) {
-            const key = `zoom-${m.id}`
-            if (!lastCheck[key]) {
-              newNotifs.push({
-                id: key, type: 'zoom' as NotificationType,
-                title: m.title || 'Meeting',
-                body: `Starts in ${Math.ceil(minsUntil)} minutes`,
-                time: new Date(), read: false,
-                action: m.zoomLink || undefined,
-              })
-            }
-          }
-        }
-      }
-    } catch {}
-
-    if (newNotifs.length > 0) {
-      setNotifications(prev => {
-        const existing = new Set(prev.map(n => n.id))
-        const fresh = newNotifs.filter(n => !existing.has(n.id))
-        return [...fresh, ...prev].slice(0, 50) // Keep max 50
-      })
-      // Update lastCheck
-      const updates: Record<string, number> = {}
-      newNotifs.forEach(n => { updates[n.id] = Date.now() })
-      setLastCheck(prev => ({ ...prev, ...updates }))
-
-      // Browser notification
-      if (Notification.permission === 'granted') {
-        newNotifs.slice(0, 3).forEach(n => {
-          new Notification(n.title, { body: n.body, icon: '/icon.png' })
-        })
-      }
-    }
-  }, [lastCheck])
-
-  // Request notification permission
-  useEffect(() => {
-    if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
-      Notification.requestPermission()
-    }
-  }, [])
-
-  // Poll every 30s
-  useEffect(() => {
-    checkNotifications()
-    const t = setInterval(checkNotifications, 30000)
-    return () => clearInterval(t)
-  }, [checkNotifications])
-
-  // Listen for Nora events
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail
-      if (detail?.text) {
-        const notif: Notification = {
-          id: `nora-${Date.now()}`, type: 'nora' as NotificationType,
-          title: 'Nora replied',
-          body: detail.text.slice(0, 80),
-          time: new Date(), read: false,
-        }
-        setNotifications(prev => [notif, ...prev].slice(0, 50))
-      }
-    }
-    window.addEventListener('nora:reply', handler)
-    return () => window.removeEventListener('nora:reply', handler)
-  }, [])
+  // Read from shared store
+  const notifications = useStore(s => s.notifications)
+  const markNotificationRead = useStore(s => s.markNotificationRead)
+  const markAllNotificationsRead = useStore(s => s.markAllNotificationsRead)
 
   const unreadCount = notifications.filter(n => !n.read).length
 
-  const markAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
-  }
+  // Click outside to close
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    // Delay to avoid closing immediately on the same click
+    const t = setTimeout(() => document.addEventListener('mousedown', handler), 0)
+    return () => {
+      clearTimeout(t)
+      document.removeEventListener('mousedown', handler)
+    }
+  }, [open])
+
+  // Escape to close
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [open])
 
   return (
-    <div style={{ position: 'relative' }}>
+    <div style={{ position: 'relative' }} ref={dropdownRef}>
       {/* Bell Button */}
       <button onClick={() => setOpen(!open)} title="Notifications"
         style={{
@@ -193,7 +108,7 @@ export default function NotificationCenter() {
           }}>
             <span style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>Notifications</span>
             {unreadCount > 0 && (
-              <button onClick={markAllRead} style={{
+              <button onClick={markAllNotificationsRead} style={{
                 background: 'none', border: 'none', color: '#A855F7',
                 fontSize: 11, fontWeight: 600, cursor: 'pointer',
               }}>Mark all read</button>
@@ -213,7 +128,7 @@ export default function NotificationCenter() {
               return (
                 <div key={notif.id}
                   onClick={() => {
-                    setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n))
+                    markNotificationRead(notif.id)
                     if (notif.action) window.open(notif.action, '_blank')
                   }}
                   style={{
@@ -240,7 +155,7 @@ export default function NotificationCenter() {
                     }}>{notif.body}</div>
                   </div>
                   <span style={{ color: 'rgba(255,255,255,0.2)', fontSize: 10, flexShrink: 0 }}>
-                    {timeAgo(notif.time)}
+                    {timeAgo(notif.time instanceof Date ? notif.time : new Date(notif.time))}
                   </span>
                 </div>
               )

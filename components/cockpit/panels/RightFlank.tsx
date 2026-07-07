@@ -1,38 +1,13 @@
 /* eslint-disable */
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Sparkles, CheckSquare, Send, CalendarClock, Loader2, Check, Mic, StickyNote } from 'lucide-react';
 import { useStore } from '@/lib/store/useStore';
+import type { NoraMessage } from '@/lib/store/useStore';
 import NotesPanel from './NotesPanel';
 import SpeakerButton from '@/components/chat/SpeakerButton';
 import { useToast } from '@/lib/contexts/ToastContext';
-
-interface Task {
-  id: string;
-  title: string;
-  priority: number;
-  projectTag: string | null;
-  status: string;
-  zoomLink?: string | null
-}
-
-interface SpeechRecognitionEvent extends Event {
-  results: {
-    [key: number]: {
-      [key: number]: {
-        transcript: string;
-      };
-    };
-  };
-}
-
-interface SpeechRecognition extends EventTarget {
-  start(): void;
-  onresult: (event: SpeechRecognitionEvent) => void;
-  onerror: (event: { error: string }) => void;
-  onend: () => void;
-}
 
 interface PendingApproval {
   id: string;
@@ -42,104 +17,63 @@ interface PendingApproval {
   params?: Record<string, unknown>;
 }
 
-interface NoraMessage {
-  sender: 'user' | 'nora';
-  text: string;
-  agentId?: string;
-  pendingApprovals?: PendingApproval[];
-}
-
 export default function RightFlank() {
   const [prompt, setPrompt] = useState('');
   const { addToast } = useToast();
-  const [messages, setMessages] = useState<NoraMessage[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loadingNora, setLoadingNora] = useState(false);
-  const [loadingTasks, setLoadingTasks] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [activeTab, setActiveTab] = useState<'tasks' | 'notes'>('tasks');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
-  
-  const { emails, events, threads, selectedThreadId } = useStore();
 
-  // Fetch active tasks
-  const fetchTasks = async () => {
-    setLoadingTasks(true);
-    try {
-      const res = await fetch('/api/tasks');
-      if (res.ok) {
-        const data = await res.json();
-        setTasks(data);
-      }
-    } catch (e) {
-      console.error('Error fetching tasks:', e);
-    } finally {
-      setLoadingTasks(false);
-    }
-  };
+  // Shared state from Zustand store
+  const emails = useStore(s => s.emails);
+  const events = useStore(s => s.events);
+  const threads = useStore(s => s.threads);
+  const selectedThreadId = useStore(s => s.selectedThreadId);
+  const messages = useStore(s => s.noraMessages);
+  const noraStatus = useStore(s => s.noraStatus);
+  const addNoraMessage = useStore(s => s.addNoraMessage);
+  const setNoraStatus = useStore(s => s.setNoraStatus);
+  const tasks = useStore(s => s.tasks);
+  const removeTask = useStore(s => s.removeTask);
 
-  useEffect(() => {
-    fetchTasks();
-    const fetchHistory = async () => {
-      try {
-        const res = await fetch('/api/nora/history');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.messages && data.messages.length > 0) {
-            setMessages(data.messages.map((m: { role: string; content: string }) => ({
-              sender: m.role === 'assistant' ? 'nora' : 'user',
-              text: m.content
-            })));
-            return;
-          }
-        }
-      } catch (e) {
-        console.error('Failed to fetch Nora history', e);
-      }
-      // Fallback greeting
-      setMessages([{ sender: 'nora', text: 'System online. Ready to execute.' }]);
-    };
-    fetchHistory();
-  }, []);
+  const loadingNora = noraStatus === 'thinking';
 
   // Scroll to bottom of Nora messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handlePromptSend = async () => {
+  const handlePromptSend = useCallback(async () => {
     if (!prompt.trim() || loadingNora) return;
 
     const userPrompt = prompt.trim();
     setPrompt('');
-    setMessages((prev) => [...prev, { sender: 'user', text: userPrompt }]);
-    setLoadingNora(true);
+    addNoraMessage({ sender: 'user', text: userPrompt, timestamp: new Date() });
+    setNoraStatus('thinking');
 
     try {
       const contextPayload = {
-        emails: emails.slice(0, 10), // Limit context size
+        emails: emails.slice(0, 10),
         events,
         activeThread: threads.find(t => t.id === selectedThreadId)
       };
 
       const res = await fetch('/api/ai/nora', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: userPrompt, context: contextPayload }),
       });
 
       if (res.ok) {
         const data = await res.json();
-        setMessages((prev) => [...prev, { sender: 'nora', text: data.reply, agentId: data.agentId }]);
-        
+        addNoraMessage({ sender: 'nora', text: data.reply, agentId: data.agentId, timestamp: new Date() });
+
         // Handle pending approvals from orchestrator
         if (data.pendingApprovals?.length) {
           setPendingApprovals(prev => [...prev, ...data.pendingApprovals]);
         }
-        
+
         // Play TTS audio
         try {
           const audioRes = await fetch('/api/voice/speak', {
@@ -159,39 +93,36 @@ export default function RightFlank() {
         } catch (audioErr) {
           console.error('Failed to play Nora TTS', audioErr);
         }
-        
-        // If Nora stored memories or created tasks, reload tasks
-        if (data.tasksToCreate && data.tasksToCreate.length > 0) {
-          fetchTasks();
+
+        // Reload tasks if new ones were created
+        if (data.tasksToCreate?.length > 0) {
+          try {
+            const taskRes = await fetch('/api/tasks');
+            if (taskRes.ok) {
+              const taskData = await taskRes.json();
+              useStore.getState().setTasks(Array.isArray(taskData) ? taskData : taskData.data || []);
+            }
+          } catch { /* swallow */ }
         }
       } else {
-        setMessages((prev) => [
-          ...prev,
-          { sender: 'nora', text: 'Sorry, I encountered an issue accessing my cognitive core.' },
-        ]);
+        addNoraMessage({ sender: 'nora', text: 'Sorry, I encountered an issue accessing my cognitive core.', timestamp: new Date() });
       }
     } catch {
-      setMessages((prev) => [
-        ...prev,
-        { sender: 'nora', text: 'Network exception. Failed to connect to Nora API.' },
-      ]);
+      addNoraMessage({ sender: 'nora', text: 'Network exception. Failed to connect to Nora API.', timestamp: new Date() });
     } finally {
-      setLoadingNora(false);
+      setNoraStatus('idle');
     }
-  };
+  }, [prompt, loadingNora, emails, events, threads, selectedThreadId, addNoraMessage, setNoraStatus]);
 
   const handleCompleteTask = async (taskId: string) => {
     try {
       const res = await fetch('/api/tasks', {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: taskId, completed: true }),
       });
       if (res.ok) {
-        // Optimistically remove from UI
-        setTasks((prev) => prev.filter((t) => t.id !== taskId));
+        removeTask(taskId);
       }
     } catch (e) {
       console.error('Failed to complete task:', e);
@@ -208,7 +139,7 @@ export default function RightFlank() {
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-text-primary tracking-tight">Nora's Desk</h2>
+              <h2 className="text-lg font-black text-text-primary tracking-tight">Nora&apos;s Desk</h2>
               <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Advanced AI Secretary</p>
             </div>
           </div>
@@ -268,7 +199,7 @@ export default function RightFlank() {
                           });
                           if (res.ok) {
                             setPendingApprovals(prev => prev.filter(a => a.id !== approval.id));
-                            setMessages(prev => [...prev, { sender: 'nora', text: `✅ Action approved and executed.` }]);
+                            addNoraMessage({ sender: 'nora', text: `✅ Action approved and executed.`, timestamp: new Date() });
                             addToast('Action approved', 'success');
                           }
                         } catch { addToast('Approval failed', 'error'); }
@@ -369,7 +300,7 @@ export default function RightFlank() {
             </button>
           </div>
           {activeTab === 'tasks' && (
-            loadingTasks ? (
+            tasks.length === 0 ? (
               <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
             ) : (
               <div className="w-8 h-8 rounded-lg bg-surface-raised flex items-center justify-center text-text-muted">
@@ -432,4 +363,3 @@ export default function RightFlank() {
     </div>
   );
 }
-

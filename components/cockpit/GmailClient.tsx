@@ -2,6 +2,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 type GmailAccount = 'reprime' | 'fst'
 type EmailFolder = 'INBOX' | 'SENT' | 'DRAFT' | 'SPAM' | 'TRASH'
@@ -59,8 +60,6 @@ function avatarColor(name: string): string {
 export default function GmailClient() {
   const [account, setAccount] = useState<GmailAccount>('reprime')
   const [folder, setFolder] = useState<EmailFolder>('INBOX')
-  const [emails, setEmails] = useState<Email[]>([])
-  const [loading, setLoading] = useState(true)
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null)
   const [emailBody, setEmailBody] = useState('')
   const [bodyLoading, setBodyLoading] = useState(false)
@@ -70,33 +69,30 @@ export default function GmailClient() {
   const [composeSubject, setComposeSubject] = useState('')
   const [composeBody, setComposeBody] = useState('')
   const [composeSending, setComposeSending] = useState(false)
-  const [error, setError] = useState('')
+  const queryClient = useQueryClient()
 
-  // Fetch emails
-  const fetchEmails = useCallback(async () => {
-    setLoading(true)
-    setError('')
-    try {
+  // Fetch emails via React Query (shared cache with email page)
+  const emailsQ = useQuery<Email[]>({
+    queryKey: ['gmail-emails', account, folder, searchQuery],
+    queryFn: async () => {
       const params = new URLSearchParams({ account, folder })
       if (searchQuery) params.set('q', searchQuery)
       const res = await fetch(`/api/gmail?${params}`, { cache: 'no-store' })
       if (!res.ok) {
-        if (res.status === 401) setError('Gmail not authenticated. Visit /api/auth/google-oauth to connect.')
-        else setError(`Failed to load emails (${res.status})`)
-        setEmails([])
-        setLoading(false)
-        return
+        if (res.status === 401) throw new Error('Gmail not authenticated. Visit /api/auth/google-oauth to connect.')
+        throw new Error(`Failed to load emails (${res.status})`)
       }
       const data = await res.json()
-      setEmails((data.emails || data.messages || data || []) as Email[])
-    } catch (e) {
-      setError('Network error loading emails')
-      console.error(e)
-    }
-    setLoading(false)
-  }, [account, folder, searchQuery])
+      return (data.emails || data.messages || data || []) as Email[]
+    },
+    refetchInterval: 60000,
+    staleTime: 30000,
+    retry: 1,
+  })
 
-  useEffect(() => { fetchEmails() }, [fetchEmails])
+  const emails = emailsQ.data ?? []
+  const loading = emailsQ.isLoading
+  const error = emailsQ.error ? (emailsQ.error as Error).message : ''
 
   // Fetch email body
   const openEmail = useCallback(async (email: Email) => {
@@ -137,7 +133,7 @@ export default function GmailClient() {
         setComposeTo('')
         setComposeSubject('')
         setComposeBody('')
-        fetchEmails()
+        queryClient.invalidateQueries({ queryKey: ['gmail-emails'] })
       }
     } catch (e) { console.error('Send failed:', e) }
     setComposeSending(false)
@@ -218,9 +214,11 @@ export default function GmailClient() {
 
       {/* ── CENTER: Email List ────────────────────────────────────────── */}
       <div style={{
-        width: 380, flexShrink: 0, display: 'flex', flexDirection: 'column',
+        width: 'clamp(280px, 32%, 380px)', flexShrink: 0, display: 'flex', flexDirection: 'column',
         borderRight: '1px solid rgba(255,255,255,0.06)',
-      }}>
+      }}
+        className={selectedEmail ? 'hidden md:flex md:flex-col' : ''}
+      >
         {/* Search */}
         <div style={{ padding: '10px 12px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div style={{
@@ -232,7 +230,7 @@ export default function GmailClient() {
               type="text" placeholder="Search emails..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && fetchEmails()}
+              onKeyDown={e => e.key === 'Enter' && emailsQ.refetch()}
               style={{
                 flex: 1, background: 'none', border: 'none', outline: 'none',
                 color: '#fff', fontSize: 13,
@@ -246,7 +244,7 @@ export default function GmailClient() {
           {error ? (
             <div style={{ padding: 20, textAlign: 'center' }}>
               <div style={{ color: '#EF4444', fontSize: 13, marginBottom: 8 }}>⚠️ {error}</div>
-              <button onClick={fetchEmails} style={{
+              <button onClick={() => emailsQ.refetch()} style={{
                 background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: 8, padding: '6px 16px', color: 'rgba(255,255,255,0.5)',
                 fontSize: 12, cursor: 'pointer',

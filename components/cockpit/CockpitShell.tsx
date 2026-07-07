@@ -1,7 +1,7 @@
 /* eslint-disable */
 'use client'
 
-import React, { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { 
@@ -14,6 +14,7 @@ import { ThreeDLogo } from '@/components/ui/ThreeDLogo'
 import { ThemeSwitcher } from '@/components/cockpit/ThemeSwitcher'
 import NoraFloating from '@/components/nora/NoraFloating'
 import NotificationCenter from '@/components/cockpit/NotificationCenter'
+import { useStore } from '@/lib/store/useStore'
 
 type NavItem = { href: string; label: string; icon: React.ReactNode }
 type NavSection = { title: string; items: NavItem[] }
@@ -57,6 +58,11 @@ const NAV_SECTIONS: NavSection[] = [
 
 const NAV_ITEMS = NAV_SECTIONS.flatMap(s => s.items)
 
+function getGreeting(): string {
+  const hour = new Date().getHours()
+  return hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening'
+}
+
 export default function CockpitShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const router = useRouter()
@@ -64,14 +70,25 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
   const [mobileOpen, setMobileOpen] = useState(false)
   const [commandOpen, setCommandOpen] = useState(false)
   const [commandQuery, setCommandQuery] = useState('')
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const commandInputRef = useRef<HTMLInputElement>(null)
 
   const [dateStr, setDateStr] = useState('')
   const [greeting, setGreeting] = useState('Good Morning')
 
+  // Language from shared store
+  const language = useStore(s => s.language)
+  const setLanguage = useStore(s => s.setLanguage)
+
+  // Update greeting and date, and refresh across day boundaries
   useEffect(() => {
-    setDateStr(new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }))
-    const hour = new Date().getHours()
-    setGreeting(hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening')
+    const updateDateTime = () => {
+      setDateStr(new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }))
+      setGreeting(getGreeting())
+    }
+    updateDateTime()
+    const interval = setInterval(updateDateTime, 60_000) // Check every minute
+    return () => clearInterval(interval)
   }, [])
 
   // Keyboard shortcut for command palette
@@ -81,6 +98,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
         e.preventDefault()
         setCommandOpen(o => !o)
         setCommandQuery('')
+        setSelectedIndex(0)
       }
       if (e.key === 'Escape') setCommandOpen(false)
     }
@@ -91,6 +109,36 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
   const filteredNav = commandQuery
     ? NAV_ITEMS.filter(i => i.label.toLowerCase().includes(commandQuery.toLowerCase()))
     : NAV_ITEMS
+
+  // Reset selected index when filter changes
+  useEffect(() => {
+    setSelectedIndex(0)
+  }, [commandQuery])
+
+  // Command palette keyboard navigation
+  const handleCommandKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setSelectedIndex(i => Math.min(i + 1, filteredNav.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setSelectedIndex(i => Math.max(i - 1, 0))
+    } else if (e.key === 'Enter' && filteredNav.length > 0) {
+      e.preventDefault()
+      const item = filteredNav[selectedIndex]
+      if (item) {
+        router.push(item.href)
+        setCommandOpen(false)
+      }
+    }
+  }, [filteredNav, selectedIndex, router])
+
+  // Auto-focus command palette input
+  useEffect(() => {
+    if (commandOpen) {
+      setTimeout(() => commandInputRef.current?.focus(), 50)
+    }
+  }, [commandOpen])
 
   const sidebarWidth = collapsed ? 80 : 260;
 
@@ -216,7 +264,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
           {/* Right section: Search, Actions, Nora */}
           <div className="flex items-center gap-3">
             <button
-              onClick={() => { setCommandOpen(true); setCommandQuery('') }}
+              onClick={() => { setCommandOpen(true); setCommandQuery(''); setSelectedIndex(0) }}
               className="hidden md:flex items-center gap-3 h-10 px-4 bg-surface-raised hover:bg-surface-hover rounded-full text-text-secondary text-sm font-medium transition-colors border border-transparent hover:border-border-strong"
             >
               <Search className="w-4 h-4" />
@@ -229,7 +277,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
             <NotificationCenter />
 
             <button
-              onClick={() => { setCommandOpen(true); setCommandQuery(''); }}
+              onClick={() => { setCommandOpen(true); setCommandQuery(''); setSelectedIndex(0); }}
               className="h-10 px-4 rounded-full bg-accent hover:bg-accent-hover text-accent-foreground text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm cursor-pointer"
               title="New Action"
             >
@@ -237,24 +285,25 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
               <span className="hidden sm:inline">New Action</span>
             </button>
 
-            {/* Hebrew / English Toggle */}
+            {/* Hebrew / English Toggle — uses shared store */}
             <button
               onClick={() => {
+                const newLang = language === 'EN' ? 'HE' : 'EN'
+                setLanguage(newLang)
                 const html = document.documentElement
-                const isHe = html.getAttribute('lang') === 'he'
-                html.setAttribute('lang', isHe ? 'en' : 'he')
-                html.setAttribute('dir', isHe ? 'ltr' : 'rtl')
+                html.setAttribute('lang', newLang === 'HE' ? 'he' : 'en')
+                html.setAttribute('dir', newLang === 'HE' ? 'rtl' : 'ltr')
               }}
               className="h-10 px-3 rounded-full bg-surface-raised hover:bg-surface-hover border border-border flex items-center gap-1.5 text-text-secondary hover:text-text-primary text-sm font-semibold transition-all cursor-pointer"
               title="Toggle Hebrew / English"
             >
               <Languages className="w-4 h-4" />
-              <span className="hidden sm:inline text-xs">EN/עב</span>
+              <span className="hidden sm:inline text-xs">{language === 'EN' ? 'EN/עב' : 'עב/EN'}</span>
             </button>
 
             {/* Nora AI Button */}
             <button
-              onClick={() => window.open('/center', '_blank')}
+              onClick={() => window.dispatchEvent(new Event('center:focus-nora'))}
               className="h-10 px-4 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-sm font-semibold transition-all flex items-center gap-2 shadow-lg shadow-purple-500/20 group cursor-pointer relative"
               title="Talk to Nora"
             >
@@ -266,7 +315,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
             </button>
 
             <button
-              onClick={() => window.open('/center', '_blank')}
+              onClick={() => window.dispatchEvent(new Event('center:focus-nora'))}
               className="w-10 h-10 rounded-full bg-surface-raised hover:bg-surface-hover border border-border flex items-center justify-center text-accent transition-all shadow-sm group cursor-pointer"
               title="Voice Command Center"
             >
@@ -276,7 +325,6 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
         </header>
 
         {/* Page Content Container */}
-        {/* We use flex-1 and no overflow restrictions to let the body scroll naturally, fixing scroll traps */}
         <main className="flex-1 max-w-[1600px] mx-auto p-4 lg:p-8" style={{ marginLeft: sidebarWidth }}>
           <div>
             {children}
@@ -285,7 +333,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
         <NoraFloating />
       </div>
 
-      {/* Command Palette Modal */}
+      {/* Command Palette Modal — with keyboard navigation */}
       {commandOpen && (
         <div
           onClick={() => setCommandOpen(false)}
@@ -298,27 +346,40 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
             <div className="flex items-center gap-3 px-6 py-4 border-b border-border">
               <Search className="w-5 h-5 text-accent" />
               <input
+                ref={commandInputRef}
                 autoFocus
                 value={commandQuery}
-                onChange={e => setCommandQuery(e.target.value)}
+                onChange={e => { setCommandQuery(e.target.value); setSelectedIndex(0) }}
+                onKeyDown={handleCommandKeyDown}
                 placeholder="Where to, Gideon?"
                 className="flex-1 bg-transparent border-none text-lg font-semibold text-text-primary placeholder:text-text-muted focus:outline-none"
               />
             </div>
             
             <div className="max-h-[60vh] overflow-y-auto p-2 custom-scrollbar">
-              {filteredNav.map(item => (
+              {filteredNav.map((item, index) => (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setCommandOpen(false)}
-                  className="flex items-center gap-4 p-4 rounded-2xl hover:bg-surface-hover text-text-secondary hover:text-accent transition-colors group"
+                  onMouseEnter={() => setSelectedIndex(index)}
+                  className={`flex items-center gap-4 p-4 rounded-2xl transition-colors group ${
+                    index === selectedIndex
+                      ? 'bg-accent/10 text-accent'
+                      : 'text-text-secondary hover:bg-surface-hover hover:text-accent'
+                  }`}
                 >
-                  <div className="p-2 rounded-xl bg-surface-raised group-hover:bg-surface shadow-sm transition-colors">
+                  <div className={`p-2 rounded-xl shadow-sm transition-colors ${
+                    index === selectedIndex ? 'bg-accent/20' : 'bg-surface-raised group-hover:bg-surface'
+                  }`}>
                     {item.icon}
                   </div>
                   <span className="font-semibold text-text-primary">{item.label}</span>
-                  <span className="ml-auto text-[10px] font-bold tracking-widest text-text-muted group-hover:text-accent uppercase">Return to open</span>
+                  <span className={`ml-auto text-[10px] font-bold tracking-widest uppercase ${
+                    index === selectedIndex ? 'text-accent' : 'text-text-muted group-hover:text-accent'
+                  }`}>
+                    {index === selectedIndex ? '↵ Enter' : 'Return to open'}
+                  </span>
                 </Link>
               ))}
               {filteredNav.length === 0 && (
@@ -331,8 +392,9 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
             
             <div className="px-6 py-3 bg-surface-raised border-t border-border flex items-center justify-between text-[10px] font-bold tracking-widest text-text-muted uppercase">
               <div className="flex gap-4">
-                <span>ESC to close</span>
-                <span>Enter to select</span>
+                <span>↑↓ Navigate</span>
+                <span>↵ Select</span>
+                <span>ESC Close</span>
               </div>
               <span className="text-accent">RePrime OS</span>
             </div>
@@ -350,7 +412,8 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
         @media (max-width: 1024px) {
           header, main { margin-left: 0 !important; }
         }
-      `}</style>
+      `}
+      </style>
     </div>
   )
 }

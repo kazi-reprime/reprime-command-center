@@ -2,6 +2,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 type Panel = '305' | '718'
@@ -77,8 +78,6 @@ function avatarColor(name: string): string {
 // ── Component ──────────────────────────────────────────────────────────────────
 export default function WhatsAppClient() {
   const [activePanel, setActivePanel] = useState<Panel>('305')
-  const [threads, setThreads] = useState<Thread[]>([])
-  const [loading, setLoading] = useState(true)
   const [selectedThread, setSelectedThread] = useState<Thread | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [msgLoading, setMsgLoading] = useState(false)
@@ -94,31 +93,25 @@ export default function WhatsAppClient() {
   const mediaRecRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
 
-  // ── Fetch threads ──
-  const fetchThreads = useCallback(async (panel: Panel) => {
-    setLoading(true)
-    try {
-      const res = await fetch(`/api/whatsapp/threads?panel=${panel}`, { cache: 'no-store' })
-      if (res.ok) {
-        const data = await res.json()
-        const list = (data.threads || data || []) as Thread[]
-        setThreads(list.sort((a, b) => {
-          if (a.is_priority && !b.is_priority) return -1
-          if (!a.is_priority && b.is_priority) return 1
-          return new Date(b.last_message_at || 0).getTime() - new Date(a.last_message_at || 0).getTime()
-        }))
-      }
-    } catch (e) { console.error('Failed to fetch threads:', e) }
-    setLoading(false)
-  }, [])
+  // ── Fetch threads via React Query (shared cache with CommsColumn) ──
+  const threadsQ = useQuery<{ threads: Thread[] }>({
+    queryKey: ['whatsapp-threads', activePanel],
+    queryFn: async () => {
+      const res = await fetch(`/api/whatsapp/threads?panel=${activePanel}`, { cache: 'no-store' })
+      if (!res.ok) return { threads: [] }
+      return res.json()
+    },
+    refetchInterval: 30000,
+    staleTime: 30000,
+    retry: 1,
+  })
 
-  useEffect(() => { fetchThreads(activePanel) }, [activePanel, fetchThreads])
-
-  // Auto-refresh threads every 30s
-  useEffect(() => {
-    const t = setInterval(() => fetchThreads(activePanel), 30000)
-    return () => clearInterval(t)
-  }, [activePanel, fetchThreads])
+  const threads = (threadsQ.data?.threads || []).sort((a, b) => {
+    if (a.is_priority && !b.is_priority) return -1
+    if (!a.is_priority && b.is_priority) return 1
+    return new Date(b.last_message_at || 0).getTime() - new Date(a.last_message_at || 0).getTime()
+  })
+  const loading = threadsQ.isLoading
 
   // ── Fetch messages ──
   const fetchMessages = useCallback(async (thread: Thread) => {
@@ -264,13 +257,15 @@ export default function WhatsAppClient() {
   const emojis = ['👍', '❤️', '😂', '🙏', '🔥', '👋', '✅', '🎉', '💪', '🤝', '👏', '💯', '🚀', '⭐', '😊', '🙌']
 
   return (
-    <div style={{ display: 'flex', height: '100%', background: '#0B1426', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div style={{ display: 'flex', height: '100%', background: 'var(--background, #0B1426)', fontFamily: 'inherit' }}>
       {/* ── LEFT PANEL: Chat List ──────────────────────────────────────── */}
       <div style={{
-        width: 360, flexShrink: 0, display: 'flex', flexDirection: 'column',
+        width: 'clamp(280px, 30%, 360px)', flexShrink: 0, display: selectedThread ? undefined : 'flex', flexDirection: 'column',
         borderRight: '1px solid rgba(255,255,255,0.06)',
-        background: 'rgba(11,20,38,0.98)',
-      }}>
+        background: 'var(--surface, rgba(11,20,38,0.98))',
+      }}
+        className={selectedThread ? 'hidden md:flex md:flex-col' : ''}
+      >
         {/* Panel Tabs */}
         <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           {(['305', '718'] as Panel[]).map(p => (
@@ -421,10 +416,12 @@ export default function WhatsAppClient() {
               background: 'rgba(14,52,112,0.4)',
               borderBottom: '1px solid rgba(255,255,255,0.06)',
             }}>
-              <button onClick={() => setSelectedThread(null)} style={{
-                background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
-                cursor: 'pointer', fontSize: 18, display: 'none',
-              }}>←</button>
+              <button onClick={() => setSelectedThread(null)}
+                className="md:hidden"
+                style={{
+                  background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)',
+                  cursor: 'pointer', fontSize: 18,
+                }}>←</button>
               <div style={{
                 width: 40, height: 40, borderRadius: '50%',
                 background: avatarColor(selectedThread.contact_name),

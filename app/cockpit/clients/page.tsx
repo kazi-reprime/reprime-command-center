@@ -69,15 +69,15 @@ export default function ClientsPage() {
     <div>
       <DataSourceBanner source={dataSource} warning={dataWarning} />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
         <div>
-          <h1 style={{ margin: 0, color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Client CRM</h1>
-          <p style={{ margin: '0.25rem 0 0', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+          <h1 className="m-0 text-text-primary text-2xl font-bold">Client CRM</h1>
+          <p className="mt-1 mb-0 text-text-secondary text-xs">
             {statusCounts.active} active • ${(clients.reduce((s, c) => s + c.revenue, 0) / 1000).toFixed(0)}K total revenue
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <div style={{ width: 240 }}><SearchInput value={search} onChange={setSearch} placeholder="Search clients..." /></div>
+        <div className="flex gap-2 items-center">
+          <div className="w-60"><SearchInput value={search} onChange={setSearch} placeholder="Search clients..." /></div>
           <ActionButton label="+ New Client" variant="primary" size="md" onClick={() => setShowCreate(true)} />
         </div>
       </div>
@@ -93,45 +93,34 @@ export default function ClientsPage() {
         onChange={setFilter}
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-4 mt-4">
         {filtered.map(client => (
           <div
             key={client.id}
             onClick={() => setSelectedClient(client)}
-            style={{
-              background: 'rgba(14,52,112,0.4)', border: '1px solid rgba(255,204,51,0.08)',
-              borderRadius: 12, padding: '1.25rem', cursor: 'pointer',
-              transition: 'all 200ms',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,204,51,0.2)')}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,204,51,0.08)')}
+            className="bg-surface-raised border border-border rounded-xl p-5 cursor-pointer transition-all duration-200 hover:border-border-strong"
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: '50%',
-                  background: 'linear-gradient(135deg, rgba(255,204,51,0.15), rgba(14,52,112,0.5))',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  color: '#FFCC33', fontSize: '0.7rem', fontWeight: 700, flexShrink: 0,
-                }}>
+            <div className="flex justify-between items-start mb-2">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-accent/15 to-surface-raised flex items-center justify-center text-accent text-[0.7rem] font-bold flex-shrink-0">
                   {client.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                 </div>
                 <div>
-                  <div style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600 }}>{client.name}</div>
-                  <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.65rem', marginTop: '0.1rem' }}>{client.business}</div>
+                  <div className="text-text-primary text-sm font-semibold">{client.name}</div>
+                  <div className="text-text-muted text-[0.65rem] mt-0.5">{client.business}</div>
                 </div>
               </div>
               <StatusBadge status={client.status} size="md" />
             </div>
 
-            <div style={{ display: 'flex', gap: '1.25rem', fontSize: '0.7rem', color: 'rgba(255,204,51,0.5)', marginTop: '0.75rem' }}>
+            <div className="flex gap-5 text-[0.7rem] text-text-secondary mt-3">
               <span>💰 ${(client.revenue / 1000).toFixed(0)}K</span>
               {client.email && <span>📧 {client.email}</span>}
               {client.nextFollowUp && <span>📅 {client.nextFollowUp}</span>}
             </div>
 
             {client.notes && (
-              <p style={{ margin: '0.5rem 0 0', color: 'rgba(255,204,51,0.35)', fontSize: '0.7rem', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <p className="mt-2 mb-0 text-text-muted text-[0.7rem] leading-relaxed overflow-hidden text-ellipsis whitespace-nowrap">
                 {client.notes}
               </p>
             )}
@@ -145,24 +134,24 @@ export default function ClientsPage() {
       <Modal isOpen={!!selectedClient} onClose={() => setSelectedClient(null)} title={selectedClient?.name || ''} width={640}>
         {selectedClient && (
           <div>
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <div className="flex gap-4 mb-4 flex-wrap">
               <StatusBadge status={selectedClient.status} size="md" />
-              <span style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>{selectedClient.business}</span>
-              <span style={{ color: '#00A980', fontSize: '0.75rem', fontWeight: 600 }}>${(selectedClient.revenue / 1000).toFixed(0)}K revenue</span>
+              <span className="text-text-secondary text-xs">{selectedClient.business}</span>
+              <span className="text-status-success text-xs font-semibold">${(selectedClient.revenue / 1000).toFixed(0)}K revenue</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '1rem' }}>
-              <Card title="Email"><span style={{ color: '#e2e8f0', fontSize: '0.8rem' }}>{selectedClient.email || 'Not set'}</span></Card>
-              <Card title="Phone"><span style={{ color: '#e2e8f0', fontSize: '0.8rem' }}>{selectedClient.phone || 'Not set'}</span></Card>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <Card title="Email"><span className="text-text-primary text-xs">{selectedClient.email || 'Not set'}</span></Card>
+              <Card title="Phone"><span className="text-text-primary text-xs">{selectedClient.phone || 'Not set'}</span></Card>
             </div>
             {selectedClient.notes && (
-              <Card title="Notes"><p style={{ color: '#e2e8f0', fontSize: '0.8rem', margin: 0, lineHeight: 1.6 }}>{selectedClient.notes}</p></Card>
+              <Card title="Notes"><p className="text-text-primary text-xs m-0 leading-relaxed">{selectedClient.notes}</p></Card>
             )}
             {selectedClient.nextFollowUp && (
-              <div style={{ marginTop: '0.5rem', color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>
+              <div className="mt-2 text-text-secondary text-xs">
                 📅 Next follow-up: {selectedClient.nextFollowUp}
               </div>
             )}
-            <div style={{ display: 'flex', gap: '0.35rem', marginTop: '1rem' }}>
+            <div className="flex gap-1.5 mt-4">
               <ActionButton label="Send Email" variant="primary" size="md" onClick={() => addToast(
                 process.env.NEXT_PUBLIC_SENDGRID_CONFIGURED === 'true'
                   ? 'Opening email composer...'
@@ -177,7 +166,7 @@ export default function ClientsPage() {
 
       {/* Create Client Modal */}
       <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create New Client" width={500}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="flex flex-col gap-3">
           {[
             { label: 'Name *', value: newName, set: setNewName, placeholder: 'Client name' },
             { label: 'Business', value: newBusiness, set: setNewBusiness, placeholder: 'Company or business name' },
@@ -186,21 +175,16 @@ export default function ClientsPage() {
             { label: 'Source', value: newSource, set: setNewSource, placeholder: 'Referral, LinkedIn, etc.' },
           ].map(field => (
             <div key={field.label}>
-              <label style={{ display: 'block', color: 'rgba(255,204,51,0.6)', fontSize: '0.7rem', marginBottom: '0.25rem', fontWeight: 500 }}>{field.label}</label>
+              <label className="block text-text-secondary text-[0.7rem] mb-1 font-medium">{field.label}</label>
               <input
                 value={field.value}
                 onChange={e => field.set(e.target.value)}
                 placeholder={field.placeholder}
-                style={{
-                  width: '100%', padding: '0.6rem 0.75rem', background: 'rgba(0,0,0,0.2)',
-                  border: '1px solid rgba(255,204,51,0.1)', borderRadius: 8,
-                  color: '#fff', fontSize: '0.85rem', outline: 'none', fontFamily: 'inherit',
-                  boxSizing: 'border-box',
-                }}
+                className="w-full px-3 py-2.5 bg-black/20 border border-border rounded-lg text-text-primary text-sm outline-none font-[inherit] box-border"
               />
             </div>
           ))}
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+          <div className="flex gap-2 mt-2">
             <ActionButton label={createMutation.isPending ? 'Creating...' : 'Create Client'} variant="primary" size="md" onClick={handleCreate} />
             <ActionButton label="Cancel" variant="ghost" size="md" onClick={() => setShowCreate(false)} />
           </div>

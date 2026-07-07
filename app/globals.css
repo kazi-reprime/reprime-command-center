@@ -126,41 +126,41 @@
   [data-theme="high-contrast"] {
     /* Theme 4 — RePrime High Contrast */
     --background: #ffffff;
-    --background-subtle: #ffffff;
+    --background-subtle: #f5f5f5;
     
     --surface: #ffffff;
-    --surface-raised: #ffffff;
+    --surface-raised: #f5f5f5;
     --surface-glass: #ffffff;
-    --surface-hover: #000000;
+    --surface-hover: #e5e5e5;
     
     --text-primary: #000000;
-    --text-secondary: #000000;
-    --text-muted: #333333;
+    --text-secondary: #1a1a1a;
+    --text-muted: #404040;
     --text-inverse: #ffffff;
     
-    --border: #000000;
+    --border: #666666;
     --border-strong: #000000;
-    --border-glass: #000000;
+    --border-glass: #999999;
     
-    --accent: #0000ea;
-    --accent-hover: #000000;
+    --accent: #0033cc;
+    --accent-hover: #0022aa;
     --accent-foreground: #ffffff;
     
     --success: #006400;
     --warning: #8b4500;
-    --error: #8b0000;
+    --error: #cc0000;
     --info: #00008b;
     
-    --focus-ring: #000000;
+    --focus-ring: rgba(0, 51, 204, 0.6);
     
     --glass-blur: none;
-    --glass-shadow: none;
+    --glass-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 
-    --chart-1: #000000;
-    --chart-2: #333333;
-    --chart-3: #666666;
-    --chart-4: #999999;
-    --chart-5: #000000;
+    --chart-1: #0033cc;
+    --chart-2: #006400;
+    --chart-3: #cc0000;
+    --chart-4: #8b4500;
+    --chart-5: #660099;
   }
 
   [data-theme="slate"] {
@@ -274,4 +274,19 @@ body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+
+/* Smooth theme transitions for surfaces and text */
+.theme-transition,
+.theme-transition * {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

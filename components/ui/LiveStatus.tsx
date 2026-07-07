@@ -35,7 +35,7 @@ export function ConfigWarning({ message }: { message: string }) {
 export function LoadingState({ message = 'Loading...' }: { message?: string }) {
   return (
     <div className="flex items-center justify-center p-12 gap-3">
-      <div className="w-5 h-5 border-2 border-accent/20 border-t-blue-500 rounded-full animate-spin" />
+      <div className="w-5 h-5 border-2 border-accent/20 border-t-accent rounded-full animate-spin" />
       <span className="text-sm font-semibold text-text-muted">{message}</span>
     </div>
   );
@@ -52,7 +52,7 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
       {onRetry && (
         <button
           onClick={onRetry}
-          className="px-4 py-2 mt-2 text-xs font-bold text-error bg-error/10 hover:bg-error/20 border border-red-200 rounded-lg transition-colors"
+          className="px-4 py-2 mt-2 text-xs font-bold text-status-error bg-status-error/10 hover:bg-status-error/20 border border-status-error/30 rounded-lg transition-colors cursor-pointer"
         >
           Retry
         </button>

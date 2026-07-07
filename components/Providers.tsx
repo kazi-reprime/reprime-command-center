@@ -18,7 +18,14 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       })
   )
   return (
-    <ThemeProvider attribute="data-theme" defaultTheme="light" enableSystem={false}>
+    <ThemeProvider
+      attribute="data-theme"
+      defaultTheme="light"
+      enableSystem={false}
+      themes={['light', 'midnight', 'aurora', 'high-contrast', 'slate']}
+      storageKey="reprime-theme"
+      disableTransitionOnChange={false}
+    >
       <QueryClientProvider client={client}>
         <ToastProvider>
           {children}

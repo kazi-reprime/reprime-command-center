@@ -46,10 +46,10 @@ export default function BrokersPage() {
   return (
     <div>
       <DataSourceBanner source={source} warning={warning} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div className="flex justify-between items-center mb-4">
         <div>
-          <h1 style={{ margin: '0 0 0.25rem', color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Brokers</h1>
-          <p style={{ margin: 0, color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+          <h1 className="mb-1 text-text-primary text-2xl font-bold">Brokers</h1>
+          <p className="m-0 text-text-secondary text-xs">
             {total.toLocaleString()} broker contacts
           </p>
         </div>
@@ -57,59 +57,55 @@ export default function BrokersPage() {
       </div>
 
       {/* Search */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+      <div className="flex gap-2 mb-4">
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && (setPage(1), fetchData())}
           placeholder="Search brokers..."
-          style={{
-            flex: 1, padding: '0.5rem 0.75rem', background: 'rgba(0,0,0,0.2)',
-            border: '1px solid rgba(255,204,51,0.1)', borderRadius: 8, color: '#fff',
-            fontSize: '0.8rem', outline: 'none', fontFamily: 'inherit',
-          }}
+          className="flex-1 px-3 py-2 bg-black/20 border border-border-strong rounded-lg text-text-primary text-sm outline-none font-[inherit]"
         />
         <ActionButton label="Search" variant="primary" onClick={() => { setPage(1); fetchData() }} />
       </div>
 
       {/* Table */}
-      <div style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid rgba(255,204,51,0.06)' }}>
-        <div style={{
-          display: 'grid', gridTemplateColumns: '2fr 2fr 2fr 80px 80px 90px 70px',
-          padding: '0.6rem 0.75rem', background: 'rgba(14,52,112,0.5)',
-          fontSize: '0.6rem', fontWeight: 700, color: 'rgba(255,204,51,0.35)', textTransform: 'uppercase',
-        }}>
+      <div className="rounded-xl overflow-hidden border border-border">
+        <div
+          className="bg-surface-raised text-text-muted text-[0.6rem] font-bold uppercase"
+          style={{
+            display: 'grid', gridTemplateColumns: '2fr 2fr 2fr 80px 80px 90px 70px',
+            padding: '0.6rem 0.75rem',
+          }}
+        >
           <div>Broker</div><div>Brokerage</div><div>Email</div><div>Deals</div><div>Props</div><div>Value</div><div>Active</div>
         </div>
 
         {brokers.length === 0 && (
-          <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(255,204,51,0.3)', fontSize: '0.8rem' }}>
+          <div className="p-8 text-center text-text-muted text-sm">
             {warning || 'No brokers found'}
           </div>
         )}
 
         {brokers.map(b => (
-          <div key={b.id} style={{
-            display: 'grid', gridTemplateColumns: '2fr 2fr 2fr 80px 80px 90px 70px',
-            padding: '0.55rem 0.75rem', alignItems: 'center',
-            background: 'rgba(14,52,112,0.25)', borderBottom: '1px solid rgba(255,204,51,0.03)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <div style={{
-                width: 28, height: 28, borderRadius: 6, flexShrink: 0,
-                background: 'rgba(255,204,51,0.1)', display: 'flex', alignItems: 'center',
-                justifyContent: 'center', fontSize: '0.6rem', fontWeight: 700, color: '#FFCC33',
-              }}>
+          <div key={b.id}
+            className="items-center bg-surface border-b border-border/30"
+            style={{
+              display: 'grid', gridTemplateColumns: '2fr 2fr 2fr 80px 80px 90px 70px',
+              padding: '0.55rem 0.75rem',
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-md shrink-0 bg-accent/10 flex items-center justify-center text-[0.6rem] font-bold text-accent">
                 {b.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
               </div>
-              <span style={{ color: '#e2e8f0', fontSize: '0.78rem', fontWeight: 500 }}>{b.name}</span>
+              <span className="text-text-primary text-[0.78rem] font-medium">{b.name}</span>
             </div>
-            <div style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.72rem' }}>{b.company || '—'}</div>
-            <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.68rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.email || '—'}</div>
-            <div style={{ color: '#e2e8f0', fontSize: '0.78rem', fontWeight: 600 }}>{b.deal_count ?? 0}</div>
-            <div style={{ color: '#e2e8f0', fontSize: '0.78rem' }}>{b.property_count ?? 0}</div>
-            <div style={{ color: '#FFCC33', fontSize: '0.78rem', fontWeight: 600 }}>{fmt(b.total_value)}</div>
-            <div style={{ color: (b.active_deals ?? 0) > 0 ? '#00A980' : 'rgba(255,204,51,0.3)', fontSize: '0.78rem', fontWeight: 600 }}>
+            <div className="text-text-secondary text-[0.72rem]">{b.company || '—'}</div>
+            <div className="text-text-muted text-[0.68rem] overflow-hidden text-ellipsis whitespace-nowrap">{b.email || '—'}</div>
+            <div className="text-text-primary text-[0.78rem] font-semibold">{b.deal_count ?? 0}</div>
+            <div className="text-text-primary text-[0.78rem]">{b.property_count ?? 0}</div>
+            <div className="text-accent text-[0.78rem] font-semibold">{fmt(b.total_value)}</div>
+            <div className={`text-[0.78rem] font-semibold ${(b.active_deals ?? 0) > 0 ? 'text-status-success' : 'text-text-muted'}`}>
               {b.active_deals ?? 0}
             </div>
           </div>
@@ -117,13 +113,13 @@ export default function BrokersPage() {
       </div>
 
       {/* Pagination */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem' }}>
-        <span style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.75rem' }}>
+      <div className="flex justify-between items-center mt-4">
+        <span className="text-text-secondary text-xs">
           Showing {((page - 1) * limit) + 1}–{Math.min(page * limit, total)} of {total.toLocaleString()}
         </span>
-        <div style={{ display: 'flex', gap: '0.3rem' }}>
+        <div className="flex gap-1">
           <ActionButton label="‹" variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} />
-          <span style={{ color: '#FFCC33', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }}>{page}/{totalPages}</span>
+          <span className="text-text-primary text-sm px-2 py-1">{page}/{totalPages}</span>
           <ActionButton label="›" variant="ghost" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} />
         </div>
       </div>

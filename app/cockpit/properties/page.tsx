@@ -64,41 +64,31 @@ export default function PropertiesPage() {
   return (
     <div>
       <DataSourceBanner source={source} warning={warning} />
-      <h1 style={{ margin: '0 0 0.25rem', color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Market Listings</h1>
-      <p style={{ margin: '0 0 1rem', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+      <h1 className="mb-1 text-text-primary text-2xl font-bold">Market Listings</h1>
+      <p className="mb-4 text-text-secondary text-xs">
         {total.toLocaleString()} listings across all markets
       </p>
 
       {/* Filters */}
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+      <div className="flex gap-2 flex-wrap mb-4">
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && (setPage(1), fetchData())}
           placeholder="Search listings…"
-          style={{
-            flex: 1, minWidth: 200, padding: '0.5rem 0.75rem', background: 'rgba(0,0,0,0.2)',
-            border: '1px solid rgba(255,204,51,0.1)', borderRadius: 8, color: '#fff',
-            fontSize: '0.8rem', outline: 'none', fontFamily: 'inherit',
-          }}
+          className="flex-1 min-w-[200px] px-3 py-2 bg-black/20 border border-border-strong rounded-lg text-text-primary text-sm outline-none font-[inherit]"
         />
         <select
           value={typeFilter}
           onChange={e => { setTypeFilter(e.target.value); setPage(1) }}
-          style={{
-            padding: '0.5rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,204,51,0.1)',
-            borderRadius: 8, color: '#FFCC33', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'inherit',
-          }}
+          className="py-2 px-2 bg-black/30 border border-border-strong rounded-lg text-accent text-xs cursor-pointer font-[inherit]"
         >
           {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
         <select
           value={listingTypeFilter}
           onChange={e => { setListingTypeFilter(e.target.value); setPage(1) }}
-          style={{
-            padding: '0.5rem', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,204,51,0.1)',
-            borderRadius: 8, color: '#FFCC33', fontSize: '0.75rem', cursor: 'pointer', fontFamily: 'inherit',
-          }}
+          className="py-2 px-2 bg-black/30 border border-border-strong rounded-lg text-accent text-xs cursor-pointer font-[inherit]"
         >
           {LISTING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
@@ -108,33 +98,34 @@ export default function PropertiesPage() {
       {loading ? <LoadingState message="Loading listings..." /> : (
         <>
           {/* Listing Grid */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div className="flex flex-col gap-2">
             {listings.length === 0 && (
               <Card title="No Results">
-                <p style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+                <p className="text-text-secondary text-sm">
                   {warning || 'No listings match your filters. Try broadening your search.'}
                 </p>
               </Card>
             )}
             {listings.map(l => (
-              <div key={l.id} style={{
-                display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto',
-                gap: '0.75rem', padding: '0.85rem 1rem',
-                background: 'rgba(14,52,112,0.4)', border: '1px solid rgba(255,204,51,0.06)',
-                borderRadius: 10, alignItems: 'center',
-              }}>
+              <div key={l.id}
+                className="bg-surface-raised border border-border rounded-xl items-center"
+                style={{
+                  display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto',
+                  gap: '0.75rem', padding: '0.85rem 1rem',
+                }}
+              >
                 {/* Title & Address */}
                 <div>
-                  <div style={{ color: '#e2e8f0', fontSize: '0.85rem', fontWeight: 600, marginBottom: 2 }}>{l.title}</div>
-                  <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.65rem' }}>{l.address}</div>
-                  <div style={{ display: 'flex', gap: '0.3rem', marginTop: 4 }}>
+                  <div className="text-text-primary text-sm font-semibold mb-0.5">{l.title}</div>
+                  <div className="text-text-secondary text-[0.65rem]">{l.address}</div>
+                  <div className="flex gap-1 mt-1">
                     {l.property_type && (
-                      <span style={{ padding: '0.15rem 0.4rem', borderRadius: 4, fontSize: '0.55rem', fontWeight: 600, background: 'rgba(59,130,246,0.15)', color: '#3B82F6' }}>
+                      <span className="px-1.5 py-0.5 rounded text-[0.55rem] font-semibold bg-status-info/15 text-status-info">
                         {l.property_type}
                       </span>
                     )}
                     {l.listing_type && (
-                      <span style={{ padding: '0.15rem 0.4rem', borderRadius: 4, fontSize: '0.55rem', fontWeight: 600, background: 'rgba(0,169,128,0.15)', color: '#00A980' }}>
+                      <span className="px-1.5 py-0.5 rounded text-[0.55rem] font-semibold bg-status-success/15 text-status-success">
                         {l.listing_type}
                       </span>
                     )}
@@ -142,22 +133,22 @@ export default function PropertiesPage() {
                 </div>
 
                 {/* Deal Economics */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem' }}>
+                <div className="grid grid-cols-2 gap-1">
                   <div>
-                    <div style={{ color: 'rgba(255,204,51,0.35)', fontSize: '0.55rem', textTransform: 'uppercase' }}>Asking</div>
-                    <div style={{ color: '#FFCC33', fontSize: '0.85rem', fontWeight: 600 }}>{fmt(l.asking_price)}</div>
+                    <div className="text-text-muted text-[0.55rem] uppercase">Asking</div>
+                    <div className="text-accent text-sm font-semibold">{fmt(l.asking_price)}</div>
                   </div>
                   <div>
-                    <div style={{ color: 'rgba(255,204,51,0.35)', fontSize: '0.55rem', textTransform: 'uppercase' }}>Cap Rate</div>
-                    <div style={{ color: '#e2e8f0', fontSize: '0.85rem', fontWeight: 600 }}>{fmtPct(l.cap_rate)}</div>
+                    <div className="text-text-muted text-[0.55rem] uppercase">Cap Rate</div>
+                    <div className="text-text-primary text-sm font-semibold">{fmtPct(l.cap_rate)}</div>
                   </div>
                   <div>
-                    <div style={{ color: 'rgba(255,204,51,0.35)', fontSize: '0.55rem', textTransform: 'uppercase' }}>NOI</div>
-                    <div style={{ color: '#e2e8f0', fontSize: '0.8rem' }}>{l.noi ? `$${(l.noi / 1000).toFixed(0)}K` : '—'}</div>
+                    <div className="text-text-muted text-[0.55rem] uppercase">NOI</div>
+                    <div className="text-text-primary text-sm">{l.noi ? `$${(l.noi / 1000).toFixed(0)}K` : '—'}</div>
                   </div>
                   <div>
-                    <div style={{ color: 'rgba(255,204,51,0.35)', fontSize: '0.55rem', textTransform: 'uppercase' }}>Vacancy</div>
-                    <div style={{ color: (l.occupancy ?? 100) < 80 ? '#EF4444' : '#e2e8f0', fontSize: '0.8rem' }}>
+                    <div className="text-text-muted text-[0.55rem] uppercase">Vacancy</div>
+                    <div className={`text-sm ${(l.occupancy ?? 100) < 80 ? 'text-status-error' : 'text-text-primary'}`}>
                       {l.occupancy != null ? `${(100 - l.occupancy).toFixed(0)}%` : '—'}
                     </div>
                   </div>
@@ -165,20 +156,20 @@ export default function PropertiesPage() {
 
                 {/* Broker & Building */}
                 <div>
-                  <div style={{ color: 'rgba(255,204,51,0.35)', fontSize: '0.55rem', textTransform: 'uppercase' }}>Building</div>
-                  <div style={{ color: '#e2e8f0', fontSize: '0.75rem' }}>{fmtSF(l.building_sf)}</div>
+                  <div className="text-text-muted text-[0.55rem] uppercase">Building</div>
+                  <div className="text-text-primary text-xs">{fmtSF(l.building_sf)}</div>
                   {l.listing_agent_name && (
-                    <div style={{ marginTop: 4 }}>
-                      <div style={{ color: 'rgba(255,204,51,0.35)', fontSize: '0.55rem', textTransform: 'uppercase' }}>Broker</div>
-                      <div style={{ color: '#e2e8f0', fontSize: '0.7rem' }}>{l.listing_agent_name}</div>
-                      {l.listing_agent_company && <div style={{ color: 'rgba(255,204,51,0.3)', fontSize: '0.6rem' }}>{l.listing_agent_company}</div>}
+                    <div className="mt-1">
+                      <div className="text-text-muted text-[0.55rem] uppercase">Broker</div>
+                      <div className="text-text-primary text-[0.7rem]">{l.listing_agent_name}</div>
+                      {l.listing_agent_company && <div className="text-text-muted text-[0.6rem]">{l.listing_agent_company}</div>}
                     </div>
                   )}
                 </div>
 
                 {/* Actions & Date */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', alignItems: 'flex-end' }}>
-                  <span style={{ color: 'rgba(255,204,51,0.3)', fontSize: '0.6rem' }}>{daysSince(l.created_at)}</span>
+                <div className="flex flex-col gap-1 items-end">
+                  <span className="text-text-muted text-[0.6rem]">{daysSince(l.created_at)}</span>
                   <ActionButton label="View" variant="primary" size="sm" onClick={() => addToast(`Viewing ${l.title}`, 'info')} />
                   <ActionButton label="Outreach" variant="ghost" size="sm" onClick={() => addToast(`Starting outreach for ${l.title}`, 'info')} />
                 </div>
@@ -187,16 +178,13 @@ export default function PropertiesPage() {
           </div>
 
           {/* Pagination */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginTop: '1rem', padding: '0.75rem 0',
-          }}>
-            <span style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.75rem' }}>
+          <div className="flex items-center justify-between mt-4 py-3">
+            <span className="text-text-secondary text-xs">
               Showing {((page - 1) * limit) + 1}–{Math.min(page * limit, total)} of {total.toLocaleString()}
             </span>
-            <div style={{ display: 'flex', gap: '0.3rem' }}>
+            <div className="flex gap-1">
               <ActionButton label="‹" variant="ghost" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} />
-              <span style={{ color: '#FFCC33', fontSize: '0.8rem', padding: '0.3rem 0.6rem' }}>{page}</span>
+              <span className="text-text-primary text-sm px-2 py-1">{page}</span>
               <ActionButton label="›" variant="ghost" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} />
             </div>
           </div>

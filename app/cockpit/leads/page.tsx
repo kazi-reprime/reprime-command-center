@@ -102,15 +102,15 @@ export default function LeadsPage() {
     <div>
       <DataSourceBanner source={dataSource} warning={dataWarning} />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
         <div>
-          <h1 style={{ margin: 0, color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Lead Pipeline</h1>
-          <p style={{ margin: '0.25rem 0 0', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+          <h1 className="m-0 text-text-primary text-2xl font-bold">Lead Pipeline</h1>
+          <p className="mt-1 mb-0 text-text-secondary text-xs">
             {leads.length} leads • ${(leads.reduce((s, l) => s + l.value, 0) / 1000).toFixed(0)}K pipeline
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <div style={{ width: 240 }}><SearchInput value={search} onChange={setSearch} placeholder="Search leads..." /></div>
+        <div className="flex gap-2 items-center">
+          <div className="w-[240px]"><SearchInput value={search} onChange={setSearch} placeholder="Search leads..." /></div>
           <ActionButton
             label={view === 'kanban' ? '☰ List' : '◻ Board'}
             variant="ghost"
@@ -121,43 +121,37 @@ export default function LeadsPage() {
       </div>
 
       {view === 'kanban' ? (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: `repeat(${stageGroups.length}, minmax(180px, 1fr))`,
-          gap: '0.6rem',
-          overflowX: 'auto',
-        }}>
+        <div className="grid gap-2.5 overflow-x-auto" style={{ gridTemplateColumns: `repeat(${stageGroups.length}, minmax(180px, 1fr))` }}>
           {stageGroups.map(stage => (
             <div key={stage.key}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.6rem',
-                marginBottom: '0.5rem', background: `${stage.color}15`, borderRadius: 8,
-                borderLeft: `3px solid ${stage.color}`,
-              }}>
-                <span style={{ color: stage.color, fontSize: '0.75rem', fontWeight: 600 }}>{stage.label}</span>
-                <span style={{ color: 'rgba(255,204,51,0.3)', fontSize: '0.65rem' }}>({stage.leads.length})</span>
+              <div
+                className="flex items-center gap-1.5 px-2.5 py-2 mb-2 rounded-lg"
+                style={{
+                  background: `${stage.color}15`,
+                  borderLeft: `3px solid ${stage.color}`,
+                }}
+              >
+                <span className="text-xs font-semibold" style={{ color: stage.color }}>{stage.label}</span>
+                <span className="text-text-muted text-[0.65rem]">({stage.leads.length})</span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', minHeight: 100 }}>
+              <div className="flex flex-col gap-1.5" style={{ minHeight: 100 }}>
                 {stage.leads.map(lead => (
                   <div
                     key={lead.id}
                     onClick={() => setSelectedLead(lead)}
-                    style={{
-                      background: 'rgba(14,52,112,0.5)', border: '1px solid rgba(255,204,51,0.06)',
-                      borderRadius: 8, padding: '0.7rem', cursor: 'pointer', transition: 'border-color 150ms',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,204,51,0.15)')}
-                    onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,204,51,0.06)')}
+                    className="bg-surface-raised border border-border rounded-lg p-3 cursor-pointer transition-colors hover:border-border-strong"
                   >
-                    <div style={{ color: '#fff', fontSize: '0.75rem', fontWeight: 600, marginBottom: '0.25rem' }}>{lead.name}</div>
-                    <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.6rem', marginBottom: '0.35rem' }}>{lead.business}</div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: '#00A980', fontSize: '0.65rem', fontWeight: 600 }}>${(lead.value / 1000).toFixed(0)}K</span>
-                      <span style={{
-                        padding: '0.15rem 0.35rem', borderRadius: 999, fontSize: '0.55rem', fontWeight: 700,
-                        background: lead.score >= 80 ? 'rgba(255,204,51,0.15)' : 'rgba(59,130,246,0.15)',
-                        color: lead.score >= 80 ? '#FFCC33' : '#3B82F6',
-                      }}>{lead.score}</span>
+                    <div className="text-text-primary text-xs font-semibold mb-1">{lead.name}</div>
+                    <div className="text-text-muted text-[0.6rem] mb-1.5">{lead.business}</div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-status-success text-[0.65rem] font-semibold">${(lead.value / 1000).toFixed(0)}K</span>
+                      <span
+                        className="px-1.5 py-0.5 rounded-full text-[0.55rem] font-bold"
+                        style={{
+                          background: lead.score >= 80 ? 'rgba(255,204,51,0.15)' : 'rgba(59,130,246,0.15)',
+                          color: lead.score >= 80 ? '#FFCC33' : '#3B82F6',
+                        }}
+                      >{lead.score}</span>
                     </div>
                   </div>
                 ))}
@@ -166,28 +160,26 @@ export default function LeadsPage() {
           ))}
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginTop: '0.5rem' }}>
+        <div className="flex flex-col gap-1 mt-2">
           {filtered.map(lead => (
             <div
               key={lead.id}
               onClick={() => setSelectedLead(lead)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.75rem',
-                padding: '0.85rem 1rem', background: 'rgba(14,52,112,0.4)',
-                border: '1px solid rgba(255,204,51,0.06)', borderRadius: 8, cursor: 'pointer',
-              }}
+              className="flex items-center gap-3 px-4 py-3 bg-surface-raised border border-border rounded-lg cursor-pointer"
             >
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ color: '#fff', fontSize: '0.85rem', fontWeight: 600 }}>{lead.name}</div>
-                <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.65rem' }}>{lead.business} • {lead.source}</div>
+              <div className="flex-1 min-w-0">
+                <div className="text-text-primary text-sm font-semibold">{lead.name}</div>
+                <div className="text-text-muted text-[0.65rem]">{lead.business} • {lead.source}</div>
               </div>
-              <span style={{ color: '#00A980', fontSize: '0.75rem', fontWeight: 600 }}>${(lead.value / 1000).toFixed(0)}K</span>
+              <span className="text-status-success text-xs font-semibold">${(lead.value / 1000).toFixed(0)}K</span>
               <StatusBadge status={lead.stage} size="md" />
-              <span style={{
-                padding: '0.2rem 0.5rem', borderRadius: 999, fontSize: '0.6rem', fontWeight: 700,
-                background: lead.score >= 80 ? 'rgba(255,204,51,0.15)' : 'rgba(59,130,246,0.15)',
-                color: lead.score >= 80 ? '#FFCC33' : '#3B82F6',
-              }}>{lead.score}</span>
+              <span
+                className="px-2 py-0.5 rounded-full text-[0.6rem] font-bold"
+                style={{
+                  background: lead.score >= 80 ? 'rgba(255,204,51,0.15)' : 'rgba(59,130,246,0.15)',
+                  color: lead.score >= 80 ? '#FFCC33' : '#3B82F6',
+                }}
+              >{lead.score}</span>
             </div>
           ))}
           {filtered.length === 0 && <EmptyState icon="🎯" title="No leads found" />}
@@ -198,34 +190,33 @@ export default function LeadsPage() {
       <Modal isOpen={!!selectedLead} onClose={() => setSelectedLead(null)} title={selectedLead?.name || ''} width={580}>
         {selectedLead && (
           <div>
-            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="flex gap-3 mb-4 flex-wrap items-center">
               <StatusBadge status={selectedLead.stage} size="md" />
-              <span style={{ color: '#00A980', fontSize: '0.85rem', fontWeight: 600 }}>${(selectedLead.value / 1000).toFixed(0)}K</span>
-              <span style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>Score: {selectedLead.score}</span>
-              <span style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>Prob: {selectedLead.probability}%</span>
+              <span className="text-status-success text-sm font-semibold">${(selectedLead.value / 1000).toFixed(0)}K</span>
+              <span className="text-text-secondary text-xs">Score: {selectedLead.score}</span>
+              <span className="text-text-secondary text-xs">Prob: {selectedLead.probability}%</span>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '1rem' }}>
-              <Card title="Business"><span style={{ color: '#e2e8f0', fontSize: '0.8rem' }}>{selectedLead.business}</span></Card>
-              <Card title="Source"><span style={{ color: '#e2e8f0', fontSize: '0.8rem' }}>{selectedLead.source || 'Unknown'}</span></Card>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              <Card title="Business"><span className="text-text-primary text-xs">{selectedLead.business}</span></Card>
+              <Card title="Source"><span className="text-text-primary text-xs">{selectedLead.source || 'Unknown'}</span></Card>
             </div>
             {selectedLead.nextAction && (
-              <Card title="Next Action"><p style={{ color: '#e2e8f0', fontSize: '0.8rem', margin: 0 }}>{selectedLead.nextAction}</p></Card>
+              <Card title="Next Action"><p className="text-text-primary text-xs m-0">{selectedLead.nextAction}</p></Card>
             )}
-            <div style={{ marginTop: '1rem' }}>
-              <label style={{ color: 'rgba(255,204,51,0.6)', fontSize: '0.7rem', fontWeight: 500, display: 'block', marginBottom: '0.35rem' }}>Move to Stage</label>
-              <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+            <div className="mt-4">
+              <label className="text-text-secondary text-[0.7rem] font-medium block mb-1.5">Move to Stage</label>
+              <div className="flex gap-1 flex-wrap">
                 {STAGES.map(s => (
                   <button
                     key={s.key}
                     onClick={() => { handleStageChange(selectedLead.id, s.key); setSelectedLead(null) }}
                     disabled={s.key === selectedLead.stage}
+                    className="px-2.5 py-1.5 rounded-lg text-[0.7rem] font-medium font-[inherit]"
                     style={{
-                      padding: '0.35rem 0.6rem', borderRadius: 6, fontSize: '0.7rem', fontWeight: 500,
                       border: `1px solid ${s.color}30`,
                       background: s.key === selectedLead.stage ? `${s.color}25` : 'transparent',
                       color: s.key === selectedLead.stage ? s.color : 'rgba(255,204,51,0.5)',
                       cursor: s.key === selectedLead.stage ? 'default' : 'pointer',
-                      fontFamily: 'inherit',
                     }}
                   >{s.label}</button>
                 ))}
@@ -237,7 +228,7 @@ export default function LeadsPage() {
 
       {/* Create Lead Modal */}
       <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create New Lead" width={500}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="flex flex-col gap-3">
           {[
             { label: 'Name *', value: newName, set: setNewName, placeholder: 'Lead name' },
             { label: 'Business', value: newBusiness, set: setNewBusiness, placeholder: 'Company name' },
@@ -246,21 +237,16 @@ export default function LeadsPage() {
             { label: 'Source', value: newSource, set: setNewSource, placeholder: 'Referral, Website, etc.' },
           ].map(field => (
             <div key={field.label}>
-              <label style={{ display: 'block', color: 'rgba(255,204,51,0.6)', fontSize: '0.7rem', marginBottom: '0.25rem', fontWeight: 500 }}>{field.label}</label>
+              <label className="block text-text-secondary text-[0.7rem] mb-1 font-medium">{field.label}</label>
               <input
                 value={field.value}
                 onChange={e => field.set(e.target.value)}
                 placeholder={field.placeholder}
-                style={{
-                  width: '100%', padding: '0.6rem 0.75rem', background: 'rgba(0,0,0,0.2)',
-                  border: '1px solid rgba(255,204,51,0.1)', borderRadius: 8,
-                  color: '#fff', fontSize: '0.85rem', outline: 'none', fontFamily: 'inherit',
-                  boxSizing: 'border-box',
-                }}
+                className="w-full px-3 py-2.5 bg-black/20 border border-border rounded-lg text-text-primary text-sm outline-none font-[inherit] box-border"
               />
             </div>
           ))}
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+          <div className="flex gap-2 mt-2">
             <ActionButton label={createMutation.isPending ? 'Creating...' : 'Create Lead'} variant="primary" size="md" onClick={handleCreate} />
             <ActionButton label="Cancel" variant="ghost" size="md" onClick={() => setShowCreate(false)} />
           </div>

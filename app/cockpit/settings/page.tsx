@@ -117,31 +117,26 @@ export default function SettingsPage() {
 
   return (
     <div>
-      <h1 style={{ margin: '0 0 0.25rem', color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Settings & Configuration</h1>
-      <p style={{ margin: '0 0 1.5rem', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+      <h1 className="mb-1 text-text-primary text-2xl font-bold">Settings & Configuration</h1>
+      <p className="mb-6 text-text-secondary text-xs">
         Manage integrations, preferences, and system configuration
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '1rem' }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(380px,1fr))] gap-4">
         {/* Business Settings */}
         <Card title="Business Profile">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className="flex flex-col gap-3">
             {[
               { label: 'Business Name', key: 'businessName' as const, value: settings.businessName },
               { label: 'Owner Name', key: 'ownerName' as const, value: settings.ownerName },
               { label: 'Timezone', key: 'timezone' as const, value: settings.timezone },
             ].map(field => (
               <div key={field.key}>
-                <label style={{ display: 'block', color: 'rgba(255,204,51,0.6)', fontSize: '0.7rem', marginBottom: '0.25rem', fontWeight: 500 }}>{field.label}</label>
+                <label className="block text-text-secondary text-[0.7rem] mb-1 font-medium">{field.label}</label>
                 <input
                   value={field.value}
                   onChange={e => updateSetting(field.key, e.target.value)}
-                  style={{
-                    width: '100%', padding: '0.5rem 0.75rem', background: 'rgba(0,0,0,0.2)',
-                    border: '1px solid rgba(255,204,51,0.1)', borderRadius: 8,
-                    color: '#fff', fontSize: '0.85rem', outline: 'none', fontFamily: 'inherit',
-                    boxSizing: 'border-box',
-                  }}
+                  className="w-full px-3 py-2 bg-black/20 border border-border rounded-lg text-text-primary text-sm outline-none font-[inherit] box-border"
                 />
               </div>
             ))}
@@ -150,34 +145,29 @@ export default function SettingsPage() {
 
         {/* Feature Toggles */}
         <Card title="Features & Preferences">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          <div className="flex flex-col gap-2.5">
             {[
               { label: 'Push Notifications', key: 'notifications' as const, desc: 'Receive alerts for important events' },
               { label: 'AI Auto-Summarize', key: 'aiAutoSummarize' as const, desc: 'Generate AI summaries for new messages' },
               { label: 'Auto Follow-Up Reminders', key: 'autoFollowUp' as const, desc: 'Automatic follow-up scheduling' },
             ].map(toggle => (
-              <div key={toggle.key} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                padding: '0.6rem 0.75rem', background: 'rgba(0,0,0,0.1)', borderRadius: 8,
-              }}>
+              <div key={toggle.key} className="flex items-center justify-between px-3 py-2.5 bg-black/10 rounded-lg">
                 <div>
-                  <div style={{ color: '#e2e8f0', fontSize: '0.8rem', fontWeight: 500 }}>{toggle.label}</div>
-                  <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.65rem' }}>{toggle.desc}</div>
+                  <div className="text-text-primary text-xs font-medium">{toggle.label}</div>
+                  <div className="text-text-muted text-[0.65rem]">{toggle.desc}</div>
                 </div>
                 <button
                   onClick={() => updateSetting(toggle.key, !settings[toggle.key])}
+                  className="relative border-none cursor-pointer transition-colors duration-200"
                   style={{
-                    width: 44, height: 24, borderRadius: 12, border: 'none', cursor: 'pointer',
+                    width: 44, height: 24, borderRadius: 12,
                     background: settings[toggle.key] ? '#00A980' : 'rgba(255,204,51,0.15)',
-                    position: 'relative', transition: 'background 200ms',
                   }}
                 >
-                  <div style={{
-                    width: 18, height: 18, borderRadius: '50%', background: '#fff',
-                    position: 'absolute', top: 3,
-                    left: settings[toggle.key] ? 23 : 3,
-                    transition: 'left 200ms',
-                  }} />
+                  <div
+                    className="absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white transition-[left] duration-200"
+                    style={{ left: settings[toggle.key] ? 23 : 3 }}
+                  />
                 </button>
               </div>
             ))}
@@ -186,27 +176,28 @@ export default function SettingsPage() {
 
         {/* Integration Status (Live) */}
         <Card title="Integration Status (Live)" style={{ gridColumn: '1 / -1' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '0.5rem' }}>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-2">
             {integrations.map(svc => {
               const testKey = Object.entries(integrationTestMap).find(([name]) => svc.name.includes(name.split(' ')[0]))?.[1]
               return (
-                <div key={svc.name} style={{
-                  display: 'flex', alignItems: 'center', gap: '0.6rem',
-                  padding: '0.6rem 0.75rem', background: 'rgba(0,0,0,0.1)', borderRadius: 8,
-                }}>
-                  <span style={{
-                    width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
-                    background: svc.status === 'connected' ? '#00A980' : svc.status === 'error' ? '#EF4444' : '#F59E0B',
-                  }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: '#e2e8f0', fontSize: '0.8rem', fontWeight: 500 }}>{svc.name}</div>
-                    {svc.message && <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.6rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{svc.message}</div>}
+                <div key={svc.name} className="flex items-center gap-2.5 px-3 py-2.5 bg-black/10 rounded-lg">
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{
+                      background: svc.status === 'connected' ? '#00A980' : svc.status === 'error' ? '#EF4444' : '#F59E0B',
+                    }}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-text-primary text-xs font-medium">{svc.name}</div>
+                    {svc.message && <div className="text-text-muted text-[0.6rem] overflow-hidden text-ellipsis whitespace-nowrap">{svc.message}</div>}
                   </div>
-                  <span style={{
-                    padding: '0.2rem 0.5rem', borderRadius: 999, fontSize: '0.6rem', fontWeight: 600,
-                    background: svc.status === 'connected' ? 'rgba(0,169,128,0.15)' : svc.status === 'error' ? 'rgba(239,68,68,0.15)' : 'rgba(245,158,11,0.15)',
-                    color: svc.status === 'connected' ? '#00A980' : svc.status === 'error' ? '#EF4444' : '#F59E0B',
-                  }}>
+                  <span className={`px-2 py-0.5 rounded-full text-[0.6rem] font-semibold ${
+                    svc.status === 'connected'
+                      ? 'bg-status-success/15 text-status-success'
+                      : svc.status === 'error'
+                        ? 'bg-status-error/15 text-status-error'
+                        : 'bg-status-warning/15 text-status-warning'
+                  }`}>
                     {svc.status === 'connected' ? 'Connected' : svc.status === 'error' ? 'Error' : 'Missing'}
                   </span>
                   {testKey && (
@@ -224,18 +215,10 @@ export default function SettingsPage() {
       </div>
 
       {/* Save Button */}
-      <div style={{
-        position: 'sticky', bottom: 20, display: 'flex', justifyContent: 'flex-end',
-        marginTop: '1.5rem', gap: '0.5rem',
-      }}>
+      <div className="sticky bottom-5 flex justify-end mt-6 gap-2">
         {dirty && (
-          <div style={{
-            padding: '0.75rem 1.25rem', background: 'rgba(14,52,112,0.95)',
-            border: '1px solid rgba(255,204,51,0.15)', borderRadius: 10,
-            display: 'flex', alignItems: 'center', gap: '0.75rem',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)', backdropFilter: 'blur(12px)',
-          }}>
-            <span style={{ color: '#F59E0B', fontSize: '0.8rem' }}>Unsaved changes</span>
+          <div className="flex items-center gap-3 px-5 py-3 bg-surface-raised border border-border rounded-[10px] shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-xl">
+            <span className="text-status-warning text-xs">Unsaved changes</span>
             <ActionButton label="Save Changes" variant="primary" size="md" onClick={handleSaveSettings} />
             <ActionButton label="Discard" variant="ghost" size="md" onClick={() => {
               try {

@@ -46,27 +46,25 @@ export default function CockpitDashboard() {
 
   // Derive system health from /api/health response
   const systemServices = (() => {
-    if (!healthData?.integrations) return [
+    if (!healthData) return [
       { label: 'Nora AI', status: 'Checking...', color: 'text-text-muted', bg: 'bg-surface-raised' },
       { label: 'WhatsApp', status: 'Checking...', color: 'text-text-muted', bg: 'bg-surface-raised' },
       { label: 'Gmail', status: 'Checking...', color: 'text-text-muted', bg: 'bg-surface-raised' },
       { label: 'Database', status: 'Checking...', color: 'text-text-muted', bg: 'bg-surface-raised' },
     ]
-    const intgs = healthData.integrations as {name: string; status: string}[]
-    const getStatus = (name: string) => {
-      const found = intgs.find((i: any) => i.name.toLowerCase().includes(name.toLowerCase()))
-      if (!found) return { status: 'N/A', color: 'text-text-muted' }
-      return found.status === 'connected'
-        ? { status: 'Live', color: 'text-success' }
-        : found.status === 'error'
-        ? { status: 'Error', color: 'text-error' }
-        : { status: 'Not Set', color: 'text-warning' }
-    }
+
+    const getStatus = (label: string, isOk: boolean) => ({
+      label,
+      status: isOk ? 'Live' : 'Error',
+      color: isOk ? 'text-success' : 'text-error',
+      bg: 'bg-surface-raised'
+    })
+
     return [
-      { label: 'Nora AI', ...getStatus('Anthropic'), bg: 'bg-surface-raised' },
-      { label: 'WhatsApp', ...getStatus('WhatsApp'), bg: 'bg-surface-raised' },
-      { label: 'Gmail', ...getStatus('Gmail'), bg: 'bg-surface-raised' },
-      { label: 'Database', ...getStatus('Database'), bg: 'bg-surface-raised' },
+      getStatus('Nora AI', !!healthData.env?.ANTHROPIC_API_KEY),
+      getStatus('WhatsApp', healthData.adapters?.whatsapp?.isConfigured),
+      getStatus('Gmail', !!healthData.env?.GOOGLE_REFRESH_TOKEN),
+      getStatus('Database', healthData.db?.reachable),
     ]
   })()
 
@@ -131,10 +129,10 @@ export default function CockpitDashboard() {
 
             {/* KPI GRID */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard label="Pipeline Value" value={fmt(stats?.pipelineValue ?? 0)} color="#3b82f6" icon={<TrendingUp className="w-5 h-5" />} change={12} changeLabel="vs last month" />
-              <StatCard label="Active Deals" value={stats?.pipelineDeals ?? 0} color="#a855f7" icon={<Briefcase className="w-5 h-5" />} />
-              <StatCard label="Active Campaigns" value={stats?.activeCampaigns ?? 0} color="#10b981" icon={<Activity className="w-5 h-5" />} />
-              <StatCard label="Reply Rate" value={`${stats?.replyRate ?? 0}%`} color="#f59e0b" icon={<MessageSquare className="w-5 h-5" />} change={5} />
+              <StatCard label="Pipeline Value" value={fmt(stats?.pipelineValue ?? 0)} color="var(--chart-1)" icon={<TrendingUp className="w-5 h-5" />} change={12} changeLabel="vs last month" />
+              <StatCard label="Active Deals" value={stats?.pipelineDeals ?? 0} color="var(--chart-2)" icon={<Briefcase className="w-5 h-5" />} />
+              <StatCard label="Active Campaigns" value={stats?.activeCampaigns ?? 0} color="var(--chart-3)" icon={<Activity className="w-5 h-5" />} />
+              <StatCard label="Reply Rate" value={`${stats?.replyRate ?? 0}%`} color="var(--chart-4)" icon={<MessageSquare className="w-5 h-5" />} change={5} />
             </div>
 
             {/* PREMIUM ANALYTICS CHART */}

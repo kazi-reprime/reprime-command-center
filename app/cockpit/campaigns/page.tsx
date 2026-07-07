@@ -41,13 +41,13 @@ export default function CampaignsPage() {
   return (
     <div>
       <DataSourceBanner source={source} warning={warning} />
-      <h1 style={{ margin: '0 0 0.25rem', color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Outreach Campaigns</h1>
-      <p style={{ margin: '0 0 1rem', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+      <h1 className="mb-1 text-text-primary text-2xl font-bold">Outreach Campaigns</h1>
+      <p className="mb-4 text-text-secondary text-xs">
         Email outreach management & performance
       </p>
 
       {/* KPIs */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(160px,1fr))] gap-3 mb-6">
         <StatCard label="Total Campaigns" value={campaigns.length} icon={<span>📡</span>} />
         <StatCard label="Active" value={activeCamps.length} icon={<span>🟢</span>} color="#00A980" />
         <StatCard label="Emails Sent" value={totalSent.toLocaleString()} icon={<span>📧</span>} color="#3B82F6" />
@@ -55,50 +55,52 @@ export default function CampaignsPage() {
       </div>
 
       {/* Campaign Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '0.75rem' }}>
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(340px,1fr))] gap-3">
         {campaigns.length === 0 && (
           <Card title="No Campaigns">
-            <p style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>{warning || 'No campaigns configured'}</p>
+            <p className="text-text-secondary text-sm">{warning || 'No campaigns configured'}</p>
           </Card>
         )}
         {campaigns.map(c => {
           const rate = c.sent_count && c.sent_count > 0 ? Math.round(((c.reply_count || 0) / c.sent_count) * 100) : 0
           return (
             <Card key={c.id} title="">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+              <div className="flex justify-between items-start mb-2">
                 <div>
-                  <div style={{ color: '#e2e8f0', fontSize: '0.9rem', fontWeight: 600 }}>{c.name}</div>
-                  <span style={{
-                    padding: '0.1rem 0.4rem', borderRadius: 999, fontSize: '0.55rem', fontWeight: 600, marginTop: 4, display: 'inline-block',
-                    background: c.status === 'active' || c.status === 'sending' ? 'rgba(0,169,128,0.15)' : c.status === 'completed' ? 'rgba(59,130,246,0.15)' : 'rgba(245,158,11,0.15)',
-                    color: c.status === 'active' || c.status === 'sending' ? '#00A980' : c.status === 'completed' ? '#3B82F6' : '#F59E0B',
-                  }}>{c.status || 'draft'}</span>
+                  <div className="text-text-primary text-base font-semibold">{c.name}</div>
+                  <span className={`px-1.5 py-0.5 rounded-full text-[0.55rem] font-semibold mt-1 inline-block ${
+                    c.status === 'active' || c.status === 'sending'
+                      ? 'bg-status-success/15 text-status-success'
+                      : c.status === 'completed'
+                        ? 'bg-status-info/15 text-status-info'
+                        : 'bg-status-warning/15 text-status-warning'
+                  }`}>{c.status || 'draft'}</span>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ color: '#FFCC33', fontSize: '1.2rem', fontWeight: 700 }}>{rate}%</div>
-                  <div style={{ color: 'rgba(255,204,51,0.3)', fontSize: '0.55rem' }}>reply rate</div>
+                <div className="text-right">
+                  <div className="text-text-primary text-xl font-bold">{rate}%</div>
+                  <div className="text-text-muted text-[0.55rem]">reply rate</div>
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <div className="grid grid-cols-3 gap-2 mb-2">
                 {[
-                  { label: 'Listings', value: c.listing_count || 0, color: '#e2e8f0' },
-                  { label: 'Sent', value: c.sent_count || 0, color: '#3B82F6' },
-                  { label: 'Replied', value: c.reply_count || 0, color: '#00A980' },
+                  { label: 'Listings', value: c.listing_count || 0, colorClass: 'text-text-primary' },
+                  { label: 'Sent', value: c.sent_count || 0, colorClass: 'text-status-info' },
+                  { label: 'Replied', value: c.reply_count || 0, colorClass: 'text-status-success' },
                 ].map(m => (
-                  <div key={m.label} style={{ padding: '0.4rem', background: 'rgba(0,0,0,0.1)', borderRadius: 6, textAlign: 'center' }}>
-                    <div style={{ color: m.color, fontSize: '1rem', fontWeight: 700 }}>{m.value}</div>
-                    <div style={{ color: 'rgba(255,204,51,0.3)', fontSize: '0.55rem', textTransform: 'uppercase' }}>{m.label}</div>
+                  <div key={m.label} className="p-1.5 bg-black/10 rounded-md text-center">
+                    <div className={`${m.colorClass} text-base font-bold`}>{m.value}</div>
+                    <div className="text-text-muted text-[0.55rem] uppercase">{m.label}</div>
                   </div>
                 ))}
               </div>
 
               {/* Reply rate bar */}
-              <div style={{ height: 6, background: 'rgba(0,0,0,0.2)', borderRadius: 3, overflow: 'hidden', marginBottom: '0.5rem' }}>
-                <div style={{ height: '100%', width: `${Math.min(rate, 100)}%`, background: rate > 30 ? '#00A980' : '#F59E0B', borderRadius: 3, transition: 'width 300ms' }} />
+              <div className="h-1.5 bg-black/20 rounded-sm overflow-hidden mb-2">
+                <div className={`h-full rounded-sm transition-[width] duration-300 ${rate > 30 ? 'bg-status-success' : 'bg-status-warning'}`} style={{ width: `${Math.min(rate, 100)}%` }} />
               </div>
 
-              <div style={{ display: 'flex', gap: '0.3rem' }}>
+              <div className="flex gap-1">
                 <ActionButton label="View Details" variant="primary" size="sm" onClick={() => addToast(`Opening ${c.name}`, 'info')} />
                 <ActionButton
                   label={c.status === 'active' ? 'Pause' : 'Resume'}

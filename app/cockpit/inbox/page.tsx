@@ -99,17 +99,17 @@ export default function InboxPage() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
         <div>
-          <h1 style={{ margin: 0, color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Communication Inbox</h1>
-          <p style={{ margin: '0.25rem 0 0', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+          <h1 className="m-0 text-text-primary text-2xl font-bold">Communication Inbox</h1>
+          <p className="mt-1 mb-0 text-text-secondary text-xs">
             {messages.filter(m => !m.isRead).length} unread • {messages.length} total
           </p>
         </div>
-        <div style={{ width: 260 }}><SearchInput value={search} onChange={setSearch} placeholder="Search messages..." /></div>
+        <div className="w-[260px]"><SearchInput value={search} onChange={setSearch} placeholder="Search messages..." /></div>
       </div>
 
-      <div style={{ marginBottom: '1rem' }}>
+      <div className="mb-4">
         <TabGroup
           tabs={[
             { key: 'all', label: 'All', count: messages.length },
@@ -124,29 +124,33 @@ export default function InboxPage() {
         />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: selectedId ? '1fr 1fr' : '1fr', gap: '1rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+      <div className="grid gap-4" style={{ gridTemplateColumns: selectedId ? '1fr 1fr' : '1fr' }}>
+        <div className="flex flex-col gap-1">
           {filtered.map(msg => (
             <div
               key={msg.id}
               onClick={() => { setSelectedId(msg.id); markRead(msg.id) }}
+              className={`px-4 py-3 rounded-lg cursor-pointer transition-all ${
+                selectedId === msg.id
+                  ? 'bg-accent/10 border border-accent/15'
+                  : msg.isRead
+                    ? 'bg-surface-raised border border-border'
+                    : 'bg-surface-raised/80 border border-border'
+              }`}
               style={{
-                padding: '0.85rem 1rem', background: selectedId === msg.id ? 'rgba(255,204,51,0.08)' : msg.isRead ? 'rgba(14,52,112,0.3)' : 'rgba(14,52,112,0.5)',
-                border: `1px solid ${selectedId === msg.id ? 'rgba(255,204,51,0.15)' : 'rgba(255,204,51,0.05)'}`,
-                borderRadius: 8, cursor: 'pointer', transition: 'all 150ms',
-                borderLeft: msg.isRead ? undefined : '3px solid #FFCC33',
+                borderLeft: msg.isRead ? undefined : '3px solid var(--accent)',
               }}
             >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <div className="flex justify-between items-center mb-1">
+                <div className="flex items-center gap-1.5">
                   <span>{channelIcons[msg.channel] || '📩'}</span>
-                  <span style={{ color: '#fff', fontSize: '0.8rem', fontWeight: msg.isRead ? 500 : 700 }}>{msg.sender}</span>
-                  {msg.priority === 'high' && <span style={{ color: '#EF4444', fontSize: '0.6rem', fontWeight: 600, padding: '0.1rem 0.3rem', background: 'rgba(239,68,68,0.1)', borderRadius: 4 }}>HIGH</span>}
+                  <span className={`text-text-primary text-xs ${msg.isRead ? 'font-medium' : 'font-bold'}`}>{msg.sender}</span>
+                  {msg.priority === 'high' && <span className="text-status-error text-[0.6rem] font-semibold px-1 py-0.5 bg-status-error/10 rounded">HIGH</span>}
                 </div>
-                <span style={{ color: 'rgba(255,204,51,0.3)', fontSize: '0.6rem' }}>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                <span className="text-text-muted text-[0.6rem]">{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
-              {msg.subject && <div style={{ color: 'rgba(255,204,51,0.6)', fontSize: '0.75rem', marginBottom: '0.15rem' }}>{msg.subject}</div>}
-              <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.7rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{msg.preview}</div>
+              {msg.subject && <div className="text-text-secondary text-xs mb-0.5">{msg.subject}</div>}
+              <div className="text-text-muted text-[0.7rem] overflow-hidden text-ellipsis whitespace-nowrap">{msg.preview}</div>
             </div>
           ))}
           {filtered.length === 0 && <EmptyState icon="📭" title="Inbox zero!" description="No messages match your filter." />}
@@ -154,22 +158,22 @@ export default function InboxPage() {
 
         {selected && (
           <Card title={selected.sender} style={{ position: 'sticky', top: 80, alignSelf: 'flex-start' }}>
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.7rem', color: 'rgba(255,204,51,0.5)', marginBottom: '0.5rem' }}>
+            <div className="mb-4">
+              <div className="flex gap-2 text-[0.7rem] text-text-secondary mb-2">
                 <span>{channelIcons[selected.channel]} {selected.channel}</span>
                 <span>•</span>
                 <span>{new Date(selected.createdAt).toLocaleString()}</span>
               </div>
-              {selected.subject && <h3 style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600, margin: '0 0 0.5rem' }}>{selected.subject}</h3>}
-              <p style={{ color: '#e2e8f0', fontSize: '0.85rem', lineHeight: 1.6, margin: 0 }}>{selected.preview}</p>
+              {selected.subject && <h3 className="text-text-primary text-sm font-semibold mb-2 mt-0">{selected.subject}</h3>}
+              <p className="text-text-primary text-sm leading-relaxed m-0">{selected.preview}</p>
             </div>
-            <div style={{ padding: '0.75rem', background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.1)', borderRadius: 8, marginBottom: '1rem' }}>
-              <div style={{ color: '#A855F7', fontSize: '0.7rem', fontWeight: 600, marginBottom: '0.25rem' }}>🧠 AI Summary</div>
-              <p style={{ margin: 0, color: '#e2e8f0', fontSize: '0.75rem', lineHeight: 1.5 }}>
+            <div className="p-3 bg-purple-500/5 border border-purple-500/10 rounded-lg mb-4">
+              <div className="text-purple-500 text-[0.7rem] font-semibold mb-1">🧠 AI Summary</div>
+              <p className="m-0 text-text-primary text-xs leading-normal">
                 {selected.sender} sent a {selected.priority} priority message via {selected.channel}. {selected.subject ? `Subject: "${selected.subject}".` : ''} Consider responding within 24 hours.
               </p>
             </div>
-            <div style={{ display: 'flex', gap: '0.35rem' }}>
+            <div className="flex gap-1.5">
               <ActionButton label="Reply" variant="primary" onClick={() => { setShowReply(true); setReplyText('') }} />
               <ActionButton label="Forward" variant="default" onClick={() => addToast('Forward: compose a new message with the original content', 'info')} />
               <ActionButton label="Archive" variant="ghost" onClick={handleArchive} />
@@ -180,8 +184,8 @@ export default function InboxPage() {
 
       {/* Reply Modal */}
       <Modal isOpen={showReply} onClose={() => setShowReply(false)} title={`Reply to ${selected?.sender || ''}`} width={500}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <div style={{ padding: '0.5rem 0.75rem', background: 'rgba(0,0,0,0.15)', borderRadius: 6, fontSize: '0.7rem', color: 'rgba(255,204,51,0.4)' }}>
+        <div className="flex flex-col gap-3">
+          <div className="px-3 py-2 bg-surface-hover rounded-lg text-[0.7rem] text-text-muted">
             Replying via {selected?.channel || 'email'} to {selected?.sender}
           </div>
           <textarea
@@ -189,14 +193,9 @@ export default function InboxPage() {
             onChange={e => setReplyText(e.target.value)}
             placeholder="Type your reply..."
             rows={6}
-            style={{
-              width: '100%', padding: '0.75rem', background: 'rgba(0,0,0,0.2)',
-              border: '1px solid rgba(255,204,51,0.1)', borderRadius: 8,
-              color: '#fff', fontSize: '0.85rem', outline: 'none', fontFamily: 'inherit',
-              resize: 'vertical', boxSizing: 'border-box',
-            }}
+            className="w-full p-3 bg-black/20 border border-border rounded-lg text-text-primary text-sm outline-none font-[inherit] resize-y box-border"
           />
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div className="flex gap-2">
             <ActionButton label="Send Reply" variant="primary" size="md" onClick={handleReply} />
             <ActionButton label="Cancel" variant="ghost" size="md" onClick={() => setShowReply(false)} />
           </div>

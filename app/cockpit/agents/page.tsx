@@ -43,15 +43,15 @@ export default function AgentsPage() {
     <div>
       <DataSourceBanner source={dataSource} warning={dataWarning} />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
         <div>
-          <h1 style={{ margin: 0, color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>AI Agent Control Panel</h1>
-          <p style={{ margin: '0.25rem 0 0', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+          <h1 className="m-0 text-text-primary text-2xl font-bold">AI Agent Control Panel</h1>
+          <p className="mt-1 mb-0 text-text-secondary text-sm">
             {agents.filter(a => a.status === 'running').length} running • {agents.filter(a => a.status === 'error').length} errors • {agents.length} total
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <div style={{ width: 240 }}><SearchInput value={search} onChange={setSearch} placeholder="Search agents..." /></div>
+        <div className="flex gap-2 items-center">
+          <div className="w-60"><SearchInput value={search} onChange={setSearch} placeholder="Search agents..." /></div>
         </div>
       </div>
 
@@ -66,43 +66,42 @@ export default function AgentsPage() {
         onChange={setFilter}
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
+      <div className="grid gap-4 mt-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))' }}>
         {filtered.map(agent => (
           <div
             key={agent.id}
             onClick={() => setSelectedAgent(agent)}
+            className="bg-surface border border-border rounded-xl p-5 cursor-pointer transition-all duration-200"
             style={{
-              background: 'rgba(14,52,112,0.4)', border: '1px solid rgba(255,204,51,0.08)',
-              borderRadius: 12, padding: '1.25rem', cursor: 'pointer',
-              transition: 'all 200ms', borderLeftWidth: 3,
+              borderLeftWidth: 3,
               borderLeftColor: agent.status === 'running' ? '#00A980' : agent.status === 'error' ? '#EF4444' : agent.status === 'paused' ? '#F59E0B' : 'rgba(255,204,51,0.08)',
             }}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span style={{ fontSize: '1.5rem' }}>🤖</span>
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-2xl">🤖</span>
                 <div>
-                  <div style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600 }}>{agent.name}</div>
-                  <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.65rem', marginTop: '0.1rem' }}>{agent.type}</div>
+                  <div className="text-text-primary text-[0.9rem] font-semibold">{agent.name}</div>
+                  <div className="text-text-secondary text-[0.65rem] mt-0.5">{agent.type}</div>
                 </div>
               </div>
               <StatusBadge status={agent.status} size="md" />
             </div>
 
             {agent.currentTask && (
-              <div style={{ padding: '0.4rem 0.6rem', background: 'rgba(0,0,0,0.15)', borderRadius: 6, marginBottom: '0.75rem' }}>
-                <span style={{ color: 'rgba(255,204,51,0.3)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current Task</span>
-                <div style={{ color: '#e2e8f0', fontSize: '0.75rem', marginTop: '0.15rem' }}>{agent.currentTask}</div>
+              <div className="p-2.5 bg-surface-hover rounded-md mb-3">
+                <span className="text-text-muted text-[0.6rem] uppercase tracking-wide">Current Task</span>
+                <div className="text-text-primary text-xs mt-0.5">{agent.currentTask}</div>
               </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', gap: '1rem', fontSize: '0.65rem', color: 'rgba(255,204,51,0.4)' }}>
+            <div className="flex justify-between items-center">
+              <div className="flex gap-4 text-[0.65rem] text-text-secondary">
                 <span>🔄 {agent.completedToday} today</span>
-                {agent.errorCount > 0 && <span style={{ color: '#EF4444' }}>❌ {agent.errorCount}</span>}
+                {agent.errorCount > 0 && <span className="text-status-error">❌ {agent.errorCount}</span>}
                 <span>⚡ {agent.uptime}</span>
               </div>
-              <div style={{ display: 'flex', gap: '0.25rem' }} onClick={e => e.stopPropagation()}>
+              <div className="flex gap-1" onClick={e => e.stopPropagation()}>
                 {agent.status === 'running' && <ActionButton label="Pause" onClick={() => handleToggle(agent.id, 'pause')} variant="ghost" />}
                 {agent.status === 'paused' && <ActionButton label="Resume" onClick={() => handleToggle(agent.id, 'resume')} variant="default" />}
                 {agent.status === 'error' && <ActionButton label="Retry" onClick={() => handleToggle(agent.id, 'retry')} variant="danger" />}
@@ -118,25 +117,25 @@ export default function AgentsPage() {
       <Modal isOpen={!!selectedAgent} onClose={() => setSelectedAgent(null)} title={selectedAgent?.name || ''} width={640}>
         {selectedAgent && (
           <div>
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+            <div className="flex gap-4 mb-4 flex-wrap">
               <StatusBadge status={selectedAgent.status} size="md" />
-              <span style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>Type: {selectedAgent.type}</span>
-              <span style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>Runs today: {selectedAgent.completedToday}</span>
-              <span style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>Uptime: {selectedAgent.uptime}</span>
+              <span className="text-text-secondary text-xs">Type: {selectedAgent.type}</span>
+              <span className="text-text-secondary text-xs">Runs today: {selectedAgent.completedToday}</span>
+              <span className="text-text-secondary text-xs">Uptime: {selectedAgent.uptime}</span>
             </div>
             {selectedAgent.currentTask && (
-              <Card title="Current Task"><p style={{ color: '#e2e8f0', fontSize: '0.8rem', margin: 0 }}>{selectedAgent.currentTask}</p></Card>
+              <Card title="Current Task"><p className="text-text-primary text-sm m-0">{selectedAgent.currentTask}</p></Card>
             )}
-            <div style={{ marginTop: '1rem' }}>
+            <div className="mt-4">
               <Card title="Diagnostics">
-                <div style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>
-                  <div style={{ padding: '0.4rem 0', borderBottom: '1px solid rgba(255,204,51,0.05)' }}>🕒 Last active: {new Date(selectedAgent.lastActive).toLocaleString()}</div>
-                  <div style={{ padding: '0.4rem 0', borderBottom: '1px solid rgba(255,204,51,0.05)' }}>🔄 {selectedAgent.completedToday} operations completed today</div>
-                  {selectedAgent.errorCount > 0 && <div style={{ padding: '0.4rem 0', color: '#EF4444' }}>❌ {selectedAgent.errorCount} error(s) logged in last 24h</div>}
+                <div className="text-text-secondary text-xs">
+                  <div className="py-1.5 border-b border-border">🕒 Last active: {new Date(selectedAgent.lastActive).toLocaleString()}</div>
+                  <div className="py-1.5 border-b border-border">🔄 {selectedAgent.completedToday} operations completed today</div>
+                  {selectedAgent.errorCount > 0 && <div className="py-1.5 text-status-error">❌ {selectedAgent.errorCount} error(s) logged in last 24h</div>}
                 </div>
               </Card>
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
+            <div className="flex gap-2 mt-4">
               {selectedAgent.status === 'running' && <ActionButton label="Pause Agent" onClick={() => { handleToggle(selectedAgent.id, 'pause'); setSelectedAgent(null) }} variant="default" size="md" />}
               {selectedAgent.status === 'paused' && <ActionButton label="Resume Agent" onClick={() => { handleToggle(selectedAgent.id, 'resume'); setSelectedAgent(null) }} variant="primary" size="md" />}
               {selectedAgent.status === 'error' && <ActionButton label="Retry" onClick={() => { handleToggle(selectedAgent.id, 'retry'); setSelectedAgent(null) }} variant="danger" size="md" />}

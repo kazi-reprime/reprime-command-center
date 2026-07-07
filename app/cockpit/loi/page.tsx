@@ -65,67 +65,63 @@ export default function LOIPage() {
   ]
   const failCount = checks.filter(c => !c.pass).length
 
-  const inputStyle = {
-    width: '100%', padding: '0.45rem 0.65rem', background: 'rgba(0,0,0,0.2)',
-    border: '1px solid rgba(255,204,51,0.1)', borderRadius: 8, color: '#fff',
-    fontSize: '0.8rem', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' as const,
-  }
-  const labelStyle = { display: 'block', color: 'rgba(255,204,51,0.5)', fontSize: '0.65rem', marginBottom: '0.2rem', fontWeight: 600 as const }
+  const inputClassName = 'w-full px-2.5 py-1.5 bg-black/20 border border-border-strong rounded-lg text-text-primary text-sm outline-none font-[inherit] box-border'
+  const labelClassName = 'block text-text-secondary text-[0.65rem] mb-0.5 font-semibold'
 
   return (
     <div>
-      <h1 style={{ margin: '0 0 0.25rem', color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>LOI Creator</h1>
-      <p style={{ margin: '0 0 1rem', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+      <h1 className="mb-1 text-text-primary text-2xl font-bold">LOI Creator</h1>
+      <p className="mb-4 text-text-secondary text-xs">
         Generate a plain, de-branded Letter of Intent under a stealth company&apos;s name
       </p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+      <div className="grid grid-cols-2 gap-4">
         {/* LEFT: Form */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="flex flex-col gap-3">
           {/* Identity */}
           <Card title="Identity & Deal">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-              <div><label style={labelStyle}>Stealth Company</label><input style={inputStyle} value={stealthCompany} onChange={e => setStealthCompany(e.target.value)} placeholder="e.g. Summit Crest Capital" /></div>
-              <div><label style={labelStyle}>Signing Persona</label><input style={inputStyle} value={signatoryName} onChange={e => setSignatoryName(e.target.value)} placeholder="e.g. Claire Mitchell" /></div>
-              <div><label style={labelStyle}>Property Name</label><input style={inputStyle} value={propertyName} onChange={e => setPropertyName(e.target.value)} placeholder="Start typing..." /></div>
-              <div><label style={labelStyle}>Property Address</label><input style={inputStyle} value={propertyAddress} onChange={e => setPropertyAddress(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className={labelClassName}>Stealth Company</label><input className={inputClassName} value={stealthCompany} onChange={e => setStealthCompany(e.target.value)} placeholder="e.g. Summit Crest Capital" /></div>
+              <div><label className={labelClassName}>Signing Persona</label><input className={inputClassName} value={signatoryName} onChange={e => setSignatoryName(e.target.value)} placeholder="e.g. Claire Mitchell" /></div>
+              <div><label className={labelClassName}>Property Name</label><input className={inputClassName} value={propertyName} onChange={e => setPropertyName(e.target.value)} placeholder="Start typing..." /></div>
+              <div><label className={labelClassName}>Property Address</label><input className={inputClassName} value={propertyAddress} onChange={e => setPropertyAddress(e.target.value)} /></div>
             </div>
           </Card>
 
           {/* Underwriting */}
           <Card title="Underwriting">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-              <div><label style={labelStyle}>Net Operating Income</label><input style={inputStyle} value={noi} onChange={e => setNoi(e.target.value)} placeholder="$" type="number" /></div>
-              <div><label style={labelStyle}>Target Cap Rate</label>
-                <select style={{ ...inputStyle, cursor: 'pointer' }} value={capRate} onChange={e => setCapRate(e.target.value)}>
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className={labelClassName}>Net Operating Income</label><input className={inputClassName} value={noi} onChange={e => setNoi(e.target.value)} placeholder="$" type="number" /></div>
+              <div><label className={labelClassName}>Target Cap Rate</label>
+                <select className={`${inputClassName} cursor-pointer`} value={capRate} onChange={e => setCapRate(e.target.value)}>
                   {['7', '7.5', '8', '8.5', '9', '9.5', '10', '10.5', '11', '12'].map(v => <option key={v} value={v}>{v}%</option>)}
                 </select>
               </div>
-              <div><label style={labelStyle}>Square Feet</label><input style={inputStyle} value={sqft} onChange={e => setSqft(e.target.value)} type="number" /></div>
-              <div><label style={labelStyle}>Occupancy %</label><input style={inputStyle} value={occupancy} onChange={e => setOccupancy(e.target.value)} type="number" /></div>
+              <div><label className={labelClassName}>Square Feet</label><input className={inputClassName} value={sqft} onChange={e => setSqft(e.target.value)} type="number" /></div>
+              <div><label className={labelClassName}>Occupancy %</label><input className={inputClassName} value={occupancy} onChange={e => setOccupancy(e.target.value)} type="number" /></div>
             </div>
-            <div style={{ marginTop: '0.5rem', padding: '0.5rem 0.65rem', background: 'rgba(255,204,51,0.06)', borderRadius: 8 }}>
-              <div style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.6rem', textTransform: 'uppercase', fontWeight: 600 }}>Implied Offer Price</div>
-              <div style={{ color: '#FFCC33', fontSize: '1.3rem', fontWeight: 700 }}>{fmt(impliedPrice)}</div>
-              <div style={{ color: 'rgba(255,204,51,0.35)', fontSize: '0.65rem' }}>NOI {fmt(parseFloat(noi) || 0)} ÷ {capRate}% cap</div>
+            <div className="mt-2 px-2.5 py-2 bg-accent/[0.06] rounded-lg">
+              <div className="text-text-secondary text-[0.6rem] uppercase font-semibold">Implied Offer Price</div>
+              <div className="text-accent text-xl font-bold">{fmt(impliedPrice)}</div>
+              <div className="text-text-muted text-[0.65rem]">NOI {fmt(parseFloat(noi) || 0)} ÷ {capRate}% cap</div>
             </div>
           </Card>
 
           {/* Letter Details */}
           <Card title="Letter Details">
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-              <div><label style={labelStyle}>Seller Entity (blank = fill later)</label><input style={inputStyle} value={sellerEntity} onChange={e => setSellerEntity(e.target.value)} /></div>
-              <div><label style={labelStyle}>Earnest Deposit</label><input style={inputStyle} value={earnest} onChange={e => setEarnest(e.target.value)} type="number" /></div>
-              <div><label style={labelStyle}>Inspection (days)</label><input style={inputStyle} value={inspectionDays} onChange={e => setInspectionDays(e.target.value)} type="number" /></div>
-              <div><label style={labelStyle}>Extension (days)</label><input style={inputStyle} value={extensionDays} onChange={e => setExtensionDays(e.target.value)} type="number" /></div>
-              <div><label style={labelStyle}>Closing (days after)</label><input style={inputStyle} value={closingDays} onChange={e => setClosingDays(e.target.value)} type="number" /></div>
-              <div><label style={labelStyle}>Offer valid (biz days)</label><input style={inputStyle} value={validDays} onChange={e => setValidDays(e.target.value)} type="number" /></div>
-              <div><label style={labelStyle}>Signatory Title</label><input style={inputStyle} value={signatoryTitle} onChange={e => setSignatoryTitle(e.target.value)} /></div>
-              <div><label style={labelStyle}>Escrow Holder</label><input style={inputStyle} value={escrowHolder} onChange={e => setEscrowHolder(e.target.value)} /></div>
-              <div style={{ gridColumn: '1 / -1' }}><label style={labelStyle}>Footer Contact Line</label><input style={inputStyle} value={footerContact} onChange={e => setFooterContact(e.target.value)} placeholder="Company · persona@domain" /></div>
+            <div className="grid grid-cols-2 gap-2">
+              <div><label className={labelClassName}>Seller Entity (blank = fill later)</label><input className={inputClassName} value={sellerEntity} onChange={e => setSellerEntity(e.target.value)} /></div>
+              <div><label className={labelClassName}>Earnest Deposit</label><input className={inputClassName} value={earnest} onChange={e => setEarnest(e.target.value)} type="number" /></div>
+              <div><label className={labelClassName}>Inspection (days)</label><input className={inputClassName} value={inspectionDays} onChange={e => setInspectionDays(e.target.value)} type="number" /></div>
+              <div><label className={labelClassName}>Extension (days)</label><input className={inputClassName} value={extensionDays} onChange={e => setExtensionDays(e.target.value)} type="number" /></div>
+              <div><label className={labelClassName}>Closing (days after)</label><input className={inputClassName} value={closingDays} onChange={e => setClosingDays(e.target.value)} type="number" /></div>
+              <div><label className={labelClassName}>Offer valid (biz days)</label><input className={inputClassName} value={validDays} onChange={e => setValidDays(e.target.value)} type="number" /></div>
+              <div><label className={labelClassName}>Signatory Title</label><input className={inputClassName} value={signatoryTitle} onChange={e => setSignatoryTitle(e.target.value)} /></div>
+              <div><label className={labelClassName}>Escrow Holder</label><input className={inputClassName} value={escrowHolder} onChange={e => setEscrowHolder(e.target.value)} /></div>
+              <div className="col-span-2"><label className={labelClassName}>Footer Contact Line</label><input className={inputClassName} value={footerContact} onChange={e => setFooterContact(e.target.value)} placeholder="Company · persona@domain" /></div>
             </div>
 
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem' }}>
+            <div className="flex gap-2 mt-3">
               <ActionButton label="Generate PDF" variant="primary" onClick={() => addToast('PDF generation requires server-side template engine', 'warning')} />
               <ActionButton label="Generate DOCX" variant="ghost" onClick={() => addToast('DOCX generation requires server-side template engine', 'warning')} />
             </div>
@@ -133,31 +129,31 @@ export default function LOIPage() {
         </div>
 
         {/* RIGHT: Preview & Metrics */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="flex flex-col gap-3">
           {/* Screen Metrics */}
           <Card title="Screen Metrics">
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.4rem' }}>
+            <div className="grid grid-cols-4 gap-1.5">
               {[
                 { label: 'Offer Cap', value: `${capRate}%` },
                 { label: 'Price/SF', value: pricePerSF > 0 ? `$${pricePerSF}` : '—' },
                 { label: 'NOI/SF', value: noiPerSF > 0 ? `$${noiPerSF}` : '—' },
                 { label: 'Earnest', value: fmt(parseInt(earnest) || 0) },
               ].map(m => (
-                <div key={m.label} style={{ padding: '0.4rem', background: 'rgba(0,0,0,0.1)', borderRadius: 6, textAlign: 'center' }}>
-                  <div style={{ color: '#FFCC33', fontSize: '0.9rem', fontWeight: 700 }}>{m.value}</div>
-                  <div style={{ color: 'rgba(255,204,51,0.3)', fontSize: '0.5rem', textTransform: 'uppercase' }}>{m.label}</div>
+                <div key={m.label} className="p-1.5 bg-black/10 rounded-md text-center">
+                  <div className="text-accent text-base font-bold">{m.value}</div>
+                  <div className="text-text-muted text-[0.5rem] uppercase">{m.label}</div>
                 </div>
               ))}
             </div>
-            <div style={{ marginTop: '0.5rem' }}>
+            <div className="mt-2">
               {checks.map(c => (
-                <div key={c.label} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.2rem 0', fontSize: '0.7rem' }}>
-                  <span style={{ color: c.pass ? '#00A980' : '#EF4444' }}>{c.pass ? '✓' : '✗'}</span>
-                  <span style={{ color: c.pass ? '#e2e8f0' : '#EF4444' }}>{c.label}</span>
+                <div key={c.label} className="flex items-center gap-1.5 py-0.5 text-[0.7rem]">
+                  <span className={c.pass ? 'text-status-success' : 'text-status-error'}>{c.pass ? '✓' : '✗'}</span>
+                  <span className={c.pass ? 'text-text-primary' : 'text-status-error'}>{c.label}</span>
                 </div>
               ))}
               {failCount > 0 && (
-                <div style={{ color: '#F59E0B', fontSize: '0.65rem', marginTop: '0.3rem' }}>
+                <div className="text-status-warning text-[0.65rem] mt-1">
                   {failCount} underwriting check(s) failing — not blocked.
                 </div>
               )}
@@ -166,11 +162,8 @@ export default function LOIPage() {
 
           {/* Letter Preview */}
           <Card title="Letter Preview">
-            <div style={{
-              padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: 8,
-              fontSize: '0.72rem', lineHeight: 1.7, color: '#e2e8f0', maxHeight: 500, overflowY: 'auto',
-            }}>
-              <p style={{ fontWeight: 700, marginTop: 0 }}>Letter of Intent to Purchase Real Estate</p>
+            <div className="p-4 bg-white/[0.03] rounded-lg text-[0.72rem] leading-relaxed text-text-primary max-h-[500px] overflow-y-auto">
+              <p className="font-bold mt-0">Letter of Intent to Purchase Real Estate</p>
               <p>Date: {today}</p>
               <p>Property: {propertyName || '________'}{propertyAddress ? `, ${propertyAddress}` : ''}</p>
               <p>Seller: {sellerEntity || '________________________________________'}</p>
@@ -181,7 +174,7 @@ export default function LOIPage() {
               <p><strong>Inspection.</strong> We&apos;d like {inspectionDays} days to inspect the property and review your records, with the option to extend another {extensionDays} days if something needs a closer look.</p>
               <p><strong>Closing.</strong> We&apos;d plan to close within {closingDays} days after the inspection period ends.</p>
               <p><strong>Timing.</strong> We&apos;d appreciate hearing back within {validDays} business days.</p>
-              <hr style={{ border: 'none', borderTop: '1px solid rgba(255,204,51,0.1)', margin: '0.75rem 0' }} />
+              <hr className="border-none border-t border-border my-3" />
               <p>Agreed and accepted for the Seller:</p>
               <p>Signature: ______________________________________</p>
               <p>Date: ______________________________________</p>

@@ -70,15 +70,15 @@ export default function TasksPage() {
     <div>
       <DataSourceBanner source={dataSource} warning={dataWarning} />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
         <div>
-          <h1 style={{ margin: 0, color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Task Command</h1>
-          <p style={{ margin: '0.25rem 0 0', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+          <h1 className="m-0 text-text-primary text-2xl font-bold">Task Command</h1>
+          <p className="mt-1 mb-0 text-text-secondary text-sm">
             {statusCounts.done} completed • {statusCounts.todo + statusCounts.in_progress} remaining • {statusCounts.overdue} overdue
           </p>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <div style={{ width: 240 }}><SearchInput value={search} onChange={setSearch} placeholder="Search tasks..." /></div>
+        <div className="flex gap-2 items-center">
+          <div className="w-60"><SearchInput value={search} onChange={setSearch} placeholder="Search tasks..." /></div>
           <ActionButton label="+ New Task" variant="primary" size="md" onClick={() => setShowCreate(true)} />
         </div>
       </div>
@@ -95,40 +95,36 @@ export default function TasksPage() {
         onChange={setFilter}
       />
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginTop: '1rem' }}>
+      <div className="flex flex-col gap-1.5 mt-4">
         {filtered.map(task => (
-          <div key={task.id} style={{
-            display: 'flex', alignItems: 'center', gap: '0.75rem',
-            padding: '0.75rem 1rem', background: 'rgba(14,52,112,0.4)',
-            border: '1px solid rgba(255,204,51,0.06)', borderRadius: 8,
-            opacity: task.status === 'done' ? 0.6 : 1,
-            borderLeftWidth: 3,
-            borderLeftColor: task.priority === 1 ? '#EF4444' : task.priority === 2 ? '#F59E0B' : task.priority === 3 ? '#3B82F6' : '#94A3B8',
-          }}>
+          <div key={task.id}
+            className="flex items-center gap-3 p-3 px-4 bg-surface border border-border rounded-lg"
+            style={{
+              opacity: task.status === 'done' ? 0.6 : 1,
+              borderLeftWidth: 3,
+              borderLeftColor: task.priority === 1 ? '#EF4444' : task.priority === 2 ? '#F59E0B' : task.priority === 3 ? '#3B82F6' : '#94A3B8',
+            }}
+          >
             <button
               onClick={() => handleToggle(task.id)}
+              className="w-[22px] h-[22px] rounded-md flex-shrink-0 cursor-pointer flex items-center justify-center text-text-inverse text-[0.6rem]"
               style={{
-                width: 22, height: 22, borderRadius: 6, flexShrink: 0,
                 background: task.status === 'done' ? '#00A980' : 'rgba(255,204,51,0.08)',
                 border: `2px solid ${task.status === 'done' ? '#00A980' : 'rgba(255,204,51,0.2)'}`,
-                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                color: '#fff', fontSize: '0.6rem',
               }}
             >
               {task.status === 'done' ? '✓' : ''}
             </button>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{
-                color: '#e2e8f0', fontSize: '0.85rem', fontWeight: 500,
-                textDecoration: task.status === 'done' ? 'line-through' : 'none',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}>{task.title}</div>
-              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.2rem', fontSize: '0.65rem', color: 'rgba(255,204,51,0.4)' }}>
+            <div className="flex-1 min-w-0">
+              <div className={`text-text-primary text-sm font-medium overflow-hidden text-ellipsis whitespace-nowrap ${task.status === 'done' ? 'line-through' : ''}`}>
+                {task.title}
+              </div>
+              <div className="flex gap-2 mt-0.5 text-[0.65rem] text-text-secondary">
                 <span>{task.projectTag}</span>
                 {task.owner && <><span>•</span><span>{task.owner}</span></>}
-                {task.dueDate && <><span>•</span><span style={{
-                  color: task.status !== 'done' && new Date(task.dueDate) < new Date() ? '#EF4444' : 'inherit',
-                }}>Due {task.dueDate}</span></>}
+                {task.dueDate && <><span>•</span><span className={task.status !== 'done' && new Date(task.dueDate) < new Date() ? 'text-status-error' : ''}>
+                  Due {task.dueDate}
+                </span></>}
               </div>
             </div>
             <PriorityBadge priority={task.priority} />
@@ -140,18 +136,18 @@ export default function TasksPage() {
 
       {/* Create Task Modal */}
       <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create New Task" width={480}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div className="flex flex-col gap-3">
           <div>
-            <label style={{ display: 'block', color: 'rgba(255,204,51,0.6)', fontSize: '0.7rem', marginBottom: '0.25rem', fontWeight: 500 }}>Title *</label>
+            <label className="block text-text-secondary text-xs mb-1 font-medium">Title *</label>
             <input value={newTitle} onChange={e => setNewTitle(e.target.value)} placeholder="Task title"
-              style={{ width: '100%', padding: '0.6rem 0.75rem', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,204,51,0.1)', borderRadius: 8, color: '#fff', fontSize: '0.85rem', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+              className="w-full px-3 py-2.5 bg-surface-hover border border-border rounded-lg text-text-primary text-sm outline-none font-[inherit] box-border"
             />
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+          <div className="grid grid-cols-2 gap-2">
             <div>
-              <label style={{ display: 'block', color: 'rgba(255,204,51,0.6)', fontSize: '0.7rem', marginBottom: '0.25rem', fontWeight: 500 }}>Priority</label>
+              <label className="block text-text-secondary text-xs mb-1 font-medium">Priority</label>
               <select value={newPriority} onChange={e => setNewPriority(e.target.value)}
-                style={{ width: '100%', padding: '0.6rem 0.75rem', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,204,51,0.1)', borderRadius: 8, color: '#fff', fontSize: '0.85rem', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                className="w-full px-3 py-2.5 bg-surface-hover border border-border rounded-lg text-text-primary text-sm font-[inherit] box-border"
               >
                 <option value="1">Critical</option>
                 <option value="2">High</option>
@@ -161,19 +157,19 @@ export default function TasksPage() {
               </select>
             </div>
             <div>
-              <label style={{ display: 'block', color: 'rgba(255,204,51,0.6)', fontSize: '0.7rem', marginBottom: '0.25rem', fontWeight: 500 }}>Due Date</label>
+              <label className="block text-text-secondary text-xs mb-1 font-medium">Due Date</label>
               <input type="date" value={newDue} onChange={e => setNewDue(e.target.value)}
-                style={{ width: '100%', padding: '0.6rem 0.75rem', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,204,51,0.1)', borderRadius: 8, color: '#fff', fontSize: '0.85rem', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                className="w-full px-3 py-2.5 bg-surface-hover border border-border rounded-lg text-text-primary text-sm font-[inherit] box-border"
               />
             </div>
           </div>
           <div>
-            <label style={{ display: 'block', color: 'rgba(255,204,51,0.6)', fontSize: '0.7rem', marginBottom: '0.25rem', fontWeight: 500 }}>Project Tag</label>
+            <label className="block text-text-secondary text-xs mb-1 font-medium">Project Tag</label>
             <input value={newProject} onChange={e => setNewProject(e.target.value)} placeholder="General"
-              style={{ width: '100%', padding: '0.6rem 0.75rem', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,204,51,0.1)', borderRadius: 8, color: '#fff', fontSize: '0.85rem', outline: 'none', fontFamily: 'inherit', boxSizing: 'border-box' }}
+              className="w-full px-3 py-2.5 bg-surface-hover border border-border rounded-lg text-text-primary text-sm outline-none font-[inherit] box-border"
             />
           </div>
-          <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+          <div className="flex gap-2 mt-2">
             <ActionButton label={createMutation.isPending ? 'Creating...' : 'Create Task'} variant="primary" size="md" onClick={handleCreate} />
             <ActionButton label="Cancel" variant="ghost" size="md" onClick={() => setShowCreate(false)} />
           </div>

@@ -52,17 +52,17 @@ export default function AutomationsPage() {
     <div>
       <DataSourceBanner source={dataSource} warning={dataWarning} />
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-3">
         <div>
-          <h1 style={{ margin: 0, color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Automation Hub</h1>
-          <p style={{ margin: '0.25rem 0 0', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+          <h1 className="m-0 text-text-primary text-2xl font-bold">Automation Hub</h1>
+          <p className="mt-1 mb-0 text-text-secondary text-xs">
             {automations.filter(a => a.status === 'active').length} active • {automations.filter(a => a.status === 'error').length} errors
           </p>
         </div>
-        <div style={{ width: 240 }}><SearchInput value={search} onChange={setSearch} placeholder="Search automations..." /></div>
+        <div className="w-60"><SearchInput value={search} onChange={setSearch} placeholder="Search automations..." /></div>
       </div>
 
-      <div style={{ marginBottom: '1rem' }}>
+      <div className="mb-4">
         <TabGroup
           tabs={[
             { key: 'all', label: 'All', count: automations.length },
@@ -75,35 +75,33 @@ export default function AutomationsPage() {
         />
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <div className="flex flex-col gap-2">
         {filtered.map(auto => (
-          <div key={auto.id} style={{
-            background: 'rgba(14,52,112,0.4)', border: '1px solid rgba(255,204,51,0.06)',
-            borderRadius: 10, padding: '1rem 1.25rem',
+          <div key={auto.id} className="bg-surface-raised border border-border rounded-[10px] p-4 px-5" style={{
             borderLeftWidth: 3,
             borderLeftColor: auto.status === 'active' ? '#00A980' : auto.status === 'error' ? '#EF4444' : auto.status === 'paused' ? '#F59E0B' : '#6B7280',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+            <div className="flex justify-between items-start mb-2">
               <div>
-                <div style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600 }}>{auto.name}</div>
-                <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.7rem', marginTop: '0.15rem' }}>Trigger: {auto.trigger}</div>
+                <div className="text-text-primary text-sm font-semibold">{auto.name}</div>
+                <div className="text-text-muted text-[0.7rem] mt-0.5">Trigger: {auto.trigger}</div>
               </div>
               <StatusBadge status={auto.status} size="md" />
             </div>
 
-            <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '0.75rem', fontSize: '0.7rem', color: 'rgba(255,204,51,0.5)', flexWrap: 'wrap' }}>
+            <div className="flex gap-6 mb-3 text-[0.7rem] text-text-secondary flex-wrap">
               <span>🔄 Executed: {auto.executionCount}</span>
-              <span style={{ color: auto.failureCount > 0 ? '#EF4444' : 'inherit' }}>❌ Failures: {auto.failureCount}</span>
+              <span className={auto.failureCount > 0 ? 'text-status-error' : ''}>❌ Failures: {auto.failureCount}</span>
               {auto.lastRun && <span>🕐 Last run: {new Date(auto.lastRun).toLocaleString()}</span>}
             </div>
 
             {auto.configWarning && (
-              <div style={{ padding: '0.4rem 0.6rem', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 6, marginBottom: '0.5rem' }}>
-                <span style={{ color: '#F59E0B', fontSize: '0.7rem' }}>⚠️ {auto.configWarning}</span>
+              <div className="px-2.5 py-1.5 bg-status-warning/10 border border-status-warning/15 rounded-md mb-2">
+                <span className="text-status-warning text-[0.7rem]">⚠️ {auto.configWarning}</span>
               </div>
             )}
 
-            <div style={{ display: 'flex', gap: '0.35rem' }}>
+            <div className="flex gap-1.5">
               {auto.status === 'active' && <ActionButton label="Disable" onClick={() => handleToggle(auto.id, 'disable')} variant="ghost" />}
               {auto.status === 'paused' && <ActionButton label="Enable" onClick={() => handleToggle(auto.id, 'enable')} variant="default" />}
               {auto.status === 'error' && <ActionButton label="Retry" onClick={() => handleToggle(auto.id, 'retry')} variant="danger" />}

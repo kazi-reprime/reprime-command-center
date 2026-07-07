@@ -136,20 +136,16 @@ export default function CommsPage() {
 
   return (
     <div>
-      <h1 style={{ margin: '0 0 0.25rem', color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Unified Communications</h1>
-      <p style={{ margin: '0 0 1rem', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+      <h1 className="mb-1 text-text-primary text-2xl font-bold">Unified Communications</h1>
+      <p className="mb-4 text-text-secondary text-sm">
         All channels consolidated · {threads.length} threads · {totalUnread} unread
       </p>
 
       {/* Connection Errors */}
       {errors.length > 0 && (
-        <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+        <div className="mb-4 flex flex-col gap-1">
           {errors.map((err, i) => (
-            <div key={i} style={{
-              padding: '0.5rem 0.75rem', borderRadius: 8,
-              background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)',
-              color: '#F59E0B', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '0.4rem',
-            }}>
+            <div key={i} className="px-3 py-2 rounded-lg bg-status-warning/10 border border-status-warning/15 text-status-warning text-xs flex items-center gap-1.5">
               <span>⚠️</span> {err}
             </div>
           ))}
@@ -157,7 +153,7 @@ export default function CommsPage() {
       )}
 
       {/* Channel Tabs */}
-      <div style={{ display: 'flex', gap: '0.3rem', marginBottom: '1rem', overflowX: 'auto' }}>
+      <div className="flex gap-1 mb-4 overflow-x-auto">
         {[
           { key: 'all' as Channel, label: `All (${threads.length})`, color: '#FFCC33' },
           ...Object.entries(CHANNEL_CONFIG).map(([k, v]) => ({
@@ -167,29 +163,26 @@ export default function CommsPage() {
           })),
         ].map(tab => (
           <button key={tab.key} onClick={() => setChannel(tab.key)}
+            className="font-semibold text-xs whitespace-nowrap font-[inherit] cursor-pointer border-none"
             style={{
-              padding: '0.45rem 0.85rem', borderRadius: 8, border: 'none', cursor: 'pointer',
+              padding: '0.45rem 0.85rem', borderRadius: 8,
               background: channel === tab.key ? `${tab.color}22` : 'rgba(0,0,0,0.15)',
               color: channel === tab.key ? tab.color : 'rgba(255,204,51,0.4)',
-              fontSize: '0.72rem', fontWeight: 600, fontFamily: 'inherit', whiteSpace: 'nowrap',
               borderBottom: channel === tab.key ? `2px solid ${tab.color}` : '2px solid transparent',
             }}
           >{tab.label}</button>
         ))}
-        <div style={{ flex: 1 }} />
+        <div className="flex-1" />
         <ActionButton label="↻ Refresh" variant="ghost" size="sm" onClick={fetchThreads} />
       </div>
 
       {loading ? <LoadingState message="Loading communications..." /> : (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', minHeight: 500 }}>
+        <div className="grid grid-cols-2 gap-4" style={{ minHeight: 500 }}>
           {/* Thread List */}
-          <div style={{
-            background: 'rgba(14,52,112,0.3)', borderRadius: 10,
-            border: '1px solid rgba(255,204,51,0.06)', overflow: 'hidden',
-          }}>
+          <div className="bg-surface-raised rounded-xl border border-border overflow-hidden">
             <div style={{ maxHeight: 600, overflowY: 'auto' }}>
               {filtered.length === 0 && (
-                <div style={{ padding: '2rem', textAlign: 'center', color: 'rgba(255,204,51,0.3)', fontSize: '0.8rem' }}>
+                <div className="p-8 text-center text-text-muted text-sm">
                   {errors.length > 0
                     ? 'Could not connect to messaging services. Check the warnings above.'
                     : 'No threads found. Check WhatsApp and Gmail connections in Settings.'
@@ -201,51 +194,43 @@ export default function CommsPage() {
                 const cfg = CHANNEL_CONFIG[ch] || { label: ch, color: '#888', icon: '💬' }
                 return (
                   <div key={t.id} onClick={() => setSelected(t.id)}
+                    className="cursor-pointer border-b border-border"
                     style={{
-                      padding: '0.6rem 0.75rem', cursor: 'pointer',
+                      padding: '0.6rem 0.75rem',
                       background: selected === t.id ? 'rgba(255,204,51,0.06)' : 'transparent',
-                      borderBottom: '1px solid rgba(255,204,51,0.03)',
-                      borderLeft: selected === t.id ? '3px solid #FFCC33' : '3px solid transparent',
+                      borderLeft: selected === t.id ? '3px solid var(--color-accent)' : '3px solid transparent',
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: '0.7rem' }}>{cfg.icon}</span>
-                        <span style={{
-                          color: (t.unread_count || 0) > 0 ? '#fff' : '#e2e8f0',
-                          fontSize: '0.78rem', fontWeight: (t.unread_count || 0) > 0 ? 700 : 500,
-                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                        }}>
+                    <div className="flex justify-between items-start mb-0.5">
+                      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                        <span className="text-xs">{cfg.icon}</span>
+                        <span className={`text-sm overflow-hidden text-ellipsis whitespace-nowrap ${(t.unread_count || 0) > 0 ? 'text-text-inverse font-bold' : 'text-text-primary font-medium'}`}>
                           {t.contact_name || t.phone || t.email || 'Unknown'}
                         </span>
                         {t.is_investor && (
-                          <span style={{ fontSize: '0.5rem', padding: '0.05rem 0.2rem', borderRadius: 3, background: 'rgba(255,204,51,0.15)', color: '#FFCC33' }}>
+                          <span className="text-[0.5rem] px-1 py-px rounded bg-accent/15 text-accent">
                             INV{t.investor_tier ? ` ${t.investor_tier}` : ''}
                           </span>
                         )}
-                        {t.is_priority && <span style={{ fontSize: '0.5rem', padding: '0.05rem 0.2rem', borderRadius: 3, background: 'rgba(239,68,68,0.15)', color: '#EF4444' }}>!</span>}
+                        {t.is_priority && <span className="text-[0.5rem] px-1 py-px rounded bg-status-error/15 text-status-error">!</span>}
                       </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', flexShrink: 0 }}>
+                      <div className="flex items-center gap-1 flex-shrink-0">
                         {(t.unread_count || 0) > 0 && (
-                          <span style={{
-                            width: 18, height: 18, borderRadius: '50%', background: '#FFCC33',
-                            color: '#0E3470', fontSize: '0.55rem', fontWeight: 700,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          }}>{t.unread_count}</span>
+                          <span className="w-[18px] h-[18px] rounded-full bg-accent text-accent-foreground text-[0.55rem] font-bold flex items-center justify-center">
+                            {t.unread_count}
+                          </span>
                         )}
-                        <span style={{ color: 'rgba(255,204,51,0.3)', fontSize: '0.6rem' }}>{timeAgo(t.last_message_at)}</span>
+                        <span className="text-text-muted text-[0.6rem]">{timeAgo(t.last_message_at)}</span>
                       </div>
                     </div>
                     {t.last_message_preview && (
-                      <p style={{
-                        color: 'rgba(255,204,51,0.35)', fontSize: '0.68rem', margin: 0,
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>{t.last_message_preview}</p>
+                      <p className="text-text-muted text-[0.68rem] m-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                        {t.last_message_preview}
+                      </p>
                     )}
-                    <span style={{
-                      display: 'inline-block', marginTop: 2, padding: '0.05rem 0.25rem', borderRadius: 3,
-                      fontSize: '0.5rem', background: `${cfg.color}15`, color: cfg.color,
-                    }}>{cfg.label}{t.panel ? ` · ${t.panel}` : ''}</span>
+                    <span className="inline-block mt-0.5 px-1 py-px rounded text-[0.5rem]"
+                      style={{ background: `${cfg.color}15`, color: cfg.color }}
+                    >{cfg.label}{t.panel ? ` · ${t.panel}` : ''}</span>
                   </div>
                 )
               })}
@@ -253,17 +238,13 @@ export default function CommsPage() {
           </div>
 
           {/* Message Detail */}
-          <div style={{
-            background: 'rgba(14,52,112,0.3)', borderRadius: 10,
-            border: '1px solid rgba(255,204,51,0.06)',
-            display: 'flex', flexDirection: 'column',
-          }}>
+          <div className="bg-surface-raised rounded-xl border border-border flex flex-col">
             {!selected ? (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ textAlign: 'center', color: 'rgba(255,204,51,0.2)' }}>
-                  <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>💬</div>
-                  <div style={{ fontSize: '0.85rem' }}>Select a thread to view</div>
-                  <div style={{ fontSize: '0.7rem', marginTop: '0.25rem', color: 'rgba(255,204,51,0.15)' }}>
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center text-text-muted">
+                  <div className="text-3xl mb-2">💬</div>
+                  <div className="text-sm">Select a thread to view</div>
+                  <div className="text-xs mt-1 text-text-muted">
                     For full message history, use the Command Center
                   </div>
                 </div>
@@ -275,36 +256,28 @@ export default function CommsPage() {
               const cfg = CHANNEL_CONFIG[ch] || { label: ch, color: '#888', icon: '💬' }
               return (
                 <>
-                  <div style={{
-                    padding: '0.75rem 1rem', borderBottom: '1px solid rgba(255,204,51,0.06)',
-                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  }}>
+                  <div className="px-4 py-3 border-b border-border flex justify-between items-center">
                     <div>
-                      <div style={{ color: '#e2e8f0', fontSize: '0.9rem', fontWeight: 600 }}>
+                      <div className="text-text-primary text-[0.9rem] font-semibold">
                         {t.contact_name || t.phone || t.email}
                       </div>
-                      <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.65rem' }}>
+                      <div className="text-text-secondary text-[0.65rem]">
                         {cfg.icon} {cfg.label} · {t.phone || t.email || ''}
                         {t.panel && ` · Panel ${t.panel}`}
                       </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '0.3rem' }}>
+                    <div className="flex gap-1">
                       <ActionButton label="Open Command Center" variant="primary" size="sm" onClick={() => window.open('/center', '_blank')} />
                     </div>
                   </div>
-                  <div style={{ flex: 1, padding: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <div style={{ textAlign: 'center', color: 'rgba(255,204,51,0.25)' }}>
-                      <p style={{ fontSize: '0.8rem', margin: 0 }}>Message history is available in the Command Center</p>
-                      <p style={{ fontSize: '0.7rem', margin: '0.25rem 0 0', color: 'rgba(255,204,51,0.15)' }}>
+                  <div className="flex-1 p-4 flex items-center justify-center">
+                    <div className="text-center text-text-muted">
+                      <p className="text-sm m-0">Message history is available in the Command Center</p>
+                      <p className="text-xs mt-1 text-text-muted">
                         Last activity: {t.last_message_at ? new Date(t.last_message_at).toLocaleString() : 'Unknown'}
                       </p>
                       {t.is_investor && (
-                        <span style={{
-                          display: 'inline-block', marginTop: '0.5rem',
-                          padding: '0.2rem 0.5rem', borderRadius: 4,
-                          background: 'rgba(255,204,51,0.1)', color: '#FFCC33',
-                          fontSize: '0.65rem', fontWeight: 600,
-                        }}>
+                        <span className="inline-block mt-2 px-2 py-1 rounded bg-accent/10 text-accent text-[0.65rem] font-semibold">
                           Investor{t.investor_tier ? ` · Tier ${t.investor_tier}` : ''}
                         </span>
                       )}

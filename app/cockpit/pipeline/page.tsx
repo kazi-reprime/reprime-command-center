@@ -67,61 +67,63 @@ export default function PipelinePage() {
   return (
     <div>
       <DataSourceBanner source={source} />
-      <h1 style={{ margin: '0 0 0.25rem', color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Acquisition Pipeline</h1>
-      <p style={{ margin: '0 0 1rem', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+      <h1 className="mt-0 mb-1 text-text-primary text-2xl font-bold">Acquisition Pipeline</h1>
+      <p className="mt-0 mb-4 text-text-secondary text-xs">
         {deals.length} active deals · {fmt(totalValue)}
       </p>
 
       {/* KPI Strip */}
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', overflowX: 'auto' }}>
+      <div className="flex gap-4 mb-6 overflow-x-auto">
         {dealsByStage.map(s => (
-          <div key={s.key} style={{
-            padding: '0.6rem 1rem', background: 'rgba(14,52,112,0.5)',
-            border: `1px solid ${s.color}22`, borderRadius: 10, minWidth: 120,
-          }}>
-            <div style={{ color: s.color, fontSize: '0.6rem', fontWeight: 600, textTransform: 'uppercase', marginBottom: 2 }}>{s.label}</div>
-            <div style={{ color: '#e2e8f0', fontSize: '1.1rem', fontWeight: 700 }}>{s.deals.length}</div>
-            <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.65rem' }}>{fmt(s.value)}</div>
+          <div
+            key={s.key}
+            className="px-4 py-2.5 bg-surface-raised rounded-xl"
+            style={{ border: `1px solid ${s.color}22`, minWidth: 120 }}
+          >
+            <div className="text-[0.6rem] font-semibold uppercase mb-0.5" style={{ color: s.color }}>{s.label}</div>
+            <div className="text-text-primary text-lg font-bold">{s.deals.length}</div>
+            <div className="text-text-muted text-[0.65rem]">{fmt(s.value)}</div>
           </div>
         ))}
       </div>
 
       {/* Kanban Board */}
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${STAGES.length}, minmax(200px, 1fr))`, gap: '0.75rem', overflowX: 'auto' }}>
+      <div className="grid gap-3 overflow-x-auto" style={{ gridTemplateColumns: `repeat(${STAGES.length}, minmax(200px, 1fr))` }}>
         {dealsByStage.map(stage => (
-          <div key={stage.key} style={{
-            background: 'rgba(14,52,112,0.3)', borderRadius: 10,
-            border: `1px solid ${stage.color}15`, minHeight: 300,
-          }}>
-            <div style={{
-              padding: '0.6rem 0.75rem', borderBottom: `2px solid ${stage.color}`,
-              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            }}>
-              <span style={{ color: stage.color, fontSize: '0.7rem', fontWeight: 700 }}>{stage.label}</span>
-              <span style={{
-                background: `${stage.color}22`, color: stage.color,
-                padding: '0.15rem 0.4rem', borderRadius: 999, fontSize: '0.6rem', fontWeight: 700,
-              }}>{stage.deals.length}</span>
+          <div
+            key={stage.key}
+            className="bg-surface-raised rounded-xl"
+            style={{ border: `1px solid ${stage.color}15`, minHeight: 300 }}
+          >
+            <div
+              className="px-3 py-2.5 flex justify-between items-center"
+              style={{ borderBottom: `2px solid ${stage.color}` }}
+            >
+              <span className="text-[0.7rem] font-bold" style={{ color: stage.color }}>{stage.label}</span>
+              <span
+                className="px-1.5 py-0.5 rounded-full text-[0.6rem] font-bold"
+                style={{
+                  background: `${stage.color}22`,
+                  color: stage.color,
+                }}
+              >{stage.deals.length}</span>
             </div>
-            <div style={{ padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <div className="p-2 flex flex-col gap-1.5">
               {stage.deals.length === 0 && (
-                <div style={{ padding: '1.5rem 0.5rem', textAlign: 'center', color: 'rgba(255,204,51,0.2)', fontSize: '0.7rem' }}>No deals</div>
+                <div className="py-6 px-2 text-center text-text-muted/50 text-[0.7rem]">No deals</div>
               )}
               {stage.deals.map(d => (
-                <div key={d.id} style={{
-                  padding: '0.6rem', background: 'rgba(0,0,0,0.15)', borderRadius: 8,
-                  border: '1px solid rgba(255,204,51,0.04)',
-                  cursor: 'pointer',
-                }} onClick={() => addToast(`Opening ${d.name}`, 'info')}>
-                  <div style={{ color: '#e2e8f0', fontSize: '0.75rem', fontWeight: 600, marginBottom: 2 }}>{d.name}</div>
-                  {d.address && <div style={{ color: 'rgba(255,204,51,0.35)', fontSize: '0.6rem', marginBottom: 4 }}>{d.address}</div>}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ color: '#FFCC33', fontSize: '0.75rem', fontWeight: 600 }}>{fmt(d.purchasePrice || d.value)}</span>
+                <div
+                  key={d.id}
+                  className="p-2.5 bg-surface-hover rounded-lg border border-border cursor-pointer"
+                  onClick={() => addToast(`Opening ${d.name}`, 'info')}
+                >
+                  <div className="text-text-primary text-xs font-semibold mb-0.5">{d.name}</div>
+                  {d.address && <div className="text-text-muted text-[0.6rem] mb-1">{d.address}</div>}
+                  <div className="flex justify-between items-center">
+                    <span className="text-accent text-xs font-semibold">{fmt(d.purchasePrice || d.value)}</span>
                     {d.assetType && (
-                      <span style={{
-                        padding: '0.1rem 0.35rem', borderRadius: 4, fontSize: '0.5rem', fontWeight: 600,
-                        background: 'rgba(59,130,246,0.15)', color: '#3B82F6',
-                      }}>{d.assetType}</span>
+                      <span className="px-1.5 py-0.5 rounded text-[0.5rem] font-semibold bg-status-info/15 text-status-info">{d.assetType}</span>
                     )}
                   </div>
                 </div>

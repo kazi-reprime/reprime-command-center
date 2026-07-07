@@ -9,6 +9,7 @@ import {
   ChevronLeft, ChevronRight, Menu, Hexagon, UserCircle
 } from 'lucide-react'
 import { ThreeDLogo } from '@/components/ui/ThreeDLogo'
+import { ThemeSwitcher } from '@/components/cockpit/ThemeSwitcher'
 
 type NavItem = { href: string; label: string; icon: React.ReactNode }
 type NavSection = { title: string; items: NavItem[] }
@@ -187,7 +188,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
 
       {/* Main Content Area */}
       <div 
-        className="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out w-full"
+        className="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out"
       >
         {/* Top Executive Bar */}
         <header className="sticky top-0 z-30 flex items-center justify-between h-20 px-4 lg:px-8 glass-panel border-b border-border" style={{ marginLeft: sidebarWidth }}>
@@ -216,6 +217,8 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
               <span>Command Palette...</span>
               <kbd className="hidden lg:inline-flex items-center h-5 px-1.5 bg-surface rounded border border-border text-[10px] font-semibold text-text-muted">⌘K</kbd>
             </button>
+
+            <ThemeSwitcher />
 
             <button
               onClick={() => router.push('/cockpit/inbox')}
@@ -247,7 +250,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
 
         {/* Page Content Container */}
         {/* We use flex-1 and no overflow restrictions to let the body scroll naturally, fixing scroll traps */}
-        <main className="flex-1 w-full max-w-[1600px] mx-auto p-4 lg:p-8" style={{ marginLeft: sidebarWidth }}>
+        <main className="flex-1 max-w-[1600px] mx-auto p-4 lg:p-8" style={{ marginLeft: sidebarWidth }}>
           <div>
             {children}
           </div>

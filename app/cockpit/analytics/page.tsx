@@ -24,53 +24,56 @@ export default function AnalyticsPage() {
   return (
     <div>
       <DataSourceBanner source={dataSource} warning={dataWarning} />
-      <div style={{ marginBottom: '1.5rem' }}>
-        <h1 style={{ margin: 0, color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Analytics</h1>
-        <p style={{ margin: '0.25rem 0 0', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+      <div className="mb-6">
+        <h1 className="m-0 text-text-primary text-2xl font-bold">Analytics</h1>
+        <p className="mt-1 mb-0 text-text-secondary text-xs">
           Live metrics from Portal database
         </p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.75rem', marginBottom: '1.5rem' }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-3 mb-6">
         <StatCard label="Listings" value={(stats?.listingsCount ?? 0).toLocaleString()} icon={<span>🏢</span>} />
-        <StatCard label="Brokers" value={(stats?.brokersCount ?? 0).toLocaleString()} icon={<span>🤝</span>} color="#3B82F6" />
-        <StatCard label="Pipeline Deals" value={stats?.pipelineDeals ?? 0} icon={<span>🎯</span>} color="#A855F7" />
-        <StatCard label="Pipeline Value" value={fmt(stats?.pipelineValue ?? 0)} icon={<span>💰</span>} color="#FFCC33" />
-        <StatCard label="Campaigns" value={stats?.totalCampaigns ?? 0} icon={<span>📡</span>} color="#00A980" />
-        <StatCard label="Active Campaigns" value={stats?.activeCampaigns ?? 0} icon={<span>🟢</span>} color="#00A980" />
-        <StatCard label="Emails Sent" value={(stats?.emailsSent ?? 0).toLocaleString()} icon={<span>📧</span>} color="#3B82F6" />
-        <StatCard label="Reply Rate" value={`${stats?.replyRate ?? 0}%`} icon={<span>💬</span>} color="#A855F7" />
-        <StatCard label="Active Automations" value={stats?.activeAutomations ?? 0} icon={<span>⚡</span>} color="#F59E0B" />
-        <StatCard label="Needs Attention" value={stats?.needsAttention ?? 0} icon={<span>🔴</span>} color="#EF4444" />
-        <StatCard label="Deal Scores" value={stats?.topScoreCount ?? 0} icon={<span>⭐</span>} color="#FFCC33" />
+        <StatCard label="Brokers" value={(stats?.brokersCount ?? 0).toLocaleString()} icon={<span>🤝</span>} color="var(--chart-1)" />
+        <StatCard label="Pipeline Deals" value={stats?.pipelineDeals ?? 0} icon={<span>🎯</span>} color="var(--chart-2)" />
+        <StatCard label="Pipeline Value" value={fmt(stats?.pipelineValue ?? 0)} icon={<span>💰</span>} color="var(--chart-4)" />
+        <StatCard label="Campaigns" value={stats?.totalCampaigns ?? 0} icon={<span>📡</span>} color="var(--success)" />
+        <StatCard label="Active Campaigns" value={stats?.activeCampaigns ?? 0} icon={<span>🟢</span>} color="var(--success)" />
+        <StatCard label="Emails Sent" value={(stats?.emailsSent ?? 0).toLocaleString()} icon={<span>📧</span>} color="var(--chart-1)" />
+        <StatCard label="Reply Rate" value={`${stats?.replyRate ?? 0}%`} icon={<span>💬</span>} color="var(--chart-2)" />
+        <StatCard label="Active Automations" value={stats?.activeAutomations ?? 0} icon={<span>⚡</span>} color="var(--warning)" />
+        <StatCard label="Needs Attention" value={stats?.needsAttention ?? 0} icon={<span>🔴</span>} color="var(--error)" />
+        <StatCard label="Deal Scores" value={stats?.topScoreCount ?? 0} icon={<span>⭐</span>} color="var(--chart-4)" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1rem' }}>
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(340px,1fr))] gap-4">
         <Card title="Outreach Performance">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>Emails Sent</span>
-              <span style={{ color: '#e2e8f0', fontSize: '0.85rem', fontWeight: 600 }}>{(stats?.emailsSent ?? 0).toLocaleString()}</span>
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between items-center">
+              <span className="text-text-secondary text-xs">Emails Sent</span>
+              <span className="text-text-primary text-sm font-semibold">{(stats?.emailsSent ?? 0).toLocaleString()}</span>
             </div>
-            <div style={{ height: 8, background: 'rgba(0,0,0,0.2)', borderRadius: 4, overflow: 'hidden' }}>
-              <div style={{ height: '100%', width: `${Math.min((stats?.replyRate ?? 0), 100)}%`, background: (stats?.replyRate ?? 0) > 30 ? '#00A980' : '#F59E0B', borderRadius: 4 }} />
+            <div className="h-2 bg-black/20 rounded overflow-hidden">
+              <div
+                className={`h-full rounded ${(stats?.replyRate ?? 0) > 30 ? 'bg-status-success' : 'bg-status-warning'}`}
+                style={{ width: `${Math.min((stats?.replyRate ?? 0), 100)}%` }}
+              />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'rgba(255,204,51,0.35)', fontSize: '0.65rem' }}>Reply rate</span>
-              <span style={{ color: '#FFCC33', fontSize: '0.75rem', fontWeight: 600 }}>{stats?.replyRate ?? 0}%</span>
+            <div className="flex justify-between">
+              <span className="text-text-muted text-[0.65rem]">Reply rate</span>
+              <span className="text-text-primary text-xs font-semibold">{stats?.replyRate ?? 0}%</span>
             </div>
           </div>
         </Card>
 
         <Card title="Automation Health">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>Active</span>
-              <span style={{ color: '#00A980', fontSize: '0.85rem', fontWeight: 600 }}>{stats?.activeAutomations ?? 0}</span>
+          <div className="flex flex-col gap-2">
+            <div className="flex justify-between">
+              <span className="text-text-secondary text-xs">Active</span>
+              <span className="text-status-success text-sm font-semibold">{stats?.activeAutomations ?? 0}</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>Needs Attention</span>
-              <span style={{ color: (stats?.needsAttention ?? 0) > 0 ? '#EF4444' : '#00A980', fontSize: '0.85rem', fontWeight: 600 }}>{stats?.needsAttention ?? 0}</span>
+            <div className="flex justify-between">
+              <span className="text-text-secondary text-xs">Needs Attention</span>
+              <span className={`text-sm font-semibold ${(stats?.needsAttention ?? 0) > 0 ? 'text-status-error' : 'text-status-success'}`}>{stats?.needsAttention ?? 0}</span>
             </div>
           </div>
         </Card>

@@ -40,71 +40,72 @@ export default function InvestorsPage() {
   return (
     <div>
       <DataSourceBanner source={source} warning={warning} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div className="flex justify-between items-center mb-4">
         <div>
-          <h1 style={{ margin: '0 0 0.25rem', color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Investor Profiles</h1>
-          <p style={{ margin: 0, color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>
+          <h1 className="mt-0 mb-1 text-text-primary text-2xl font-bold">Investor Profiles</h1>
+          <p className="m-0 text-text-secondary text-xs">
             {investors.length} total · {investors.filter(i => i.status === 'active').length} active · {totalMatches} total matches
           </p>
         </div>
         <ActionButton label="+ Add Investor" variant="primary" onClick={() => addToast('Add investor form coming soon', 'info')} />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '0.75rem' }}>
+      <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))' }}>
         {investors.map(inv => (
           <Card key={inv.id} title="">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: 10,
-                background: inv.color || 'linear-gradient(135deg, #FFCC33, #F0B400)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '0.85rem', fontWeight: 700, color: '#0E3470', flexShrink: 0,
-              }}>
+            <div className="flex items-center gap-3 mb-3">
+              <div
+                className="w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold shrink-0"
+                style={{
+                  background: inv.color || 'linear-gradient(135deg, #FFCC33, #F0B400)',
+                  color: '#0E3470',
+                }}
+              >
                 {inv.name.split(' ').map(w => w[0]).join('').slice(0, 2)}
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ color: '#e2e8f0', fontSize: '0.9rem', fontWeight: 600 }}>{inv.name}</div>
-                <span style={{
-                  padding: '0.1rem 0.4rem', borderRadius: 999, fontSize: '0.55rem', fontWeight: 600,
-                  background: inv.status === 'active' ? 'rgba(0,169,128,0.15)' : 'rgba(245,158,11,0.15)',
-                  color: inv.status === 'active' ? '#00A980' : '#F59E0B',
-                }}>{inv.status === 'active' ? 'Active' : 'Inactive'}</span>
+              <div className="flex-1">
+                <div className="text-text-primary text-sm font-semibold">{inv.name}</div>
+                <span className={`px-1.5 py-0.5 rounded-full text-[0.55rem] font-semibold ${
+                  inv.status === 'active'
+                    ? 'bg-status-success/15 text-status-success'
+                    : 'bg-status-warning/15 text-status-warning'
+                }`}>{inv.status === 'active' ? 'Active' : 'Inactive'}</span>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ color: '#FFCC33', fontSize: '1.1rem', fontWeight: 700 }}>{inv.match_count || 0}</div>
-                <div style={{ color: 'rgba(255,204,51,0.3)', fontSize: '0.55rem' }}>matches</div>
+              <div className="text-right">
+                <div className="text-accent text-lg font-bold">{inv.match_count || 0}</div>
+                <div className="text-text-muted text-[0.55rem]">matches</div>
               </div>
             </div>
 
             {/* Buy Box Criteria */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', fontSize: '0.7rem' }}>
+            <div className="grid grid-cols-2 gap-1.5 text-[0.7rem]">
               {(inv.min_price || inv.max_price) && (
-                <div style={{ padding: '0.35rem 0.5rem', background: 'rgba(0,0,0,0.1)', borderRadius: 6 }}>
-                  <div style={{ color: 'rgba(255,204,51,0.35)', fontSize: '0.55rem', textTransform: 'uppercase' }}>Price Range</div>
-                  <div style={{ color: '#e2e8f0' }}>
+                <div className="px-2 py-1.5 bg-surface-hover rounded-lg">
+                  <div className="text-text-muted text-[0.55rem] uppercase">Price Range</div>
+                  <div className="text-text-primary">
                     {inv.min_price ? fmt(inv.min_price) : '$0'} – {inv.max_price ? fmt(inv.max_price) : '∞'}
                   </div>
                 </div>
               )}
               {inv.states && inv.states.length > 0 && (
-                <div style={{ padding: '0.35rem 0.5rem', background: 'rgba(0,0,0,0.1)', borderRadius: 6 }}>
-                  <div style={{ color: 'rgba(255,204,51,0.35)', fontSize: '0.55rem', textTransform: 'uppercase' }}>States</div>
-                  <div style={{ color: '#e2e8f0' }}>{inv.states.slice(0, 4).join(', ')}{inv.states.length > 4 ? ` +${inv.states.length - 4}` : ''}</div>
+                <div className="px-2 py-1.5 bg-surface-hover rounded-lg">
+                  <div className="text-text-muted text-[0.55rem] uppercase">States</div>
+                  <div className="text-text-primary">{inv.states.slice(0, 4).join(', ')}{inv.states.length > 4 ? ` +${inv.states.length - 4}` : ''}</div>
                 </div>
               )}
               {inv.property_types && inv.property_types.length > 0 && (
-                <div style={{ padding: '0.35rem 0.5rem', background: 'rgba(0,0,0,0.1)', borderRadius: 6, gridColumn: '1 / -1' }}>
-                  <div style={{ color: 'rgba(255,204,51,0.35)', fontSize: '0.55rem', textTransform: 'uppercase' }}>Property Types</div>
-                  <div style={{ color: '#e2e8f0', display: 'flex', gap: '0.25rem', flexWrap: 'wrap', marginTop: 2 }}>
+                <div className="col-span-full px-2 py-1.5 bg-surface-hover rounded-lg">
+                  <div className="text-text-muted text-[0.55rem] uppercase">Property Types</div>
+                  <div className="text-text-primary flex gap-1 flex-wrap mt-0.5">
                     {inv.property_types.map(t => (
-                      <span key={t} style={{ padding: '0.1rem 0.35rem', borderRadius: 4, fontSize: '0.55rem', background: 'rgba(59,130,246,0.15)', color: '#3B82F6' }}>{t}</span>
+                      <span key={t} className="px-1.5 py-0.5 rounded text-[0.55rem] bg-status-info/15 text-status-info">{t}</span>
                     ))}
                   </div>
                 </div>
               )}
             </div>
 
-            <div style={{ display: 'flex', gap: '0.3rem', marginTop: '0.6rem' }}>
+            <div className="flex gap-1.5 mt-2.5">
               <ActionButton label="View Listings" variant="primary" size="sm" onClick={() => addToast(`Viewing matches for ${inv.name}`, 'info')} />
               <ActionButton label="Edit" variant="ghost" size="sm" onClick={() => addToast('Edit investor coming soon', 'info')} />
             </div>

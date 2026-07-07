@@ -5,7 +5,7 @@ import { useStore } from '@/lib/store/useStore';
 import { Clock, Shield, Sparkles, Presentation, Layers, Users } from 'lucide-react';
 import BriefingModal from '@/components/briefing/BriefingModal';
 import ContactsModal from '@/components/cockpit/modals/ContactsModal';
-import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher';
+import { ThemeSwitcher } from '@/components/cockpit/ThemeSwitcher';
 
 export interface CrewMember {
   email: string;
@@ -106,7 +106,7 @@ export default function TopChrome() {
 
         {/* Shabbat Alert Helper Indicator */}
         {hebcalAlert && (
-          <div className="text-[10px] font-bold px-2 py-1 bg-[#F59E0B]/10 border border-[#F59E0B]/30 rounded text-[#F59E0B] flex items-center space-x-1">
+          <div className="text-[10px] font-bold px-2 py-1 bg-status-warning/10 border border-status-warning/30 rounded text-status-warning flex items-center space-x-1">
             <span>{hebcalAlert}</span>
           </div>
         )}
@@ -116,17 +116,17 @@ export default function TopChrome() {
       <div className="flex items-center space-x-4">
         {/* Unread summaries */}
         <div className="flex items-center space-x-3 text-xs">
-          <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-[#FFCC33]/10 border border-[#FFCC33]/20 rounded-md">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#FFCC33]"></span>
-            <span>WA: <span className="font-bold text-[#FFCC33]">{unreadCounts.whatsapp}</span></span>
+          <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-status-warning/10 border border-status-warning/20 rounded-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-status-warning"></span>
+            <span>WA: <span className="font-bold text-status-warning">{unreadCounts.whatsapp}</span></span>
           </div>
-          <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-green-500/10 border border-green-500/20 rounded-md">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-            <span>iMessage: <span className="font-bold text-green-400">{unreadCounts.imessage}</span></span>
+          <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-status-success/10 border border-status-success/20 rounded-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-status-success"></span>
+            <span>iMessage: <span className="font-bold text-status-success">{unreadCounts.imessage}</span></span>
           </div>
-          <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-warning/10 border border-amber-500/20 rounded-md">
-            <span className="w-1.5 h-1.5 rounded-full bg-warning"></span>
-            <span>SMS: <span className="font-bold text-amber-400">{unreadCounts.sms}</span></span>
+          <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-status-info/10 border border-status-info/20 rounded-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-status-info"></span>
+            <span>SMS: <span className="font-bold text-status-info">{unreadCounts.sms}</span></span>
           </div>
         </div>
 

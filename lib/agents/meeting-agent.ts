@@ -15,24 +15,29 @@ const listMeetings: AgentTool = {
   },
   async execute(params) {
     try {
-      const { gateway } = await import('@/lib/gateway')
-      const result = await gateway.listMeetings({
-        type: (params.type as 'upcoming' | 'past') || 'upcoming',
+      const { zoomRequest } = await import('@/lib/zoom/client')
+      const meetingType = params.type === 'past' ? 'previous_meetings' : 'upcoming'
+      const data = await zoomRequest<{
+        meetings: Array<{
+          id: number
+          topic: string
+          start_time: string
+          duration: number
+          join_url: string
+          status?: string
+        }>
+      }>(`/users/me/meetings?type=${meetingType}&page_size=20`)
+      return JSON.stringify({
+        count: data.meetings?.length || 0,
+        meetings: (data.meetings || []).map(m => ({
+          id: m.id,
+          topic: m.topic,
+          startTime: m.start_time,
+          duration: m.duration,
+          joinUrl: m.join_url,
+          status: m.status,
+        })),
       })
-      if (result.success && result.data) {
-        return JSON.stringify({
-          count: result.data.meetings.length,
-          meetings: result.data.meetings.map(m => ({
-            id: m.id,
-            topic: m.topic,
-            startTime: m.startTime,
-            duration: m.duration,
-            joinUrl: m.joinUrl,
-            status: m.status,
-          })),
-        })
-      }
-      return JSON.stringify({ error: result.error, meetings: [] })
     } catch (err) {
       return JSON.stringify({ error: (err as Error).message })
     }
@@ -53,23 +58,19 @@ const createMeeting: AgentTool = {
     if (!topic) return JSON.stringify({ error: 'topic required' })
 
     try {
-      const { gateway } = await import('@/lib/gateway')
-      const result = await gateway.createMeeting({
+      const { createMeeting: zoomCreate } = await import('@/lib/zoom/client')
+      const meeting = await zoomCreate('me', {
         topic,
-        startTime: String(params.start_time),
+        start_time: String(params.start_time),
         duration: Number(params.duration) || 30,
         agenda: params.agenda as string | undefined,
       })
-
-      if (result.success && result.data) {
-        return JSON.stringify({
-          success: true,
-          meetingId: result.data.meetingId,
-          joinUrl: result.data.joinUrl,
-          password: result.data.password,
-        })
-      }
-      return JSON.stringify({ error: result.error })
+      return JSON.stringify({
+        success: true,
+        meetingId: meeting.id,
+        joinUrl: meeting.join_url,
+        password: meeting.password,
+      })
     } catch (err) {
       return JSON.stringify({ error: (err as Error).message })
     }

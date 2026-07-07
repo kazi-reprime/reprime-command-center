@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import Column, { type ColumnProps } from '@/components/center/Column'
 import type { ComponentRegistry } from '@/components/center/windows/WindowManager'
 import type { InvestorProfileData } from '@/components/panels/InvestorProfile'
+import type { Panel } from '@/lib/timelines/types'
 
 /*
 import CalendarColumn, {
@@ -188,7 +189,7 @@ export const WINDOW_REGISTRY: ComponentRegistry = {
     <ChatWindow
       {...(props as {
         threadId: string
-        panel?: string
+        panel?: Panel
         name?: string
       })}
     />

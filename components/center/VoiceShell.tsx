@@ -246,6 +246,18 @@ async function dispatchIntent(p: ParsedIntent): Promise<DispatchOutcome> {
           } else {
             window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
           }
+        } catch (e) {
+          window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
+        }
+      } catch (e) {
+        window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
+      }
+
+      return { ok: true, msg: '' }
+    }
+  }
+}
+
 // ── Component ──────────────────────────────────────────────────────────────────
 export default function VoiceShell() {
   const [state, setState] = useState<ShellState>('idle')

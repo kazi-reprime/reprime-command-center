@@ -1,8 +1,6 @@
 # Changelog
 
-All notable changes to the RePrime Command Center.
-
----
+All notable changes to the RePrime Command Center v0.3
 
 ## [0.3.0] — 2026-07-08
 

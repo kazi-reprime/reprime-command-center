@@ -19,7 +19,7 @@ type Props = {
  * Gideon to communicate with non-investor contacts (staff, family)
  * inside the Command Center's windowing system.
  */
-export default function ChatWindow({ threadId, panel = '305', name }: Props) {
+export default function ChatWindow({ threadId, panel = '305' }: Props) {
   const queryClient = useQueryClient()
   const [thread, setThread] = useState<DashboardThread | null>(null)
 
@@ -43,7 +43,7 @@ export default function ChatWindow({ threadId, panel = '305', name }: Props) {
   }, [threadsData, threadId])
 
   // 2. Fetch messages for this thread
-  const { data: messages, isLoading: loadingMessages } = useQuery({
+  const { data: messages } = useQuery({
     queryKey: ['messages', threadId],
     enabled: !!threadId,
     queryFn: async (): Promise<DashboardMessage[]> => {

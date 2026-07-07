@@ -8,7 +8,6 @@ import { useStore } from '@/lib/store/useStore'
  * across all cockpit and center views.
  */
 export default function GlobalNoraManager() {
-  const setNoraStatus = useStore(s => s.setNoraStatus)
   const noraStatus = useStore(s => s.noraStatus)
 
   useEffect(() => {

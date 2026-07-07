@@ -3,27 +3,33 @@ import Column, { type ColumnProps } from '@/components/center/Column'
 import type { ComponentRegistry } from '@/components/center/windows/WindowManager'
 import type { InvestorProfileData } from '@/components/panels/InvestorProfile'
 
+/*
 import CalendarColumn, {
   useColumnCount as useCalendarCount,
 } from '@/components/center/columns/CalendarColumn'
+*/
 import PipelineColumn, {
   useColumnCount as usePipelineCount,
 } from '@/components/center/columns/PipelineColumn'
 import InboxColumn, {
   useColumnCount as useInboxCount,
 } from '@/components/center/columns/InboxColumn'
+/*
 import NotesColumn, {
   useColumnCount as useNotesCount,
 } from '@/components/center/columns/NotesColumn'
+*/
 import CommsColumn, {
   useColumnCount as useCommsCount,
 } from '@/components/center/columns/CommsColumn'
+/*
 import BucketColumn, {
   useColumnCount as useBucketCount,
 } from '@/components/center/columns/BucketColumn'
 import CrewColumn, {
   useColumnCount as useCrewCount,
 } from '@/components/center/columns/CrewColumn'
+*/
 import NoraDeskColumn, {
   useColumnCount as useNoraCount,
 } from '@/components/center/columns/NoraDeskColumn'
@@ -182,7 +188,7 @@ export const WINDOW_REGISTRY: ComponentRegistry = {
     <ChatWindow
       {...(props as {
         threadId: string
-        panel?: any
+        panel?: string
         name?: string
       })}
     />

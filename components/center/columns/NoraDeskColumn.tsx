@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { OrbPlaceholder } from '@/components/ui/OrbPlaceholder'
 import { useStore } from '@/lib/store/useStore'
@@ -12,7 +12,16 @@ export function useColumnCount(): number {
   return 0 // Nora doesn't have a "count"
 }
 
-function InsightCard({ icon, label, value, desc, color, textColor }: any) {
+interface InsightCardProps {
+  icon: string
+  label: string
+  value: string
+  desc: string
+  color: string
+  textColor: string
+}
+
+function InsightCard({ icon, label, value, desc, color, textColor }: InsightCardProps) {
   return (
     <div style={{
       minWidth: 160, padding: '12px 14px', borderRadius: 16,

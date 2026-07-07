@@ -7,13 +7,6 @@ import QuickEmailModal from '@/components/email/QuickEmailModal'
 const REFETCH_MS = 60_000
 const HIDDEN_SENDERS_KEY = 'center.inbox.hidden_senders'
 
-const NAVY = '#0E3470'
-const GOLD = '#FFCC33'
-const TEXT = '#F5EFD8'
-const MUTED = '#8C8771'
-const WARN = 'var(--c-warn)'
-const INVESTOR = 'var(--c-investor)'
-
 type TriageItem = {
   message_id: string
   thread_id: string | null
@@ -84,9 +77,9 @@ function initials(nameOrAddress: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
-function scoreBadgeColor(score: number): string {
-  if (score >= 10) return INVESTOR
-  return WARN
+function scoreBadgeClass(score: number): string {
+  if (score >= 10) return 'bg-purple-100 text-purple-700'
+  return 'bg-amber-100 text-amber-700'
 }
 
 function dispatchOpenWindow(opts: { url: string; title: string }) {
@@ -103,10 +96,6 @@ function dispatchOpenWindow(opts: { url: string; title: string }) {
 
 async function addToBucket(item: TriageItem): Promise<void> {
   const title = item.subject || `Email from ${item.from_name || item.from_address}`
-  // Track B's /api/bucket may not be live yet on this branch; the dispatch
-  // says: fall back to inserting via Supabase if it returns 404. v1 here
-  // does the simple POST and reports the failure to the user — code2's
-  // endpoint will land in a sibling PR.
   const res = await fetch('/api/bucket', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -122,11 +111,6 @@ async function addToBucket(item: TriageItem): Promise<void> {
   }
 }
 
-/**
- * useColumnCount — exposes the visible-item count for the kiosk header
- * badge ("Inbox (5)"). Reuses the same React Query key as InboxColumn so
- * the query is shared.
- */
 export function useColumnCount(): number {
   const account = 'g@reprime.com'
   const [hiddenSenders] = useState<Set<string>>(() => loadHiddenSenders())
@@ -177,7 +161,6 @@ export default function InboxColumn() {
     )
   }, [data, hiddenSenders])
 
-  // Toast auto-clear.
   useEffect(() => {
     if (!toast) return
     const t = setTimeout(() => setToast(null), 2400)
@@ -209,61 +192,21 @@ export default function InboxColumn() {
   }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 0,
-        height: '100%',
-        minHeight: 0,
-        position: 'relative',
-        padding: '12px 16px 16px',
-        color: TEXT,
-        fontFamily: 'inherit',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '0 0 8px',
-          borderBottom: '1px solid rgba(255, 204, 51, 0.10)',
-        }}
-      >
-        {/* Account picker — single mailbox in v1, dropdown reserved for v2 multi-account */}
+    <div className="flex flex-col h-full bg-white text-slate-800 font-sans relative">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
         <select
           value={account}
-          onChange={() => {
-            /* v1: single mailbox, no other options yet */
-          }}
+          onChange={() => {}}
           aria-label="Mailbox"
-          style={{
-            flex: 1,
-            background: 'rgba(14, 52, 112, 0.6)',
-            color: TEXT,
-            border: '1px solid rgba(255, 204, 51, 0.18)',
-            borderRadius: 6,
-            padding: '6px 8px',
-            fontSize: 13,
-            fontFamily: 'inherit',
-          }}
+          className="flex-1 bg-slate-50 text-slate-800 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer"
         >
           <option value="g@reprime.com">g@reprime.com</option>
         </select>
         <button
           onClick={() => refetch()}
           disabled={isRefetching}
-          style={{
-            background: 'transparent',
-            border: '1px solid rgba(255, 204, 51, 0.25)',
-            color: GOLD,
-            padding: '6px 10px',
-            borderRadius: 6,
-            cursor: isRefetching ? 'wait' : 'pointer',
-            fontSize: 12,
-            fontFamily: 'inherit',
-          }}
+          className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg px-3 py-1.5 text-xs cursor-pointer disabled:opacity-50 transition-colors shadow-sm"
           aria-label="Refresh inbox triage"
           title="Refresh"
         >
@@ -271,190 +214,84 @@ export default function InboxColumn() {
         </button>
       </div>
 
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingTop: 4 }}>
+      <div className="flex-1 overflow-y-auto pt-2 px-4 pb-4">
         {isLoading && (
-          <div style={{ color: MUTED, fontSize: 13, padding: '8px 4px' }}>Loading inbox…</div>
+          <div className="text-slate-400 text-xs font-bold p-2">Loading inbox…</div>
         )}
         {isError && (
-          <div
-            style={{
-              color: 'var(--c-fail)',
-              fontSize: 12,
-              padding: '8px 4px',
-              lineHeight: 1.4,
-            }}
-          >
+          <div className="text-red-500 text-xs font-bold p-2 bg-red-50 rounded-lg border border-red-100 shadow-sm mt-2">
             {(error as Error).message || 'Failed to load.'}
           </div>
         )}
         {!isLoading && !isError && items.length === 0 && (
-          <div style={{ padding: '8px 4px' }}>
-            <div style={{ color: MUTED, fontSize: 13, marginBottom: 8 }}>
+          <div className="p-2 mt-2">
+            <div className="text-slate-500 text-sm font-bold mb-4">
               Inbox is clear. Nothing scoring above 5 today.
             </div>
             <button
               type="button"
               onClick={() => refetch()}
               disabled={isRefetching}
-              style={{
-                background: 'rgba(255, 204, 51, 0.10)',
-                color: GOLD,
-                border: `1px solid ${GOLD}`,
-                borderRadius: 6,
-                padding: '6px 12px',
-                fontSize: 12,
-                fontWeight: 700,
-                fontFamily: 'inherit',
-                cursor: isRefetching ? 'wait' : 'pointer',
-              }}
+              className="bg-blue-50 text-blue-600 border border-blue-200 rounded-lg px-4 py-2 text-xs font-black uppercase tracking-widest shadow-sm hover:bg-blue-100 transition-colors cursor-pointer disabled:opacity-50"
             >
               {isRefetching ? 'Syncing…' : '↻ Sync now'}
             </button>
           </div>
         )}
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        
+        <ul className="list-none m-0 p-0 flex flex-col gap-2 mt-2">
           {items.map((it) => {
             const displayName = it.from_name || it.from_address
-            const badgeColor = scoreBadgeColor(it.score)
+            const badgeClass = scoreBadgeClass(it.score)
             return (
               <li
                 key={it.message_id}
                 onClick={(e) => {
-                  // Don't hijack action-menu clicks.
                   if ((e.target as HTMLElement).closest('[data-row-action]')) return
                   openGmailWindow(it)
                 }}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '32px 1fr auto',
-                  gap: 10,
-                  alignItems: 'center',
-                  padding: '10px 8px',
-                  borderBottom: '1px solid rgba(255, 204, 51, 0.08)',
-                  cursor: 'pointer',
-                  borderLeft: it.unread ? `3px solid ${GOLD}` : '3px solid transparent',
-                  background:
-                    openMenuId === it.message_id ? 'rgba(255, 204, 51, 0.06)' : 'transparent',
-                }}
-                onMouseEnter={(e) =>
-                  ((e.currentTarget as HTMLLIElement).style.background =
-                    'rgba(255, 204, 51, 0.06)')
-                }
-                onMouseLeave={(e) =>
-                  ((e.currentTarget as HTMLLIElement).style.background =
-                    openMenuId === it.message_id ? 'rgba(255, 204, 51, 0.06)' : 'transparent')
-                }
+                className={`grid grid-cols-[32px_1fr_auto] gap-3 items-center p-3 rounded-xl border transition-all cursor-pointer shadow-sm ${
+                  it.unread ? 'border-l-4 border-l-blue-500 bg-blue-50/30' : 'border-l-4 border-l-transparent bg-slate-50 hover:bg-white'
+                } border-slate-100 ${openMenuId === it.message_id ? 'bg-white shadow-md border-blue-200' : ''}`}
               >
                 <div
                   aria-hidden
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    background: 'rgba(255, 204, 51, 0.18)',
-                    color: GOLD,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: '0.02em',
-                  }}
+                  className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-black tracking-wider"
                 >
                   {initials(displayName)}
                 </div>
-                <div style={{ minWidth: 0 }}>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 6,
-                      fontSize: 13,
-                      fontWeight: 600,
-                      color: TEXT,
-                      overflow: 'hidden',
-                      whiteSpace: 'nowrap',
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    <span
-                      style={{
-                        flexShrink: 0,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        maxWidth: '60%',
-                      }}
-                    >
+                
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 text-sm font-bold text-slate-800 truncate">
+                    <span className="shrink-0 truncate max-w-[60%]">
                       {displayName}
                     </span>
                     {it.has_ics && (
-                      <span
-                        title="Calendar invite"
-                        style={{
-                          fontSize: 10,
-                          color: 'var(--c-live-now)',
-                          fontWeight: 700,
-                          letterSpacing: '0.04em',
-                        }}
-                      >
+                      <span title="Calendar invite" className="text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded-md">
                         ICS
                       </span>
                     )}
                     {it.gmail_important && (
-                      <span
-                        title="Marked important by Gmail"
-                        style={{ fontSize: 10, color: GOLD, fontWeight: 700 }}
-                      >
+                      <span title="Marked important by Gmail" className="text-amber-500 text-xs">
                         ★
                       </span>
                     )}
-                    <span style={{ flex: 1 }} />
-                    <span
-                      style={{
-                        fontSize: 11,
-                        color: MUTED,
-                        fontWeight: 400,
-                        flexShrink: 0,
-                      }}
-                    >
+                    <span className="flex-1" />
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
                       {relativeTime(it.received_at)}
                     </span>
                   </div>
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: '#C9C0A0',
-                      overflow: 'hidden',
-                      whiteSpace: 'nowrap',
-                      textOverflow: 'ellipsis',
-                      marginTop: 2,
-                    }}
-                    title={it.subject}
-                  >
+                  
+                  <div className="text-xs text-slate-500 font-medium truncate mt-1" title={it.subject}>
                     {it.subject || '(no subject)'}
                   </div>
                 </div>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    flexShrink: 0,
-                  }}
-                >
+                
+                <div className="flex items-center gap-2 shrink-0">
                   <span
                     aria-label={`Score ${it.score}`}
                     title={(it.reasons || []).join(' · ')}
-                    style={{
-                      background: badgeColor,
-                      color: NAVY,
-                      borderRadius: 10,
-                      padding: '2px 8px',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      minWidth: 22,
-                      textAlign: 'center',
-                    }}
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-black text-center min-w-[24px] tracking-wider ${badgeClass}`}
                   >
                     {it.score}
                   </span>
@@ -466,31 +303,17 @@ export default function InboxColumn() {
                       e.stopPropagation()
                       setOpenMenuId(openMenuId === it.message_id ? null : it.message_id)
                     }}
-                    style={{
-                      background: 'transparent',
-                      border: '1px solid rgba(255, 204, 51, 0.25)',
-                      color: GOLD,
-                      borderRadius: 6,
-                      padding: '4px 8px',
-                      fontSize: 12,
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                    }}
+                    className="bg-transparent border-none text-slate-400 hover:text-slate-800 hover:bg-slate-200 rounded p-1 text-lg leading-none cursor-pointer transition-colors"
                   >
                     ⋯
                   </button>
                 </div>
+                
                 {openMenuId === it.message_id && (
                   <div
                     data-row-action
                     onClick={(e) => e.stopPropagation()}
-                    style={{
-                      gridColumn: '1 / -1',
-                      display: 'flex',
-                      flexWrap: 'wrap',
-                      gap: 6,
-                      paddingTop: 8,
-                    }}
+                    className="col-span-full flex flex-wrap gap-2 pt-2 mt-1 border-t border-slate-100"
                   >
                     <ActionBtn
                       onClick={async () => {
@@ -530,6 +353,7 @@ export default function InboxColumn() {
             )
           })}
         </ul>
+        
         {hiddenSenders.size > 0 && (
           <button
             onClick={() => {
@@ -537,17 +361,7 @@ export default function InboxColumn() {
               persistHiddenSenders(new Set())
               qc.invalidateQueries({ queryKey: ['email-triage'] })
             }}
-            style={{
-              marginTop: 10,
-              background: 'transparent',
-              color: MUTED,
-              border: '1px solid rgba(255, 204, 51, 0.18)',
-              borderRadius: 6,
-              padding: '6px 10px',
-              fontSize: 11,
-              cursor: 'pointer',
-              fontFamily: 'inherit',
-            }}
+            className="mt-4 bg-transparent text-slate-400 hover:text-slate-600 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors w-full cursor-pointer shadow-sm"
           >
             Reset {hiddenSenders.size} hidden sender{hiddenSenders.size === 1 ? '' : 's'}
           </button>
@@ -557,19 +371,11 @@ export default function InboxColumn() {
       {toast && (
         <div
           role="status"
-          style={{
-            position: 'absolute',
-            right: 16,
-            bottom: 16,
-            background: toast.kind === 'ok' ? 'rgba(37, 211, 102, 0.16)' : 'rgba(239, 68, 68, 0.16)',
-            color: toast.kind === 'ok' ? '#9DEABE' : '#FFB4B4',
-            border: `1px solid ${toast.kind === 'ok' ? 'rgba(37, 211, 102, 0.4)' : 'rgba(239, 68, 68, 0.4)'}`,
-            borderRadius: 8,
-            padding: '8px 12px',
-            fontSize: 12,
-            zIndex: 30,
-            fontFamily: 'inherit',
-          }}
+          className={`absolute right-4 bottom-4 px-3 py-2 rounded-lg border text-xs font-bold z-30 shadow-lg ${
+            toast.kind === 'ok' 
+              ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+              : 'bg-red-50 text-red-700 border-red-200'
+          }`}
         >
           {toast.text}
         </div>
@@ -596,16 +402,7 @@ function ActionBtn({
   return (
     <button
       onClick={onClick}
-      style={{
-        background: 'rgba(255, 204, 51, 0.10)',
-        color: '#F5EFD8',
-        border: '1px solid rgba(255, 204, 51, 0.25)',
-        borderRadius: 6,
-        padding: '6px 10px',
-        fontSize: 12,
-        cursor: 'pointer',
-        fontFamily: 'inherit',
-      }}
+      className="bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 hover:border-blue-200 rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-widest cursor-pointer transition-colors shadow-sm"
     >
       {children}
     </button>

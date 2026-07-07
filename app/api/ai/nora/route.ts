@@ -79,7 +79,7 @@ export async function POST(req: Request) {
           contextMemories = notesData
             .filter((n) => {
               const text = `${n.title || ''} ${n.body || ''}`.toLowerCase();
-              return promptWords.some((word) => text.includes(word));
+              return promptWords.some((word: string) => text.includes(word));
             })
             .slice(0, 5)
             .map((n) => `[Note: ${n.title}] ${n.body}`);
@@ -219,7 +219,7 @@ Output format MUST be valid JSON:
             'anthropic-version': '2023-06-01',
           },
           body: JSON.stringify({
-            model: 'claude-3-haiku-20240307',
+            model: 'claude-haiku-4-5-20251001',
             max_tokens: 1024,
             system: systemPrompt,
             messages: [

@@ -9,23 +9,8 @@ import {
 import { createClient } from '@/lib/supabase/client'
 
 const REFETCH_MS = 60_000
-
-// Realtime debounce — bucket_items receives a UPDATE event for every row
-// touch (snooze, done, drop, demo seed, smoke writes). Without a collapse
-// window each event triggered an independent invalidate → refetch storm
-// that pinned the main thread for 20-30s. 250ms is the longest delay the
-// kiosk's "feels live" budget tolerates while still collapsing bursts of
-// 5-50 events into a single refetch.
 const REALTIME_DEBOUNCE_MS = 250
-
-// React Query key for the visible list. Used by both the count hook and
-// the column itself so the query is shared. Exported as a named constant
-// so invalidations stay narrow — invalidating ['bucket'] (no second
-// segment) was hitting every detail window's ['bucket', 'detail', id]
-// query and the column at once, doubling the refetch volume per write.
 const LIST_QUERY_KEY = ['bucket', 'open-doing'] as const
-
-// ── Types ────────────────────────────────────────────────────────────────────
 
 type BucketStatus = 'open' | 'doing' | 'done' | 'dropped'
 
@@ -49,8 +34,6 @@ interface BucketItem {
 interface ListPayload {
   items: BucketItem[]
 }
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatRelativePast(iso: string | null): string {
   if (!iso) return ''
@@ -89,15 +72,22 @@ const PRIORITY_LABELS: Record<number, string> = {
 }
 
 const PRIORITY_COLOR: Record<number, string> = {
-  1: 'var(--c-fail)',
-  2: 'var(--c-warn)',
-  3: 'var(--rp-gold)',
-  4: 'var(--rp-gold-lite)',
-  5: 'var(--rp-gold-lite)',
+  1: 'text-red-500',
+  2: 'text-amber-500',
+  3: 'text-blue-500',
+  4: 'text-slate-400',
+  5: 'text-slate-400',
+}
+
+const PRIORITY_BG: Record<number, string> = {
+  1: 'border-l-red-500',
+  2: 'border-l-amber-500',
+  3: 'border-l-blue-500',
+  4: 'border-l-slate-400',
+  5: 'border-l-slate-400',
 }
 
 function statusOrder(status: BucketStatus): number {
-  // Open before doing inside each priority group, per track spec.
   if (status === 'open') return 0
   if (status === 'doing') return 1
   return 2
@@ -117,48 +107,6 @@ function dispatchOpenWindow(item: BucketItem) {
     })
   )
 }
-
-// ── Visual primitives ────────────────────────────────────────────────────────
-
-const sectionStyle: React.CSSProperties = {
-  padding: '0.85rem 1rem',
-  borderBottom: '1px solid var(--rp-border)',
-}
-
-const sectionLabel: React.CSSProperties = {
-  color: 'var(--rp-gold)',
-  fontSize: 11,
-  fontWeight: 700,
-  textTransform: 'uppercase',
-  letterSpacing: 0.6,
-  marginBottom: 8,
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'baseline',
-  gap: 8,
-}
-
-const sectionCount: React.CSSProperties = {
-  color: 'var(--rp-gold-lite)',
-  fontSize: 11,
-  fontWeight: 500,
-  letterSpacing: 0,
-  textTransform: 'none',
-}
-
-const inputBoxStyle: React.CSSProperties = {
-  width: '100%',
-  background: 'var(--rp-surface)',
-  border: '1px solid var(--rp-border)',
-  borderRadius: 6,
-  color: 'var(--rp-white)',
-  padding: '0.55rem 0.75rem',
-  fontSize: 13,
-  fontFamily: 'inherit',
-  outline: 'none',
-}
-
-// ── Action menu ──────────────────────────────────────────────────────────────
 
 type ActionMenuProps = {
   item: BucketItem
@@ -185,36 +133,18 @@ function ActionMenu({ item, onClose, onPatch, onRemind }: ActionMenuProps) {
     onClose()
   }
 
+  const btnClass = "w-full text-left px-3 py-2 text-xs border-t border-slate-100 hover:bg-slate-50 transition-colors"
+  const activeBtnClass = "w-full text-left px-3 py-2 text-xs border-t border-slate-100 bg-blue-50 text-blue-700 font-bold transition-colors"
+
   return (
     <div
       ref={ref}
       onClick={(e) => e.stopPropagation()}
-      style={{
-        position: 'absolute',
-        right: 0,
-        top: '100%',
-        marginTop: 4,
-        background: 'rgba(14, 52, 112, 0.98)',
-        border: '1px solid var(--rp-gold)',
-        borderRadius: 6,
-        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4)',
-        minWidth: 180,
-        zIndex: 5,
-        fontSize: 12,
-        color: 'var(--rp-white)',
-      }}
+      className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg min-w-[180px] z-10 text-slate-800 overflow-hidden"
     >
       {showPriority ? (
         <>
-          <div
-            style={{
-              padding: '6px 10px',
-              color: 'var(--rp-gold-lite)',
-              fontSize: 10,
-              textTransform: 'uppercase',
-              letterSpacing: 0.5,
-            }}
-          >
+          <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
             Set priority
           </div>
           {[1, 2, 3, 4, 5].map((p) => (
@@ -225,64 +155,31 @@ function ActionMenu({ item, onClose, onPatch, onRemind }: ActionMenuProps) {
                 onPatch({ priority: p })
                 onClose()
               }}
-              style={menuButtonStyle(p === item.priority)}
+              className={p === item.priority ? activeBtnClass : btnClass}
             >
-              <span style={{ color: PRIORITY_COLOR[p], marginRight: 8 }}>●</span>
+              <span className={`${PRIORITY_COLOR[p]} mr-2`}>●</span>
               {PRIORITY_LABELS[p]}
             </button>
           ))}
         </>
       ) : (
         <>
-          <button
-            type="button"
-            onClick={() => {
-              onPatch({ status: 'done' })
-              onClose()
-            }}
-            style={menuButtonStyle(false)}
-          >
+          <button type="button" onClick={() => { onPatch({ status: 'done' }); onClose() }} className={btnClass}>
             ✓ Done
           </button>
-          <button
-            type="button"
-            onClick={() => snooze(2)}
-            style={menuButtonStyle(false)}
-          >
+          <button type="button" onClick={() => snooze(2)} className={btnClass}>
             Snooze 2 days
           </button>
-          <button
-            type="button"
-            onClick={() => snooze(3)}
-            style={menuButtonStyle(false)}
-          >
+          <button type="button" onClick={() => snooze(3)} className={btnClass}>
             Snooze 3 days
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              onRemind()
-              onClose()
-            }}
-            style={menuButtonStyle(false)}
-          >
+          <button type="button" onClick={() => { onRemind(); onClose() }} className={btnClass}>
             Remind in 1 hour
           </button>
-          <button
-            type="button"
-            onClick={() => setShowPriority(true)}
-            style={menuButtonStyle(false)}
-          >
+          <button type="button" onClick={() => setShowPriority(true)} className={btnClass}>
             Reprioritize…
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              onPatch({ status: 'dropped' })
-              onClose()
-            }}
-            style={{ ...menuButtonStyle(false), color: 'var(--c-fail)' }}
-          >
+          <button type="button" onClick={() => { onPatch({ status: 'dropped' }); onClose() }} className={`${btnClass} text-red-500 hover:text-red-600 hover:bg-red-50`}>
             Drop
           </button>
         </>
@@ -291,31 +188,6 @@ function ActionMenu({ item, onClose, onPatch, onRemind }: ActionMenuProps) {
   )
 }
 
-function menuButtonStyle(active: boolean): React.CSSProperties {
-  return {
-    display: 'block',
-    width: '100%',
-    textAlign: 'left',
-    padding: '7px 12px',
-    background: active ? 'rgba(255, 204, 51, 0.12)' : 'transparent',
-    color: 'inherit',
-    border: 'none',
-    borderTop: '1px solid rgba(255, 204, 51, 0.10)',
-    cursor: 'pointer',
-    fontSize: 12,
-    fontFamily: 'inherit',
-  }
-}
-
-// ── Row ──────────────────────────────────────────────────────────────────────
-
-// Memoized row — every snooze / done / drop mutates one row but the parent
-// list re-renders all of them. Without React.memo + a stable item identity
-// the freeze trace showed BucketRow as the dominant offender (50+ rows ×
-// per-row style object allocations × 5 priority groups). Cheap equality:
-// item reference is stable when React Query's structuralSharing keeps the
-// row unchanged, and onPatch/onRemind are stabilized by useCallback in
-// the parent.
 const BucketRow = memo(function BucketRow({
   item,
   onPatch,
@@ -326,11 +198,11 @@ const BucketRow = memo(function BucketRow({
   onRemind: (id: string) => void
 }) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const accent = PRIORITY_COLOR[item.priority] ?? 'var(--rp-gold)'
+  const bgBorder = PRIORITY_BG[item.priority] ?? 'border-l-blue-500'
   const dueText = formatDueRelative(item.due_at)
-  const dueOverdue =
-    item.due_at && new Date(item.due_at).getTime() < Date.now()
+  const dueOverdue = item.due_at && new Date(item.due_at).getTime() < Date.now()
   const isDoing = item.status === 'doing'
+  const isDoneOrDropped = item.status === 'done' || item.status === 'dropped'
 
   return (
     <div
@@ -343,79 +215,23 @@ const BucketRow = memo(function BucketRow({
           dispatchOpenWindow(item)
         }
       }}
-      style={{
-        position: 'relative',
-        background: 'var(--rp-surface)',
-        border: '1px solid var(--rp-border)',
-        borderLeft: `3px solid ${accent}`,
-        borderRadius: 6,
-        padding: '0.55rem 0.75rem',
-        marginBottom: 6,
-        fontSize: 13,
-        color: 'var(--rp-white)',
-        cursor: 'pointer',
-        opacity: item.status === 'done' || item.status === 'dropped' ? 0.55 : 1,
-      }}
+      className={`relative bg-slate-50 border border-slate-100 border-l-4 rounded-xl p-3 mb-2 text-sm text-slate-800 cursor-pointer hover:bg-white hover:border-slate-200 hover:shadow-sm transition-all ${bgBorder} ${isDoneOrDropped ? 'opacity-50 grayscale' : ''}`}
     >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          gap: 8,
-        }}
-      >
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontWeight: 600,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-              textDecoration: item.status === 'done' ? 'line-through' : undefined,
-            }}
-            title={item.title}
-          >
+      <div className="flex justify-between items-start gap-2">
+        <div className="flex-1 min-w-0">
+          <div className={`font-bold truncate ${item.status === 'done' ? 'line-through text-slate-500' : 'text-slate-800'}`} title={item.title}>
             {isDoing && (
-              <span
-                style={{
-                  display: 'inline-block',
-                  marginRight: 6,
-                  fontSize: 10,
-                  fontWeight: 700,
-                  color: 'var(--c-live-now)',
-                  border: '1px solid var(--c-live-now)',
-                  borderRadius: 3,
-                  padding: '0 4px',
-                  letterSpacing: 0.5,
-                  textTransform: 'uppercase',
-                  verticalAlign: 'middle',
-                }}
-              >
+              <span className="inline-block mr-2 text-[10px] font-black text-emerald-600 border border-emerald-200 bg-emerald-50 rounded px-1 tracking-wider uppercase align-middle">
                 Doing
               </span>
             )}
             {item.title}
           </div>
 
-          <div
-            style={{
-              display: 'flex',
-              gap: 10,
-              marginTop: 4,
-              fontSize: 11,
-              color: 'var(--rp-gold-lite)',
-              opacity: 0.8,
-            }}
-          >
+          <div className="flex gap-2 mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
             <span>added {formatRelativePast(item.created_at)}</span>
             {dueText && (
-              <span
-                style={{
-                  color: dueOverdue ? 'var(--c-fail)' : 'var(--rp-gold-lite)',
-                  fontWeight: dueOverdue ? 600 : 400,
-                }}
-              >
+              <span className={dueOverdue ? 'text-red-500' : 'text-slate-400'}>
                 {dueText}
               </span>
             )}
@@ -439,16 +255,7 @@ const BucketRow = memo(function BucketRow({
               setMenuOpen((v) => !v)
             }
           }}
-          style={{
-            flexShrink: 0,
-            padding: '2px 8px',
-            color: 'var(--rp-gold-lite)',
-            cursor: 'pointer',
-            fontSize: 16,
-            lineHeight: 1,
-            borderRadius: 4,
-            position: 'relative',
-          }}
+          className="shrink-0 px-2 py-1 text-slate-400 hover:text-slate-800 hover:bg-slate-200 rounded cursor-pointer text-lg leading-none transition-colors relative"
         >
           ⋯
           {menuOpen && (
@@ -465,13 +272,6 @@ const BucketRow = memo(function BucketRow({
   )
 })
 
-// ── Hook: column count for the kiosk header badge ───────────────────────────
-
-/**
- * useColumnCount — exposes the visible-item count for this column so the
- * parent kiosk can render a header badge ("Bucket (5)"). Reuses the same
- * React Query key as BucketColumn, so the query is shared (no extra fetch).
- */
 export function useColumnCount(): number {
   const list = useQuery({
     queryKey: LIST_QUERY_KEY,
@@ -488,29 +288,6 @@ export function useColumnCount(): number {
   return list.data?.items?.length ?? 0
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
-
-/**
- * BucketColumn — Track B. Renders open + doing items grouped by priority.
- *
- * Realtime: subscribes to public.bucket_items via the browser Supabase
- * client and invalidates the open-doing list query on every INSERT /
- * UPDATE / DELETE. Invalidations are debounced by REALTIME_DEBOUNCE_MS
- * to collapse bursts (demo seed, smoke writes) into a single refetch.
- * Background polling at 60s is the fallback when Realtime is disconnected.
- *
- * Mutation strategy: PATCH responses are written into the cache via
- * setQueryData so the row update lands instantly; the Realtime broadcast
- * arrives ~100ms later and the debounced invalidate is then a no-op
- * because the data is already current.
- *
- * Click row → dispatches `center:open-window` for code3's WindowManager
- * (target='bucket-item', componentProps={ itemId, title }).
- *
- * Action menu → PATCH /api/bucket/[id] for status / priority / due_at;
- * "Remind in 1 hour" hits POST /api/bucket/[id]/remind which is owned
- * by code5 (this column does not build that endpoint).
- */
 export default function BucketColumn() {
   const queryClient = useQueryClient()
   const [draft, setDraft] = useState('')
@@ -528,17 +305,9 @@ export default function BucketColumn() {
     },
     refetchInterval: REFETCH_MS,
     staleTime: REFETCH_MS,
-    // Keep row references stable across refetches when the underlying
-    // payload hasn't changed; React.memo on BucketRow depends on this
-    // to skip per-row work on every refetch.
     structuralSharing: true,
   })
 
-  // Realtime subscription with debounced invalidation. Each Realtime event
-  // used to fire its own invalidate → refetch; with the demo seed +
-  // smoke writes that produced 5-50 events back-to-back, the main thread
-  // was pinned for 20-30s. Collapse all events inside REALTIME_DEBOUNCE_MS
-  // into a single invalidate.
   useEffect(() => {
     const supabase = createClient()
     let pending: ReturnType<typeof setTimeout> | null = null
@@ -580,7 +349,6 @@ export default function BucketColumn() {
     onSuccess: () => {
       setDraft('')
       queryClient.invalidateQueries({ queryKey: LIST_QUERY_KEY })
-      // Refocus the input so rapid-fire dictation flows naturally.
       inputRef.current?.focus()
     },
   })
@@ -599,22 +367,15 @@ export default function BucketColumn() {
       return (await res.json()) as BucketItem
     },
     onSuccess: (data) => {
-      // Optimistically update the open-doing list with the server-confirmed
-      // row. Avoids waiting for the Realtime broadcast to refetch and
-      // eliminates the cache-bust + Realtime double work for snooze/done.
       queryClient.setQueryData<ListPayload>(LIST_QUERY_KEY, (prev) => {
         if (!prev) return prev
         const next = prev.items.map((it) => (it.id === data.id ? data : it))
         return { ...prev, items: next }
       })
-      // Also keep any open detail window in sync.
       queryClient.setQueryData<BucketItem>(['bucket', 'detail', data.id], data)
     },
   })
 
-  // Stable callbacks — BucketRow is React.memo'd so unstable refs would
-  // defeat the optimization and re-render every row on every parent
-  // render.
   const handlePatch = useCallback(
     (id: string, patch: Partial<BucketItem>) => {
       patchMutation.mutate({ id, patch })
@@ -623,8 +384,6 @@ export default function BucketColumn() {
   )
 
   const handleRemind = useCallback((id: string) => {
-    // Code5 owns this endpoint. We POST a minimal in_minutes payload —
-    // if code5's contract drifts, this is the only place to update.
     fetch(`/api/bucket/${id}/remind`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -643,7 +402,6 @@ export default function BucketColumn() {
     })
   }
 
-  // Group by priority for the rendered sections.
   const grouped = useMemo(() => {
     const items = list.data?.items ?? []
     const buckets = new Map<number, BucketItem[]>()
@@ -670,16 +428,10 @@ export default function BucketColumn() {
   return (
     <div
       data-component="bucket-column"
-      style={{
-        background: 'var(--rp-navy)',
-        color: 'var(--rp-white)',
-        height: '100%',
-        overflowY: 'auto',
-        fontFamily: 'inherit',
-      }}
+      className="bg-white text-slate-800 h-full overflow-y-auto"
     >
       {/* Add-to-bucket input */}
-      <section style={sectionStyle} data-section="add">
+      <section className="px-4 py-4 border-b border-slate-100" data-section="add">
         <input
           ref={inputRef}
           type="text"
@@ -693,16 +445,10 @@ export default function BucketColumn() {
             }
           }}
           disabled={adding}
-          style={inputBoxStyle}
+          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all shadow-sm"
         />
         {addMutation.isError && (
-          <div
-            style={{
-              color: 'var(--c-fail)',
-              fontSize: 11,
-              marginTop: 4,
-            }}
-          >
+          <div className="text-red-500 text-xs font-bold mt-2">
             {(addMutation.error as Error).message}
           </div>
         )}
@@ -710,36 +456,26 @@ export default function BucketColumn() {
 
       {/* Loading / error / empty */}
       {list.isLoading && (
-        <section style={sectionStyle}>
-          <div style={{ color: 'var(--rp-gold-lite)', fontSize: 12 }}>Loading…</div>
+        <section className="px-4 py-4 border-b border-slate-100">
+          <div className="text-slate-400 text-xs font-bold">Loading…</div>
         </section>
       )}
       {list.isError && (
-        <section style={sectionStyle}>
-          <div style={{ color: 'var(--c-fail)', fontSize: 12 }}>
+        <section className="px-4 py-4 border-b border-slate-100">
+          <div className="text-red-500 text-xs font-bold">
             Failed: {(list.error as Error).message}
           </div>
         </section>
       )}
       {!list.isLoading && !list.isError && total === 0 && (
-        <section style={sectionStyle}>
-          <div style={{ color: 'var(--rp-gold-lite)', fontSize: 13, marginBottom: 8 }}>
+        <section className="px-4 py-4 border-b border-slate-100">
+          <div className="text-slate-500 text-sm font-bold mb-3">
             Nothing in the bucket. Speak or type to add.
           </div>
           <button
             type="button"
             onClick={() => inputRef.current?.focus()}
-            style={{
-              background: 'rgba(255, 204, 51, 0.10)',
-              color: 'var(--rp-gold)',
-              border: '1px solid var(--rp-gold)',
-              borderRadius: 6,
-              padding: '6px 12px',
-              fontSize: 12,
-              fontWeight: 700,
-              fontFamily: 'inherit',
-              cursor: 'pointer',
-            }}
+            className="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-lg px-4 py-2 text-xs font-bold transition-colors shadow-sm"
           >
             + Add
           </button>
@@ -750,14 +486,14 @@ export default function BucketColumn() {
       {grouped.map((group) => (
         <section
           key={group.priority}
-          style={sectionStyle}
+          className="px-4 py-4 border-b border-slate-100"
           data-section={`p${group.priority}`}
         >
-          <div style={sectionLabel}>
-            <span style={{ color: PRIORITY_COLOR[group.priority] }}>
+          <div className="flex justify-between items-baseline mb-3">
+            <span className={`text-xs font-black uppercase tracking-widest ${PRIORITY_COLOR[group.priority]}`}>
               {PRIORITY_LABELS[group.priority]}
             </span>
-            <span style={sectionCount}>{group.items.length}</span>
+            <span className="text-slate-400 text-xs font-bold">{group.items.length}</span>
           </div>
           {group.items.map((item) => (
             <BucketRow

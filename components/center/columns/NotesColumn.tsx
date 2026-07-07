@@ -88,85 +88,75 @@ export default function NotesColumn() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="flex flex-col h-full bg-white text-slate-800 font-sans">
       {/* Header */}
-      <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(255,204,51,0.08)' }}>
-        <div style={{ color: 'var(--rp-gold, #FFCC33)', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          📝 Notes <span style={{ fontWeight: 400, fontSize: 9, opacity: 0.5 }}>quick capture</span>
+      <div className="px-4 py-3 border-b border-slate-100 flex items-baseline gap-2">
+        <div className="text-blue-600 text-xs font-black uppercase tracking-widest">
+          📝 Notes
         </div>
+        <span className="text-slate-400 font-medium text-[10px] tracking-wider uppercase">quick capture</span>
       </div>
 
       {/* Add Note */}
-      <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 4, borderBottom: '1px solid rgba(255,204,51,0.06)' }}>
+      <div className="px-4 py-3 flex flex-col gap-2 border-b border-slate-100 bg-slate-50/50">
         <input
           value={title}
           onChange={e => setTitle(e.target.value)}
           placeholder="Note title"
           onKeyDown={e => e.key === 'Enter' && handleAdd()}
-          style={{
-            width: '100%', padding: '5px 8px', borderRadius: 5,
-            background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,204,51,0.08)',
-            color: '#F5EFD8', fontSize: 11, fontFamily: 'inherit', outline: 'none',
-          }}
+          className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-800 text-sm focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all placeholder:text-slate-400"
         />
         <input
           value={body}
           onChange={e => setBody(e.target.value)}
           placeholder="Details (optional)"
           onKeyDown={e => e.key === 'Enter' && handleAdd()}
-          style={{
-            width: '100%', padding: '5px 8px', borderRadius: 5,
-            background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,204,51,0.05)',
-            color: '#F5EFD8', fontSize: 10, fontFamily: 'inherit', outline: 'none',
-          }}
+          className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all placeholder:text-slate-400"
         />
         <button
           onClick={handleAdd}
           disabled={!title.trim() || createNote.isPending}
-          style={{
-            padding: '4px 12px', borderRadius: 5, border: 'none', cursor: 'pointer',
-            background: title.trim() ? 'var(--rp-gold, #FFCC33)' : 'rgba(255,204,51,0.1)',
-            color: title.trim() ? '#0E3470' : 'rgba(255,204,51,0.3)',
-            fontSize: 10, fontWeight: 700, fontFamily: 'inherit',
-          }}
-        >{createNote.isPending ? 'Adding...' : '+ Add note'}</button>
+          className={`px-4 py-2 mt-1 rounded-lg border-none cursor-pointer text-xs font-bold transition-all ${
+            title.trim() 
+              ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md' 
+              : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+          }`}
+        >
+          {createNote.isPending ? 'Adding...' : '+ Add note'}
+        </button>
       </div>
 
       {/* Search */}
-      <div style={{ padding: '4px 10px' }}>
+      <div className="px-4 py-3">
         <input
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="🔍 Search notes..."
-          style={{
-            width: '100%', padding: '4px 8px', borderRadius: 5,
-            background: 'rgba(0,0,0,0.15)', border: '1px solid rgba(255,204,51,0.05)',
-            color: '#F5EFD8', fontSize: 10, fontFamily: 'inherit', outline: 'none',
-          }}
+          className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all placeholder:text-slate-400"
         />
       </div>
 
       {/* Notes List */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
+      <div className="flex-1 overflow-y-auto px-4 pb-4">
         {notesQ.isLoading && (
-          <div style={{ padding: 16, textAlign: 'center', color: 'rgba(255,204,51,0.3)', fontSize: 11 }}>Loading notes...</div>
+          <div className="p-4 text-center text-slate-400 text-xs font-semibold">Loading notes...</div>
         )}
         {!notesQ.isLoading && filtered.length === 0 && (
-          <div style={{ padding: 24, textAlign: 'center', color: 'rgba(255,204,51,0.2)', fontSize: 11 }}>
+          <div className="p-6 text-center text-slate-400 text-xs font-medium">
             {search ? 'No matching notes' : 'No notes yet. Capture one above.'}
           </div>
         )}
         {filtered.map(n => (
-          <div key={n.id} style={{
-            margin: '2px 6px', padding: '6px 10px', borderRadius: 6,
-            background: 'rgba(0,0,0,0.1)', borderLeft: '2px solid rgba(255,204,51,0.15)',
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ color: '#F5EFD8', fontSize: 11, fontWeight: 500 }}>{n.title}</span>
-              <span style={{ color: 'rgba(255,204,51,0.25)', fontSize: 9 }}>{timeAgo(n.created_at)}</span>
+          <div 
+            key={n.id} 
+            className="mb-2 p-3 rounded-xl bg-slate-50 border border-slate-100 border-l-4 border-l-blue-400 shadow-sm"
+          >
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-slate-800 text-sm font-bold">{n.title}</span>
+              <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">{timeAgo(n.created_at)}</span>
             </div>
             {n.body && (
-              <div style={{ color: 'rgba(255,204,51,0.35)', fontSize: 10, marginTop: 2, lineHeight: 1.3, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
+              <div className="text-slate-500 text-xs leading-relaxed line-clamp-2">
                 {n.body}
               </div>
             )}

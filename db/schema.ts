@@ -510,3 +510,42 @@ export const outboundAsksRelations = relations(outboundAsks, ({ one }) => ({
   }),
 }));
 
+// ── Cockpit Management Tables ────────────────────────────────────────────────
+
+// Table: ai_agents (Cockpit AI Agents panel)
+export const aiAgents = pgTable('ai_agents', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 255 }).notNull(),
+  type: varchar('type', { length: 100 }).notNull(),
+  status: varchar('status', { length: 50 }).notNull().default('running'),
+  currentTask: text('current_task'),
+  completedToday: integer('completed_today').notNull().default(0),
+  errorCount: integer('error_count').notNull().default(0),
+  lastActive: timestamp('last_active').defaultNow().notNull(),
+  uptime: varchar('uptime', { length: 20 }),
+});
+
+// Table: automations (Cockpit Automations panel)
+export const automations = pgTable('automations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 255 }).notNull(),
+  trigger: varchar('trigger', { length: 255 }).notNull(),
+  action: varchar('action', { length: 255 }).notNull(),
+  status: varchar('status', { length: 50 }).notNull().default('active'),
+  executionCount: integer('execution_count').notNull().default(0),
+  failureCount: integer('failure_count').notNull().default(0),
+  lastRun: timestamp('last_run'),
+  configWarning: text('config_warning'),
+});
+
+// Table: files (Cockpit Files panel)
+export const files = pgTable('files', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 500 }).notNull(),
+  type: varchar('type', { length: 100 }).notNull(),
+  size: integer('size'),
+  category: varchar('category', { length: 100 }),
+  url: text('url').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+

@@ -5,7 +5,7 @@
  */
 
 import { db } from '@/db';
-import { contacts, deals, bucketItems, notes } from '@/db/schema';
+import { contacts, deals, bucketItems, notes, messages, whatsappMessages } from '@/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { logInfo, logWarning, logError } from '@/lib/logging/systemLog';
 
@@ -47,8 +47,8 @@ export interface CockpitAutomation {
 }
 
 export interface CockpitMessage {
-  id: string; from: string; channel: string; subject: string;
-  preview: string; timestamp: string; isRead: boolean;
+  id: string; sender: string; channel: string; subject: string;
+  preview: string; createdAt: string; isRead: boolean;
   priority: 'high' | 'normal' | 'low'; aiSuggestion: string | null;
 }
 
@@ -183,36 +183,172 @@ export async function getTasks(): Promise<DataResult<CockpitTask[]>> {
 }
 
 export async function createTask(input: { title: string; priority: number; projectTag: string; dueDate: string | null }): Promise<DataResult<CockpitTask>> {
-  const newTask: CockpitTask = {
-    id: `t${Date.now()}`, title: input.title,
-    priority: input.priority as CockpitTask['priority'],
-    status: 'todo', dueDate: input.dueDate, owner: 'Gideon',
-    relatedTo: null, projectTag: input.projectTag,
-    checklist: [], aiNextStep: null,
-    createdAt: new Date().toISOString().split('T')[0],
-  };
-  return { data: newTask, source: 'unavailable', warning: 'Task created in session only.' };
+  try {
+    if (await isDatabaseAvailable()) {
+      const DEFAULT_ORG_ID = '00000000-0000-0000-0000-000000000001';
+      const [inserted] = await db.insert(bucketItems).values({
+        orgId: DEFAULT_ORG_ID,
+        title: input.title,
+        priority: input.priority || 3,
+        projectTag: input.projectTag || 'General',
+        dueAtSoft: input.dueDate ? new Date(input.dueDate) : null,
+      }).returning();
+
+      const newTask: CockpitTask = {
+        id: inserted.id, title: inserted.title,
+        priority: (inserted.priority || 3) as CockpitTask['priority'],
+        status: 'todo', dueDate: inserted.dueAtSoft?.toISOString().split('T')[0] || null,
+        owner: 'Gideon', relatedTo: null, projectTag: inserted.projectTag || 'General',
+        checklist: [], aiNextStep: null,
+        createdAt: new Date().toISOString().split('T')[0],
+      };
+      return { data: newTask, source: 'database' };
+    }
+  } catch (err) {
+    logWarning('database', `Failed to create task in DB: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  return { data: {} as CockpitTask, source: 'unavailable', warning: NO_DB_WARNING };
 }
 
 export async function toggleTaskStatus(id: string): Promise<DataResult<CockpitTask | null>> {
+  try {
+    if (await isDatabaseAvailable()) {
+      // Logic: if completedAt is null, set to now, else null
+      const [existing] = await db.select().from(bucketItems).where(eq(bucketItems.id, id));
+      if (!existing) return { data: null, source: 'unavailable', warning: 'Task not found' };
+
+      const [updated] = await db.update(bucketItems)
+        .set({ completedAt: existing.completedAt ? null : new Date() })
+        .where(eq(bucketItems.id, id))
+        .returning();
+
+      const mapped: CockpitTask = {
+        id: updated.id, title: updated.title,
+        priority: (updated.priority || 3) as CockpitTask['priority'],
+        status: updated.completedAt ? 'done' : 'todo',
+        dueDate: updated.dueAtSoft?.toISOString().split('T')[0] || null,
+        owner: 'Team', relatedTo: null, projectTag: updated.projectTag || 'General',
+        checklist: [], aiNextStep: null,
+        createdAt: new Date().toISOString().split('T')[0],
+      };
+      return { data: mapped, source: 'database' };
+    }
+  } catch (err) {
+    logWarning('database', `Failed to toggle task in DB: ${err instanceof Error ? err.message : String(err)}`);
+  }
   return { data: null, source: 'unavailable' };
 }
 
 // ── Agents ───────────────────────────────────────────────────────────────────
+import { aiAgents, automations, files as filesTable } from '@/db/schema';
 
 export async function getAgents(): Promise<DataResult<CockpitAgent[]>> {
+  try {
+    if (await isDatabaseAvailable()) {
+      const rows = await db.select().from(aiAgents).orderBy(desc(aiAgents.lastActive));
+      const mapped: CockpitAgent[] = rows.map(r => ({
+        id: r.id,
+        name: r.name,
+        type: r.type,
+        status: r.status as CockpitAgent['status'],
+        currentTask: r.currentTask,
+        completedToday: r.completedToday,
+        errorCount: r.errorCount,
+        lastActive: r.lastActive.toISOString(),
+        uptime: r.uptime || '99.9%',
+      }));
+      return { data: mapped, source: 'database' };
+    }
+  } catch (err) {
+    logWarning('database', `Failed to fetch agents: ${String(err)}`);
+  }
   return { data: [], source: 'unavailable', warning: 'No AI agents configured. Set up agents in Settings.' };
 }
 
 export async function toggleAgent(id: string, action: 'pause' | 'resume' | 'retry'): Promise<DataResult<CockpitAgent | null>> {
+  try {
+    if (await isDatabaseAvailable()) {
+      const status = action === 'pause' ? 'paused' : 'running';
+      const [updated] = await db.update(aiAgents)
+        .set({ status, lastActive: new Date() })
+        .where(eq(aiAgents.id, id))
+        .returning();
+      
+      if (!updated) return { data: null, source: 'unavailable' };
+
+      const mapped: CockpitAgent = {
+        id: updated.id,
+        name: updated.name,
+        type: updated.type,
+        status: updated.status as CockpitAgent['status'],
+        currentTask: updated.currentTask,
+        completedToday: updated.completedToday,
+        errorCount: updated.errorCount,
+        lastActive: updated.lastActive.toISOString(),
+        uptime: updated.uptime || '99.9%',
+      };
+      return { data: mapped, source: 'database' };
+    }
+  } catch (err) {
+    logWarning('database', `Failed to toggle agent: ${String(err)}`);
+  }
   return { data: null, source: 'unavailable' };
+}
+
+export async function getAutomations(): Promise<DataResult<CockpitAutomation[]>> {
+  try {
+    if (await isDatabaseAvailable()) {
+      const rows = await db.select().from(automations).orderBy(desc(automations.lastRun));
+      const mapped: CockpitAutomation[] = rows.map(r => ({
+        id: r.id,
+        name: r.name,
+        trigger: r.trigger,
+        action: r.action,
+        status: r.status as CockpitAutomation['status'],
+        executionCount: r.executionCount,
+        failureCount: r.failureCount,
+        lastRun: r.lastRun?.toISOString() || null,
+        configWarning: r.configWarning,
+      }));
+      return { data: mapped, source: 'database' };
+    }
+  } catch (err) {
+    logWarning('database', `Failed to fetch automations: ${String(err)}`);
+  }
+  return { data: [], source: 'unavailable' };
+}
+
+// ── Files ────────────────────────────────────────────────────────────────────
+
+export interface CockpitFile {
+  id: string; name: string; type: string; size: string;
+  category: string; url: string; createdAt: string;
+}
+
+export async function getFiles(): Promise<DataResult<CockpitFile[]>> {
+  try {
+    if (await isDatabaseAvailable()) {
+      const rows = await db.select().from(filesTable).orderBy(desc(filesTable.createdAt));
+      const mapped: CockpitFile[] = rows.map((r: typeof rows[number]) => ({
+        id: r.id,
+        name: r.name,
+        type: r.type,
+        size: r.size ? `${(r.size / 1024).toFixed(1)} KB` : '0 KB',
+        category: r.category || 'General',
+        url: r.url,
+        createdAt: r.createdAt.toISOString(),
+      }));
+      return { data: mapped, source: 'database' };
+    }
+  } catch (err) {
+    logWarning('database', `Failed to fetch files: ${String(err)}`);
+  }
+  return { data: [], source: 'unavailable' };
 }
 
 // ── Automations ──────────────────────────────────────────────────────────────
 
-export async function getAutomations(): Promise<DataResult<CockpitAutomation[]>> {
-  return { data: [], source: 'unavailable', warning: 'No automations configured. Use the Portal automations view.' };
-}
+// getAutomations() is defined above (line ~298). Duplicate removed.
 
 export async function toggleAutomation(id: string, action: 'enable' | 'disable' | 'retry'): Promise<DataResult<CockpitAutomation | null>> {
   return { data: null, source: 'unavailable' };
@@ -221,6 +357,35 @@ export async function toggleAutomation(id: string, action: 'enable' | 'disable' 
 // ── Messages ─────────────────────────────────────────────────────────────────
 
 export async function getMessages(): Promise<DataResult<CockpitMessage[]>> {
+  try {
+    if (await isDatabaseAvailable()) {
+      const rows = await db.select().from(messages).orderBy(desc(messages.createdAt)).limit(20);
+      const waRows = await db.select().from(whatsappMessages).orderBy(desc(whatsappMessages.createdAt)).limit(20);
+      
+      const mapped: CockpitMessage[] = [
+        ...rows.map(r => ({
+          id: r.id, sender: r.direction === 'inbound' ? 'Inbound' : 'Gideon',
+          channel: 'system',
+          subject: 'Message',
+          preview: r.body, createdAt: r.createdAt.toISOString(),
+          isRead: r.status === 'read',
+          priority: 'normal' as const, aiSuggestion: null,
+        })),
+        ...waRows.map(r => ({
+          id: r.id, sender: r.direction === 'inbound' ? (r.fromName || r.fromPhone || 'WA Contact') : 'Gideon',
+          channel: 'whatsapp',
+          subject: '',
+          preview: r.body || '[Media]', createdAt: r.createdAt.toISOString(),
+          isRead: r.status === 'read',
+          priority: 'normal' as const, aiSuggestion: null,
+        }))
+      ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 20);
+
+      return { data: mapped, source: 'database' };
+    }
+  } catch (err) {
+    logWarning('database', `Database query failed for messages: ${err instanceof Error ? err.message : String(err)}`);
+  }
   return { data: [], source: 'unavailable', warning: 'Use Unified Comms for live messages (WhatsApp, Gmail, iMessage).' };
 }
 
@@ -251,6 +416,4 @@ export async function getProjects() {
   return { data: [], source: 'unavailable' as DataSource, warning: 'No projects data. Use Pipeline view for deals.' };
 }
 
-export async function getFiles() {
-  return { data: [], source: 'unavailable' as DataSource, warning: 'No files configured.' };
-}
+// getFiles() is defined above (line ~328). Duplicate removed.

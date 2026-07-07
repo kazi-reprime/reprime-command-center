@@ -76,26 +76,30 @@ export function PriorityBadge({ priority }: { priority: number }) {
 
 // ─── Stat Card ────────────────────────────────────────────────────────────────
 
-export function StatCard({ label, value, change, changeLabel, icon, color = '#FFCC33' }: {
+export function StatCard({ label, value, change, changeLabel, icon, color = '#3b82f6' }: {
   label: string; value: string | number; change?: number; changeLabel?: string;
   icon?: React.ReactNode; color?: string;
 }) {
   return (
-    <div style={{
-      background: 'rgba(14, 52, 112, 0.5)',
-      border: '1px solid rgba(255, 204, 51, 0.1)',
-      borderRadius: 12, padding: '1.25rem',
-      display: 'flex', flexDirection: 'column', gap: '0.5rem',
-      minWidth: 0,
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ color: 'rgba(255,204,51,0.6)', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.05em', textTransform: 'uppercase' }}>{label}</span>
-        {icon && <span style={{ color, opacity: 0.7, fontSize: '1.1rem' }}>{icon}</span>}
+    <div className="glass-card flex flex-col gap-2 p-5 rounded-2xl min-w-0 relative overflow-hidden group">
+      <div className="absolute -right-4 -top-4 w-24 h-24 bg-gradient-to-br from-white/40 to-transparent rounded-full blur-2xl group-hover:scale-110 transition-transform duration-500" />
+      <div className="flex justify-between items-center relative z-10">
+        <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">{label}</span>
+        {icon && (
+          <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-lg shadow-sm" style={{ color }}>
+            {icon}
+          </div>
+        )}
       </div>
-      <span style={{ color: '#fff', fontSize: '1.75rem', fontWeight: 700, letterSpacing: '-0.02em' }}>{typeof value === 'number' ? value.toLocaleString() : value}</span>
+      <span className="text-slate-900 text-3xl font-black tracking-tight mt-1 relative z-10">
+        {typeof value === 'number' ? value.toLocaleString() : value}
+      </span>
       {(change !== undefined || changeLabel) && (
-        <span style={{ fontSize: '0.7rem', color: change && change > 0 ? '#00A980' : change && change < 0 ? '#EF4444' : '#94A3B8' }}>
-          {change !== undefined && (change > 0 ? '↑' : change < 0 ? '↓' : '→')} {changeLabel || `${Math.abs(change || 0)}% vs last month`}
+        <span className="text-xs font-semibold relative z-10 flex items-center gap-1 mt-2" style={{ color: change && change > 0 ? '#10b981' : change && change < 0 ? '#ef4444' : '#64748b' }}>
+          <span className="px-1.5 py-0.5 rounded-md" style={{ background: change && change > 0 ? 'rgba(16,185,129,0.1)' : change && change < 0 ? 'rgba(239,68,68,0.1)' : 'rgba(100,116,139,0.1)' }}>
+            {change !== undefined && (change > 0 ? '↑' : change < 0 ? '↓' : '→')} {Math.abs(change || 0)}%
+          </span>
+          <span className="text-slate-400 font-medium ml-1">{changeLabel || 'vs last month'}</span>
         </span>
       )}
     </div>
@@ -104,26 +108,19 @@ export function StatCard({ label, value, change, changeLabel, icon, color = '#FF
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
-export function Card({ children, title, action, noPad, style }: {
+export function Card({ children, title, action, noPad, style, className }: {
   children: React.ReactNode; title?: string; action?: React.ReactNode;
-  noPad?: boolean; style?: React.CSSProperties;
+  noPad?: boolean; style?: React.CSSProperties; className?: string;
 }) {
   return (
-    <div style={{
-      background: 'rgba(14, 52, 112, 0.4)',
-      border: '1px solid rgba(255, 204, 51, 0.08)',
-      borderRadius: 12, overflow: 'hidden', ...style,
-    }}>
+    <div className={`glass-card rounded-2xl overflow-hidden flex flex-col ${className || ''}`} style={style}>
       {title && (
-        <div style={{
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          padding: '1rem 1.25rem', borderBottom: '1px solid rgba(255,204,51,0.06)',
-        }}>
-          <h3 style={{ margin: 0, color: '#FFCC33', fontSize: '0.85rem', fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase' }}>{title}</h3>
+        <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100/50 bg-white/40">
+          <h3 className="m-0 text-slate-800 text-sm font-bold uppercase tracking-widest">{title}</h3>
           {action}
         </div>
       )}
-      <div style={noPad ? {} : { padding: '1.25rem' }}>{children}</div>
+      <div className={`${noPad ? '' : 'p-6'} flex-1`}>{children}</div>
     </div>
   )
 }
@@ -134,14 +131,15 @@ export function EmptyState({ icon, title, description, action }: {
   icon?: string; title: string; description?: string; action?: React.ReactNode;
 }) {
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-      padding: '3rem 1.5rem', textAlign: 'center', minHeight: 200,
-    }}>
-      {icon && <span style={{ fontSize: '2.5rem', marginBottom: '1rem', opacity: 0.5 }}>{icon}</span>}
-      <h3 style={{ margin: 0, color: '#fff', fontSize: '1rem', fontWeight: 600 }}>{title}</h3>
-      {description && <p style={{ margin: '0.5rem 0 0', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem', maxWidth: 320, lineHeight: 1.5 }}>{description}</p>}
-      {action && <div style={{ marginTop: '1rem' }}>{action}</div>}
+    <div className="flex flex-col items-center justify-center p-12 text-center min-h-[200px]">
+      {icon && (
+        <div className="w-16 h-16 mb-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-3xl shadow-sm opacity-80">
+          {icon}
+        </div>
+      )}
+      <h3 className="m-0 text-slate-800 text-base font-bold">{title}</h3>
+      {description && <p className="mt-2 text-slate-500 text-sm max-w-[320px] leading-relaxed">{description}</p>}
+      {action && <div className="mt-6">{action}</div>}
     </div>
   )
 }

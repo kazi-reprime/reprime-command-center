@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { HebrewCalendar, Location, Event } from '@hebcal/core';
+import { HebrewCalendar, Location, Event, flags } from '@hebcal/core';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
       isShabbat,
       nextCandleLighting: candleLighting ? candleLighting.getDate().greg().toISOString() : null,
       nextHavdalah: havdalah ? havdalah.getDate().greg().toISOString() : null,
-      parsha: events.find((ev: Event) => ev.getFlags() & Event.PARSHA_HASHAVUA)?.getDesc() || null
+      parsha: events.find((ev: Event) => ev.getFlags() & flags.PARSHA_HASHAVUA)?.getDesc() || null
     });
   } catch (error) {
     console.error('Hebcal error:', error);

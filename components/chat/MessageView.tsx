@@ -32,26 +32,26 @@ type Props = {
 
 const PANEL_THEME = {
   '718': {
-    bg: 'var(--personal-bg)',
-    surface: 'var(--personal-surface)',
-    border: 'var(--personal-border)',
-    text: 'var(--personal-text)',
-    muted: 'var(--personal-muted)',
-    outBg: 'var(--personal-accent)',
+    bg: '#f8fafc',
+    surface: '#fff',
+    border: 'rgba(0,0,0,0.05)',
+    text: '#0f172a',
+    muted: '#94a3b8',
+    outBg: '#0f172a',
     outText: '#fff',
-    inBg: 'var(--personal-surface)',
-    inText: 'var(--personal-text)',
+    inBg: '#fff',
+    inText: '#1e293b',
   },
   '305': {
-    bg: 'var(--rp-navy)',
-    surface: 'var(--rp-surface)',
-    border: 'var(--rp-border)',
-    text: 'var(--rp-white)',
-    muted: 'var(--rp-gold-lite)',
-    outBg: 'var(--rp-gold)',
-    outText: 'var(--rp-navy)',
-    inBg: 'var(--rp-surface)',
-    inText: 'var(--rp-white)',
+    bg: '#f8fafc',
+    surface: '#fff',
+    border: 'rgba(0,0,0,0.05)',
+    text: '#0f172a',
+    muted: '#94a3b8',
+    outBg: '#3b82f6',
+    outText: '#fff',
+    inBg: '#fff',
+    inText: '#1e293b',
   },
 } as const
 
@@ -384,38 +384,50 @@ export default function MessageView({ thread, messages }: Props) {
         flex: 1,
         minWidth: 0,
         overflow: 'hidden',
+        fontFamily: 'inherit'
       }}
     >
       {/* ── Header ── */}
       <div
         style={{
-          padding: '0.75rem 1rem',
+          padding: '1.25rem 2rem',
           borderBottom: `1px solid ${theme.border}`,
           display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-          background: theme.bg,
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: '#fff',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <h2 style={{ margin: 0, fontSize: 16, fontWeight: 600, flexShrink: 0 }}>
-            {thread.contact_name || thread.phone}
-          </h2>
-          <span style={{ color: theme.muted, fontSize: 12 }}>{thread.phone}</span>
-          {thread.is_group && (
-            <span style={{ color: theme.muted, fontSize: 11 }}>group</span>
-          )}
-          {/* Speed presets + thread reader */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div>
+            <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>
+              {thread.contact_name || thread.phone}
+            </h2>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem' }}>
+              <span style={{ color: '#94a3b8', fontSize: '0.75rem', fontWeight: 700 }}>{thread.phone}</span>
+              {thread.is_group && (
+                <span style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', fontSize: '0.65rem', fontWeight: 900, padding: '2px 6px', borderRadius: 6, textTransform: 'uppercase' }}>Group Protocol</span>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           <SpeedControl speed={speed} onChange={handleSpeedChange} muted={theme.muted} />
           <ThreadSpeaker messages={messages} muted={theme.muted} speed={speed} />
         </div>
+      </div>
+
+      <div style={{ padding: '0.75rem 2rem', background: '#fff', borderBottom: `1px solid ${theme.border}` }}>
         <TagChips threadId={thread.id} panel={thread.panel} />
       </div>
 
       {/* ── Messages ── */}
-      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '0.75rem 1rem' }}>
+      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', minHeight: 0, padding: '2rem', display: 'flex', flexDirection: 'column-reverse', gap: '1rem' }}>
         {sorted.length === 0 && (
-          <div style={{ color: theme.muted, fontSize: 13, padding: '1rem 0', textAlign: 'center' }}>No messages yet.</div>
+          <div style={{ color: '#94a3b8', fontSize: '0.9rem', fontWeight: 600, padding: '4rem 0', textAlign: 'center' }}>
+            No protocol history detected.
+          </div>
         )}
         {sorted.map((m, idx) => {
           const prev = sorted[idx - 1]
@@ -428,14 +440,17 @@ export default function MessageView({ thread, messages }: Props) {
           const rtl = isHebrew(m.body)
           const hasReadableText = !isOut && !!m.body && m.media_type !== 'audio'
           return (
-            <div key={m.id}>
+            <div key={m.id} style={{ display: 'flex', flexDirection: 'column' }}>
               {showDay && (
                 <div
                   style={{
                     textAlign: 'center',
-                    color: theme.muted,
-                    fontSize: 11,
-                    margin: '12px 0 8px',
+                    color: '#94a3b8',
+                    fontSize: '0.75rem',
+                    fontWeight: 800,
+                    margin: '2rem 0 1rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
                   }}
                 >
                   {formatDay(m.sent_at)}
@@ -444,37 +459,40 @@ export default function MessageView({ thread, messages }: Props) {
               {thread.is_group && !isOut && m.from_name && (
                 <div
                   style={{
-                    fontSize: 11,
-                    color: theme.muted,
-                    marginLeft: 6,
-                    marginBottom: 2,
+                    fontSize: '0.75rem',
+                    color: '#64748b',
+                    fontWeight: 800,
+                    marginLeft: '1rem',
+                    marginBottom: '0.25rem',
                   }}
                 >
                   {m.from_name}
                 </div>
               )}
-              {/* Bubble row — inbound gets a tiny speaker button beside it */}
+              {/* Bubble row */}
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'flex-end',
-                  gap: 4,
+                  gap: '0.75rem',
                   justifyContent: isOut ? 'flex-end' : 'flex-start',
-                  marginBottom: 6,
                 }}
               >
+                {!isOut && hasReadableText && <MessageSpeaker text={m.body!} speed={speed} />}
                 <div
                   dir={rtl ? 'rtl' : undefined}
                   style={{
                     background: isOut ? theme.outBg : theme.inBg,
                     color: isOut ? theme.outText : theme.inText,
-                    padding: '0.45rem 0.7rem',
-                    borderRadius: 12,
-                    maxWidth: '70%',
-                    fontSize: 14,
-                    lineHeight: 1.35,
+                    padding: '1rem 1.25rem',
+                    borderRadius: isOut ? '24px 24px 4px 24px' : '24px 24px 24px 4px',
+                    maxWidth: '80%',
+                    fontSize: '0.95rem',
+                    fontWeight: 500,
+                    lineHeight: 1.5,
                     wordBreak: 'break-word',
-                    boxShadow: '0 1px 1px rgba(0,0,0,0.06)',
+                    boxShadow: isOut ? '0 10px 20px rgba(0,0,0,0.05)' : '0 4px 10px rgba(0,0,0,0.02)',
+                    border: isOut ? 'none' : '1px solid rgba(0,0,0,0.03)',
                   }}
                 >
                   {m.body && m.media_type !== 'audio' && (
@@ -483,22 +501,28 @@ export default function MessageView({ thread, messages }: Props) {
                   <MediaBlock msg={m} />
                   <div
                     style={{
-                      fontSize: 10,
-                      opacity: 0.7,
-                      marginTop: 2,
+                      fontSize: '0.65rem',
+                      opacity: 0.5,
+                      marginTop: '0.5rem',
+                      fontWeight: 700,
                       textAlign: rtl ? 'left' : 'right',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.02em'
                     }}
                   >
                     {formatTime(m.sent_at)}
                   </div>
                 </div>
-                {/* Per-message speaker — only on inbound text messages */}
-                {hasReadableText && <MessageSpeaker text={m.body!} speed={speed} />}
+                {isOut && (
+                   <div style={{ width: 16, height: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.4 }}>
+                      <span style={{ fontSize: '0.6rem' }}>✓</span>
+                   </div>
+                )}
               </div>
             </div>
           )
         })}
       </div>
     </div>
-  )
+  );
 }

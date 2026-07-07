@@ -7,6 +7,25 @@ import { useCockpitQuery, useCockpitMutation } from '@/hooks/useCockpitData'
 // Seed data removed — live data only
 import { useToast } from '@/lib/contexts/ToastContext'
 
+interface SeedLead {
+  id: string
+  name: string
+  company: string
+  email: string
+  phone: string
+  source: string
+  stage: 'new' | 'contacted' | 'qualified' | 'demo_scheduled' | 'proposal_sent' | 'negotiation' | 'won' | 'lost'
+  priority: 'high' | 'medium' | 'low'
+  value: number
+  notes: string
+  created_at: string
+  last_contact: string
+  score?: number
+  probability?: number
+  business?: string
+  nextAction?: string
+}
+
 const STAGES: { key: SeedLead['stage']; label: string; color: string }[] = [
   { key: 'new', label: 'New', color: '#A855F7' },
   { key: 'contacted', label: 'Contacted', color: '#3B82F6' },

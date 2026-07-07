@@ -185,6 +185,7 @@ interface BriefingResponse {
   active_deals: ActiveDeal[]
   tenant_filings_today: TenantFiling[]
   suggested_focus: SuggestedFocus[]
+  recent_memory: string[]
   jewish_date: string
   hebcal_alert: string | null
   degraded?: boolean
@@ -331,6 +332,17 @@ async function fetchOpenBucketCandidates(
   }))
 }
 
+async function fetchRecentMemory(): Promise<string[]> {
+  const service = createServiceClient()
+  const { data, error } = await service
+    .from('nora_memory')
+    .select('content')
+    .order('created_at', { ascending: false })
+    .limit(3)
+  if (error || !data) return []
+  return data.map(m => m.content)
+}
+
 export async function GET() {
   const supabase = await createServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -371,6 +383,7 @@ export async function GET() {
     activeDealsResult,
     tenantFilingsResult,
     bucketCandidatesResult,
+    recentMemoryResult,
   ] = await Promise.all([
     withTimeout(fetchMeetings(), 'meetings'),
     withTimeout(fetchUnreadByPanel(), 'unread_by_panel'),
@@ -380,6 +393,7 @@ export async function GET() {
     withTimeout(fetchActiveDeals(), 'active_deals'),
     withTimeout(fetchTenantFilings(), 'tenant_filings'),
     withTimeout(fetchOpenBucketCandidates(svc), 'bucket_candidates'),
+    withTimeout(fetchRecentMemory(), 'recent_memory'),
   ])
 
   let degraded = false
@@ -445,6 +459,7 @@ export async function GET() {
     active_deals: activeDeals,
     tenant_filings_today: tenantFilings,
     suggested_focus: suggestedFocus,
+    recent_memory: unwrap(recentMemoryResult, []),
     ...(degraded ? { degraded: true } : {}),
   }
 

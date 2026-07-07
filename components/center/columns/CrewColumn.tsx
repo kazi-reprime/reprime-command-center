@@ -11,20 +11,18 @@ interface CrewListResponse {
   crew: CrewMemberRow[]
 }
 
-// Stable per-email avatar tint, drawn from the meaning-based palette so the
-// Crew column reuses the same color vocabulary as the rest of the kiosk.
 const AVATAR_TINTS = [
-  'var(--rp-gold)',         // Gideon — principal / brand
-  'var(--c-channel-718)',   // green — team OK
-  'var(--c-channel-305)',   // amber — RePrime business
-  'var(--c-investor)',      // gold — investor-side
-  'var(--c-live-now)',      // violet — live / motion
-  'var(--c-warn)',          // amber-orange — heads-up
+  'text-blue-600 border-blue-200',      // Gideon
+  'text-emerald-600 border-emerald-200', // green
+  'text-amber-600 border-amber-200',     // amber
+  'text-purple-600 border-purple-200',   // gold/purple
+  'text-pink-600 border-pink-200',       // violet
+  'text-orange-600 border-orange-200',   // orange
 ] as const
 
 function tintFor(email: string, isPrincipal: boolean, investorSide: boolean): string {
-  if (isPrincipal) return 'var(--rp-gold)'
-  if (investorSide) return 'var(--c-investor)'
+  if (isPrincipal) return 'text-blue-600 border-blue-200'
+  if (investorSide) return 'text-purple-600 border-purple-200'
   let hash = 0
   for (let i = 0; i < email.length; i++) {
     hash = (hash * 31 + email.charCodeAt(i)) | 0
@@ -41,7 +39,6 @@ function initialsFor(name: string): string {
 }
 
 function toLocalInputValue(date: Date): string {
-  // datetime-local format: YYYY-MM-DDTHH:mm in *local* time
   const pad = (n: number) => String(n).padStart(2, '0')
   return (
     `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
@@ -49,49 +46,6 @@ function toLocalInputValue(date: Date): string {
   )
 }
 
-// ── Visual primitives ────────────────────────────────────────────────────────
-
-const rowBase: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 12,
-  padding: '12px 14px',
-  background: 'var(--rp-surface)',
-  border: '1px solid var(--rp-border)',
-  borderRadius: 8,
-  marginBottom: 8,
-  cursor: 'pointer',
-  fontSize: 14,
-  color: 'var(--rp-white)',
-  transition: 'border-color 120ms ease',
-}
-
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  background: 'rgba(14, 52, 112, 0.55)',
-  border: '1px solid var(--rp-border)',
-  color: 'var(--rp-white)',
-  borderRadius: 6,
-  padding: '8px 10px',
-  fontSize: 13,
-  fontFamily: 'inherit',
-}
-
-const labelStyle: React.CSSProperties = {
-  display: 'block',
-  fontSize: 11,
-  color: 'var(--rp-gold-lite)',
-  textTransform: 'uppercase',
-  letterSpacing: 0.6,
-  marginBottom: 4,
-}
-
-// ── Hook: column count for the kiosk header badge ───────────────────────────
-
-/**
- * useColumnCount — exposes the active crew count for the kiosk header
- * badge ("Crew (6)"). Reuses the same React Query key as CrewColumn.
- */
 export function useColumnCount(): number {
   const crewQuery = useQuery({
     queryKey: ['crew', 'active'],
@@ -107,22 +61,6 @@ export function useColumnCount(): number {
   return crewQuery.data?.length ?? 0
 }
 
-// ── Component ────────────────────────────────────────────────────────────────
-
-/**
- * CrewColumn — Track D / Wave 2.
- *
- * Lists active crew (principal first, then alphabetical) and lets Gideon
- * delegate a bucket item with one big primary action per row. Counts of
- * open bucket items per assignee live-update via Supabase Realtime.
- *
- * Roster lock 2026-05-05 — the migration owns the seed; this component
- * never writes to crew_members. Adir Yonasi is investor-side only and is
- * surfaced with a permanent tag to keep him off broker-facing delegations.
- *
- * Click badge → emits `center:scroll-to-bucket` window event so the
- * BucketColumn (Track B) can scroll to that assignee's slice.
- */
 export default function CrewColumn() {
   const supabase = useMemo(() => createClient(), [])
   const queryClient = useQueryClient()
@@ -168,7 +106,6 @@ export default function CrewColumn() {
 
   const counts = countsQuery.data ?? {}
 
-  // Realtime — re-fetch counts when bucket_items changes for any roster email.
   useEffect(() => {
     if (emails.length === 0) return
     const filter = `assigned_to=in.(${emails.join(',')})`
@@ -188,33 +125,34 @@ export default function CrewColumn() {
   }, [emails, supabase, queryClient])
 
   return (
-    <div data-component="crew-column" style={{ paddingBottom: 8 }}>
+    <div data-component="crew-column" className="bg-white h-full overflow-y-auto px-4 py-4 text-slate-800">
       {crewQuery.isLoading && (
-        <div style={{ color: 'var(--rp-gold-lite)', fontSize: 13 }}>Loading crew…</div>
+        <div className="text-slate-400 text-xs font-bold">Loading crew…</div>
       )}
       {crewQuery.isError && (
-        <div style={{ color: 'var(--c-fail)', fontSize: 13 }}>
+        <div className="text-red-500 text-xs font-bold">
           Crew failed: {(crewQuery.error as Error).message}
         </div>
       )}
       {!crewQuery.isLoading && !crewQuery.isError && (crewQuery.data ?? []).length === 0 && (
-        <div style={{ color: 'var(--rp-gold-lite)', fontSize: 13 }}>No active crew</div>
+        <div className="text-slate-400 text-xs font-bold">No active crew</div>
       )}
-      {(crewQuery.data ?? []).map((member) => (
-        <CrewRow
-          key={member.email}
-          member={member}
-          openCount={counts[member.email] ?? 0}
-          onDelegated={() => {
-            queryClient.invalidateQueries({ queryKey: ['crew', 'open-counts'] })
-          }}
-        />
-      ))}
+      
+      <div className="flex flex-col gap-2">
+        {(crewQuery.data ?? []).map((member) => (
+          <CrewRow
+            key={member.email}
+            member={member}
+            openCount={counts[member.email] ?? 0}
+            onDelegated={() => {
+              queryClient.invalidateQueries({ queryKey: ['crew', 'open-counts'] })
+            }}
+          />
+        ))}
+      </div>
     </div>
   )
 }
-
-// ── Row ──────────────────────────────────────────────────────────────────────
 
 function CrewRow({
   member,
@@ -226,7 +164,7 @@ function CrewRow({
   onDelegated: () => void
 }) {
   const [expanded, setExpanded] = useState(false)
-  const tint = tintFor(member.email, member.is_principal, member.is_investor_side_only)
+  const tintClass = tintFor(member.email, member.is_principal, member.is_investor_side_only)
   const initials = initialsFor(member.display_name)
 
   return (
@@ -241,59 +179,23 @@ function CrewRow({
             setExpanded((v) => !v)
           }
         }}
-        style={{
-          ...rowBase,
-          borderColor: expanded ? tint : 'var(--rp-border)',
-        }}
+        className={`flex items-center gap-3 p-3 bg-slate-50 border rounded-xl cursor-pointer text-sm text-slate-800 transition-all ${
+          expanded ? 'border-blue-300 bg-white shadow-sm' : 'border-slate-100 hover:border-slate-200 hover:bg-white hover:shadow-sm'
+        }`}
       >
         <div
           aria-hidden
-          style={{
-            width: 40,
-            height: 40,
-            borderRadius: '50%',
-            background: 'rgba(14, 52, 112, 0.85)',
-            border: `2px solid ${tint}`,
-            color: tint,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontWeight: 700,
-            fontSize: 14,
-            flexShrink: 0,
-          }}
+          className={`w-10 h-10 rounded-full bg-white border-2 flex items-center justify-center font-black text-sm shrink-0 ${tintClass}`}
         >
           {initials}
         </div>
 
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, lineHeight: 1.2 }}>{member.display_name}</div>
-          <div
-            style={{
-              fontSize: 12,
-              color: 'var(--rp-gold-lite)',
-              marginTop: 2,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              flexWrap: 'wrap',
-            }}
-          >
+        <div className="flex-1 min-w-0">
+          <div className="font-bold leading-tight truncate">{member.display_name}</div>
+          <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap font-medium">
             <span>{member.role}</span>
             {member.is_investor_side_only && (
-              <span
-                style={{
-                  background: 'rgba(255, 204, 51, 0.12)',
-                  color: 'var(--c-investor)',
-                  border: '1px solid var(--c-investor)',
-                  borderRadius: 4,
-                  padding: '1px 6px',
-                  fontSize: 10,
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.5,
-                }}
-              >
+              <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest">
                 investor-side only
               </span>
             )}
@@ -312,19 +214,11 @@ function CrewRow({
             )
           }}
           aria-label={`Show bucket items assigned to ${member.display_name}`}
-          style={{
-            minWidth: 44,
-            height: 32,
-            padding: '0 12px',
-            background: openCount > 0 ? tint : 'transparent',
-            color: openCount > 0 ? 'var(--rp-navy)' : 'var(--rp-gold-lite)',
-            border: `1px solid ${openCount > 0 ? tint : 'var(--rp-border)'}`,
-            borderRadius: 16,
-            fontSize: 13,
-            fontWeight: 700,
-            fontFamily: 'inherit',
-            cursor: 'pointer',
-          }}
+          className={`min-w-[44px] h-8 px-3 rounded-full text-xs font-black transition-colors ${
+            openCount > 0 
+              ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' 
+              : 'bg-transparent text-slate-300 border border-slate-200 hover:text-slate-500 hover:border-slate-300'
+          }`}
         >
           {openCount}
         </button>
@@ -340,8 +234,6 @@ function CrewRow({
     </div>
   )
 }
-
-// ── Delegate form ────────────────────────────────────────────────────────────
 
 function DelegateForm({
   member,
@@ -395,18 +287,11 @@ function DelegateForm({
 
   return (
     <div
-      style={{
-        background: 'rgba(14, 52, 112, 0.45)',
-        border: '1px solid var(--rp-border)',
-        borderRadius: 8,
-        padding: 12,
-        marginTop: -6,
-        marginBottom: 8,
-      }}
+      className="bg-slate-50 border border-slate-200 rounded-xl p-3 -mt-2 mb-2 pt-4 relative z-0 shadow-inner"
       onClick={(e) => e.stopPropagation()}
     >
-      <div style={{ marginBottom: 10 }}>
-        <label style={labelStyle} htmlFor={`crew-title-${member.email}`}>
+      <div className="mb-3">
+        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1" htmlFor={`crew-title-${member.email}`}>
           Task for {member.display_name}
         </label>
         <input
@@ -415,14 +300,14 @@ function DelegateForm({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="What needs doing?"
-          style={inputStyle}
+          className="w-full bg-white border border-slate-200 text-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
           autoFocus
           disabled={busy}
         />
       </div>
 
-      <div style={{ marginBottom: 10 }}>
-        <label style={labelStyle} htmlFor={`crew-remind-${member.email}`}>
+      <div className="mb-3">
+        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1" htmlFor={`crew-remind-${member.email}`}>
           Remind (optional)
         </label>
         <input
@@ -431,33 +316,21 @@ function DelegateForm({
           value={remindAt}
           min={minRemind}
           onChange={(e) => setRemindAt(e.target.value)}
-          style={inputStyle}
+          className="w-full bg-white border border-slate-200 text-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
           disabled={busy}
         />
       </div>
 
       {error && (
-        <div style={{ color: 'var(--c-fail)', fontSize: 12, marginBottom: 8 }}>{error}</div>
+        <div className="text-red-500 text-xs font-bold mb-2">{error}</div>
       )}
 
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div className="flex gap-2">
         <button
           type="button"
           onClick={submit}
           disabled={busy}
-          style={{
-            flex: 1,
-            background: 'var(--rp-gold)',
-            color: 'var(--rp-navy)',
-            border: 'none',
-            borderRadius: 6,
-            padding: '10px 14px',
-            fontWeight: 700,
-            fontSize: 14,
-            fontFamily: 'inherit',
-            cursor: busy ? 'wait' : 'pointer',
-            opacity: busy ? 0.6 : 1,
-          }}
+          className={`flex-1 bg-blue-600 hover:bg-blue-700 text-white border-none rounded-lg px-4 py-2 font-bold text-sm transition-colors shadow-sm ${busy ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
         >
           {busy ? 'Delegating…' : 'Delegate'}
         </button>
@@ -465,17 +338,7 @@ function DelegateForm({
           type="button"
           onClick={onClose}
           disabled={busy}
-          style={{
-            background: 'transparent',
-            color: 'var(--rp-gold-lite)',
-            border: '1px solid var(--rp-border)',
-            borderRadius: 6,
-            padding: '10px 14px',
-            fontWeight: 600,
-            fontSize: 13,
-            fontFamily: 'inherit',
-            cursor: busy ? 'wait' : 'pointer',
-          }}
+          className={`bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-lg px-4 py-2 font-bold text-sm transition-colors shadow-sm ${busy ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
         >
           Cancel
         </button>

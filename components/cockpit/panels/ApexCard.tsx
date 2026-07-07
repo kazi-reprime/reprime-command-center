@@ -56,36 +56,53 @@ export default function ApexCard() {
   }, []);
 
   return (
-    <div className="bg-[#FFCC33] rounded-xl p-4 shadow-[0_0_15px_rgba(255,204,51,0.2)] border border-[#FFCC33]">
-      <div className="flex items-center space-x-2 border-b border-[#0E3470]/20 pb-2 mb-2">
-        <Target className="h-4 w-4 text-[#0E3470]" />
-        <h2 className="text-sm font-bold text-[#0E3470] uppercase tracking-wider">APEX Priority</h2>
+    <div className="relative overflow-hidden bg-white border border-black/5 rounded-[32px] p-6 shadow-sm shadow-black/[0.02]" style={{ fontFamily: 'inherit' }}>
+      {/* Accent strip */}
+      <div className="absolute top-0 left-0 w-2 h-full bg-indigo-500" />
+      
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+          <Target className="h-4 w-4" />
+        </div>
+        <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest">APEX Priority</h2>
       </div>
       
       {loading ? (
-        <div className="flex items-center justify-center py-4">
-          <Loader2 className="h-5 w-5 animate-spin text-[#0E3470]" />
+        <div className="flex items-center justify-center py-6">
+          <Loader2 className="h-5 w-5 animate-spin text-slate-300" />
         </div>
       ) : priority ? (
-        <div className="text-[#0E3470]">
-          <h3 className="font-bold text-sm leading-tight line-clamp-2">{priority.title}</h3>
-          {priority.time && (
-            <p className="text-[10px] font-bold mt-1 opacity-75 uppercase">
-              {new Date(priority.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </p>
-          )}
+        <div className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <h3 className="font-black text-lg text-slate-900 leading-tight tracking-tight mb-2">{priority.title}</h3>
+          <div className="flex items-center gap-4">
+            {priority.time && (
+              <div className="px-2 py-1 bg-slate-50 border border-slate-100 rounded-lg">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                  {new Date(priority.time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                </span>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse" />
+              <span className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Active Protocol</span>
+            </div>
+          </div>
           {priority.description && (
-            <p className="text-xs font-medium mt-1 leading-snug opacity-90 line-clamp-2">
+            <p className="text-xs font-medium text-slate-500 mt-4 leading-relaxed opacity-80">
               {priority.description}
             </p>
           )}
         </div>
       ) : (
-        <div className="flex items-center space-x-2 text-[#0E3470] py-2">
-          <AlertCircle className="h-4 w-4 shrink-0" />
-          <span className="text-xs font-bold leading-tight">All clear. No urgent items.</span>
+        <div className="flex items-center gap-3 py-4 text-slate-400 opacity-60">
+          <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center">
+            <Check className="h-5 w-5" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-widest">Protocol Clear</span>
         </div>
       )}
     </div>
   );
 }
+
+import { Check } from 'lucide-react'

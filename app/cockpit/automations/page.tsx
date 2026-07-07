@@ -2,22 +2,31 @@
 
 import React, { useState } from 'react'
 import { Card, StatusBadge, ActionButton, SearchInput, TabGroup, EmptyState } from '@/components/ui/shared'
-import { LoadingState } from '@/components/ui/LiveStatus'
+import { DataSourceBanner, LoadingState } from '@/components/ui/LiveStatus'
 import { useCockpitQuery, useCockpitMutation } from '@/hooks/useCockpitData'
-// Seed data removed — live data only
 import { useToast } from '@/lib/contexts/ToastContext'
 import { useRouter } from 'next/navigation'
+
+interface CockpitAutomation {
+  id: string; name: string; trigger: string; action: string;
+  status: 'active' | 'paused' | 'error';
+  executionCount: number; failureCount: number;
+  lastRun: string | null; configWarning: string | null;
+}
 
 export default function AutomationsPage() {
   const { addToast } = useToast()
   const router = useRouter()
-  const automationsQ = useCockpitQuery<any[]>('automations', '/api/cockpit/automations')
+  const automationsQ = useCockpitQuery<CockpitAutomation[]>('automations', '/api/cockpit/automations')
   const toggleMutation = useCockpitMutation<{ id: string; action: string }>('/api/cockpit/automations', {
     method: 'PATCH',
     invalidateKeys: ['automations'],
   })
 
   const automations = automationsQ.data?.data ?? []
+  const dataSource = automationsQ.data?.source ?? 'unavailable'
+  const dataWarning = automationsQ.data?.warning
+  
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
 
@@ -36,6 +45,8 @@ export default function AutomationsPage() {
 
   return (
     <div>
+      <DataSourceBanner source={dataSource} warning={dataWarning} />
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
           <h1 style={{ margin: 0, color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Automation Hub</h1>
@@ -53,7 +64,6 @@ export default function AutomationsPage() {
             { key: 'active', label: 'Active', count: automations.filter(a => a.status === 'active').length },
             { key: 'paused', label: 'Paused', count: automations.filter(a => a.status === 'paused').length },
             { key: 'error', label: 'Errors', count: automations.filter(a => a.status === 'error').length },
-            { key: 'not_configured', label: 'Not Configured', count: automations.filter(a => a.status === 'not_configured').length },
           ]}
           active={filter}
           onChange={setFilter}
@@ -71,17 +81,15 @@ export default function AutomationsPage() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
               <div>
                 <div style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600 }}>{auto.name}</div>
-                <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.7rem', marginTop: '0.15rem' }}>{auto.description}</div>
+                <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.7rem', marginTop: '0.15rem' }}>Trigger: {auto.trigger}</div>
               </div>
               <StatusBadge status={auto.status} size="md" />
             </div>
 
             <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '0.75rem', fontSize: '0.7rem', color: 'rgba(255,204,51,0.5)', flexWrap: 'wrap' }}>
-              <span>⚡ Trigger: {auto.trigger}</span>
-              <span>✅ Success: {auto.successCount}</span>
+              <span>🔄 Executed: {auto.executionCount}</span>
               <span style={{ color: auto.failureCount > 0 ? '#EF4444' : 'inherit' }}>❌ Failures: {auto.failureCount}</span>
-              {auto.lastRun && <span>🕐 Last: {new Date(auto.lastRun).toLocaleString()}</span>}
-              {auto.nextRun && <span>⏭️ Next: {new Date(auto.nextRun).toLocaleString()}</span>}
+              {auto.lastRun && <span>🕐 Last run: {new Date(auto.lastRun).toLocaleString()}</span>}
             </div>
 
             {auto.configWarning && (
@@ -94,11 +102,10 @@ export default function AutomationsPage() {
               {auto.status === 'active' && <ActionButton label="Disable" onClick={() => handleToggle(auto.id, 'disable')} variant="ghost" />}
               {auto.status === 'paused' && <ActionButton label="Enable" onClick={() => handleToggle(auto.id, 'enable')} variant="default" />}
               {auto.status === 'error' && <ActionButton label="Retry" onClick={() => handleToggle(auto.id, 'retry')} variant="danger" />}
-              {auto.status === 'not_configured' && <ActionButton label="Configure" onClick={() => router.push('/cockpit/settings')} variant="default" />}
             </div>
           </div>
         ))}
-        {filtered.length === 0 && <EmptyState icon="⚡" title="No automations found" />}
+        {filtered.length === 0 && <EmptyState icon="⚡" title="No automations found" description="Create system triggers to automate your workflow." />}
       </div>
     </div>
   )

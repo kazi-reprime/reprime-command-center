@@ -114,7 +114,7 @@ export default function ClientsPage() {
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   color: '#FFCC33', fontSize: '0.7rem', fontWeight: 700, flexShrink: 0,
                 }}>
-                  {client.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                  {client.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
                 </div>
                 <div>
                   <div style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 600 }}>{client.name}</div>

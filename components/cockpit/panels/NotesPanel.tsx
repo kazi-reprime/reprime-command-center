@@ -80,35 +80,35 @@ export default function NotesPanel() {
 
   if (activeNote) {
     return (
-      <div className="flex flex-col h-full space-y-3">
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-col h-full space-y-4 animate-in fade-in slide-in-from-right-4 duration-300" style={{ fontFamily: 'inherit' }}>
+        <div className="flex items-center gap-3">
           <input 
             type="text" 
             value={editTitle} 
             onChange={e => setEditTitle(e.target.value)} 
             placeholder="Note Title" 
-            className="flex-1 bg-black/20 border border-white/10 rounded px-2 py-1 text-xs text-white outline-none focus:border-[#FFCC33]/50" 
+            className="flex-1 bg-slate-50 border border-slate-200/50 rounded-xl px-4 py-2.5 text-sm font-black text-slate-900 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-slate-400" 
           />
         </div>
         <textarea
           value={editBody}
           onChange={e => setEditBody(e.target.value)}
-          placeholder="Note details..."
-          className="flex-1 resize-none bg-black/20 border border-white/10 rounded p-2 text-xs text-gray-300 outline-none focus:border-[#FFCC33]/50"
+          placeholder="Start writing..."
+          className="flex-1 resize-none bg-slate-50 border border-slate-200/50 rounded-[20px] p-4 text-sm font-medium text-slate-600 outline-none focus:ring-2 focus:ring-blue-500/20 transition-all placeholder:text-slate-400 leading-relaxed"
         />
-        <div className="flex justify-end space-x-2">
+        <div className="flex justify-end gap-2">
           <button 
             onClick={() => setActiveNote(null)} 
-            className="text-xs px-3 py-1 rounded bg-white/5 text-gray-400 hover:text-white"
+            className="px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all"
           >
             Cancel
           </button>
           <button 
             onClick={handleSave} 
-            className="text-xs px-3 py-1 rounded bg-[#FFCC33]/20 text-[#FFCC33] hover:bg-[#FFCC33]/30 flex items-center space-x-1"
+            className="px-5 py-2 rounded-xl bg-blue-500 text-white text-xs font-black uppercase tracking-wider hover:bg-blue-600 transition-all shadow-lg shadow-blue-500/25 flex items-center gap-2"
           >
-            <Save className="h-3 w-3" />
-            <span>Save</span>
+            <Save className="h-3.5 w-3.5" />
+            <span>Save Note</span>
           </button>
         </div>
       </div>
@@ -116,29 +116,37 @@ export default function NotesPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="flex justify-between items-center mb-2">
-        <span className="text-[10px] text-gray-400 font-semibold uppercase">Your Notes</span>
+    <div className="flex flex-col h-full" style={{ fontFamily: 'inherit' }}>
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+            <Plus className="h-4 w-4" />
+          </div>
+          <h2 className="text-sm font-black text-slate-900 uppercase tracking-widest">Your Notes</h2>
+        </div>
         <button 
           onClick={() => {
             setActiveNote({ id: 'new', title: '', body: '', is_pinned: false, updated_at: '' });
             setEditTitle('');
             setEditBody('');
           }}
-          className="p-1 text-[#FFCC33] hover:bg-[#FFCC33]/10 rounded transition"
+          className="w-8 h-8 flex items-center justify-center bg-slate-50 hover:bg-indigo-500 hover:text-white text-indigo-500 rounded-xl transition-all duration-300"
         >
           <Plus className="h-4 w-4" />
         </button>
       </div>
       
-      <div className="flex-1 overflow-y-auto space-y-2">
+      <div className="flex-1 overflow-y-auto space-y-2 pr-1 -mr-1">
         {loading ? (
-          <div className="flex justify-center p-4">
-            <Loader2 className="h-4 w-4 animate-spin text-[#FFCC33]" />
+          <div className="flex justify-center py-10">
+            <Loader2 className="h-5 w-5 animate-spin text-slate-300" />
           </div>
         ) : notes.length === 0 ? (
-          <div className="text-center p-4 text-xs text-gray-500">
-            No notes yet.
+          <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
+            <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-3">
+              <Plus className="h-5 w-5 text-slate-300" />
+            </div>
+            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Archive Empty</span>
           </div>
         ) : (
           notes.map(note => (
@@ -149,18 +157,18 @@ export default function NotesPanel() {
                 setEditTitle(note.title);
                 setEditBody(note.body);
               }}
-              className="p-2.5 bg-[#08224d] border border-white/5 rounded-lg cursor-pointer hover:border-[#FFCC33]/30 transition group"
+              className="group p-4 bg-slate-50 border border-slate-100/50 rounded-2xl hover:bg-white hover:border-indigo-500/20 hover:shadow-xl hover:shadow-slate-200/40 transition-all duration-300 cursor-pointer"
             >
-              <div className="flex justify-between items-start">
-                <span className="text-xs font-bold text-white line-clamp-1">{note.title}</span>
+              <div className="flex justify-between items-start gap-3">
+                <span className="text-xs font-black text-slate-900 line-clamp-1 flex-1 tracking-tight">{note.title}</span>
                 <button 
                   onClick={(e) => handleDelete(note.id, e)}
-                  className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition p-0.5"
+                  className="w-6 h-6 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all rounded-lg"
                 >
                   <Trash2 className="h-3 w-3" />
                 </button>
               </div>
-              <p className="text-[10px] text-gray-400 mt-1 line-clamp-2">{note.body || 'No details'}</p>
+              <p className="text-[11px] font-medium text-slate-500 mt-1 line-clamp-2 leading-relaxed">{note.body || 'No description provided'}</p>
             </div>
           ))
         )}

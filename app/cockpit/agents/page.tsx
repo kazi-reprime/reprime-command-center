@@ -2,21 +2,30 @@
 
 import React, { useState } from 'react'
 import { Card, StatusBadge, ActionButton, SearchInput, TabGroup, Modal, EmptyState } from '@/components/ui/shared'
-import { LoadingState } from '@/components/ui/LiveStatus'
+import { DataSourceBanner, LoadingState } from '@/components/ui/LiveStatus'
 import { useCockpitQuery, useCockpitMutation } from '@/hooks/useCockpitData'
-// Seed data removed — live data only
+
+interface CockpitAgent {
+  id: string; name: string; type: string; status: 'running' | 'paused' | 'error' | 'idle';
+  currentTask: string | null; completedToday: number; errorCount: number;
+  lastActive: string; uptime: string;
+  description?: string; // Optional field if we add it to DB later
+}
 
 export default function AgentsPage() {
-  const agentsQ = useCockpitQuery<any[]>('agents', '/api/cockpit/agents')
+  const agentsQ = useCockpitQuery<CockpitAgent[]>('agents', '/api/cockpit/agents')
   const toggleMutation = useCockpitMutation<{ id: string; action: string }>('/api/cockpit/agents', {
     method: 'PATCH',
     invalidateKeys: ['agents'],
   })
 
   const agents = agentsQ.data?.data ?? []
+  const dataSource = agentsQ.data?.source ?? 'unavailable'
+  const dataWarning = agentsQ.data?.warning
+  
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('all')
-  const [selectedAgent, setSelectedAgent] = useState<SeedAgent | null>(null)
+  const [selectedAgent, setSelectedAgent] = useState<CockpitAgent | null>(null)
 
   const filtered = agents.filter(a => {
     if (search && !a.name.toLowerCase().includes(search.toLowerCase())) return false
@@ -28,10 +37,12 @@ export default function AgentsPage() {
     toggleMutation.mutate({ id, action })
   }
 
-  if (agentsQ.isLoading) return <LoadingState message="Loading agents..." />
+  if (agentsQ.isLoading) return <LoadingState message="Loading AI agents..." />
 
   return (
     <div>
+      <DataSourceBanner source={dataSource} warning={dataWarning} />
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
           <h1 style={{ margin: 0, color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>AI Agent Control Panel</h1>
@@ -49,7 +60,6 @@ export default function AgentsPage() {
           { key: 'all', label: 'All', count: agents.length },
           { key: 'running', label: 'Running', count: agents.filter(a => a.status === 'running').length },
           { key: 'paused', label: 'Paused', count: agents.filter(a => a.status === 'paused').length },
-          { key: 'idle', label: 'Idle', count: agents.filter(a => a.status === 'idle').length },
           { key: 'error', label: 'Errors', count: agents.filter(a => a.status === 'error').length },
         ]}
         active={filter}
@@ -67,8 +77,6 @@ export default function AgentsPage() {
               transition: 'all 200ms', borderLeftWidth: 3,
               borderLeftColor: agent.status === 'running' ? '#00A980' : agent.status === 'error' ? '#EF4444' : agent.status === 'paused' ? '#F59E0B' : 'rgba(255,204,51,0.08)',
             }}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,204,51,0.2)')}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,204,51,0.08)')}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -81,8 +89,6 @@ export default function AgentsPage() {
               <StatusBadge status={agent.status} size="md" />
             </div>
 
-            <p style={{ margin: '0 0 0.75rem', color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem', lineHeight: 1.4 }}>{agent.description}</p>
-
             {agent.currentTask && (
               <div style={{ padding: '0.4rem 0.6rem', background: 'rgba(0,0,0,0.15)', borderRadius: 6, marginBottom: '0.75rem' }}>
                 <span style={{ color: 'rgba(255,204,51,0.3)', fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current Task</span>
@@ -90,30 +96,23 @@ export default function AgentsPage() {
               </div>
             )}
 
-            {agent.configWarning && (
-              <div style={{ padding: '0.4rem 0.6rem', background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 6, marginBottom: '0.75rem' }}>
-                <span style={{ color: '#F59E0B', fontSize: '0.7rem' }}>⚠️ {agent.configWarning}</span>
-              </div>
-            )}
-
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', gap: '1rem', fontSize: '0.65rem', color: 'rgba(255,204,51,0.4)' }}>
-                <span>✅ {agent.successRate}%</span>
-                <span>🔄 {agent.runsToday} today</span>
+                <span>🔄 {agent.completedToday} today</span>
                 {agent.errorCount > 0 && <span style={{ color: '#EF4444' }}>❌ {agent.errorCount}</span>}
+                <span>⚡ {agent.uptime}</span>
               </div>
               <div style={{ display: 'flex', gap: '0.25rem' }} onClick={e => e.stopPropagation()}>
                 {agent.status === 'running' && <ActionButton label="Pause" onClick={() => handleToggle(agent.id, 'pause')} variant="ghost" />}
                 {agent.status === 'paused' && <ActionButton label="Resume" onClick={() => handleToggle(agent.id, 'resume')} variant="default" />}
                 {agent.status === 'error' && <ActionButton label="Retry" onClick={() => handleToggle(agent.id, 'retry')} variant="danger" />}
-                {agent.status === 'idle' && <ActionButton label="Run" onClick={() => handleToggle(agent.id, 'resume')} variant="primary" />}
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {filtered.length === 0 && <EmptyState icon="🤖" title="No agents found" description="Try adjusting your filters." />}
+      {filtered.length === 0 && <EmptyState icon="🤖" title="No agents found" description="Add AI agents to your workforce in Settings." />}
 
       {/* Agent Detail Modal */}
       <Modal isOpen={!!selectedAgent} onClose={() => setSelectedAgent(null)} title={selectedAgent?.name || ''} width={640}>
@@ -122,19 +121,18 @@ export default function AgentsPage() {
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
               <StatusBadge status={selectedAgent.status} size="md" />
               <span style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>Type: {selectedAgent.type}</span>
-              <span style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>Success: {selectedAgent.successRate}%</span>
-              <span style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>Runs today: {selectedAgent.runsToday}</span>
+              <span style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>Runs today: {selectedAgent.completedToday}</span>
+              <span style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>Uptime: {selectedAgent.uptime}</span>
             </div>
-            <p style={{ color: '#e2e8f0', fontSize: '0.85rem', lineHeight: 1.6, marginBottom: '1rem' }}>{selectedAgent.description}</p>
             {selectedAgent.currentTask && (
               <Card title="Current Task"><p style={{ color: '#e2e8f0', fontSize: '0.8rem', margin: 0 }}>{selectedAgent.currentTask}</p></Card>
             )}
             <div style={{ marginTop: '1rem' }}>
-              <Card title="Recent Activity Log">
+              <Card title="Diagnostics">
                 <div style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.75rem' }}>
-                  <div style={{ padding: '0.4rem 0', borderBottom: '1px solid rgba(255,204,51,0.05)' }}>✅ {selectedAgent.lastRun ? new Date(selectedAgent.lastRun).toLocaleString() : 'Never'} — Last successful run</div>
-                  <div style={{ padding: '0.4rem 0', borderBottom: '1px solid rgba(255,204,51,0.05)' }}>🔄 {selectedAgent.runsToday} operations completed today</div>
-                  {selectedAgent.errorCount > 0 && <div style={{ padding: '0.4rem 0', color: '#EF4444' }}>❌ {selectedAgent.errorCount} error(s) logged</div>}
+                  <div style={{ padding: '0.4rem 0', borderBottom: '1px solid rgba(255,204,51,0.05)' }}>🕒 Last active: {new Date(selectedAgent.lastActive).toLocaleString()}</div>
+                  <div style={{ padding: '0.4rem 0', borderBottom: '1px solid rgba(255,204,51,0.05)' }}>🔄 {selectedAgent.completedToday} operations completed today</div>
+                  {selectedAgent.errorCount > 0 && <div style={{ padding: '0.4rem 0', color: '#EF4444' }}>❌ {selectedAgent.errorCount} error(s) logged in last 24h</div>}
                 </div>
               </Card>
             </div>

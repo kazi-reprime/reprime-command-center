@@ -19,7 +19,7 @@ const geistMono = localFont({
 const lexend = Lexend({
   variable: "--font-lexend",
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
 });
 

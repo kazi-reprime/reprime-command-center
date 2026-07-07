@@ -18,8 +18,8 @@ export default function EventModal({ eventId, onClose }: EventModalProps) {
 
   if (!event) return null;
 
-  const start = new Date(event.start);
-  const end = new Date(event.end);
+  const start = new Date(event.start || event.startTime);
+  const end = new Date(event.end || event.endTime);
   const dateStr = start.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
   const timeStr = `${start.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
   

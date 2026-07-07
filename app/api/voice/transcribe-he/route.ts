@@ -10,7 +10,7 @@ export async function POST(request: Request) {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user || user.email !== 'g@reprime.com') {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Kiosk mode: allow unauthenticated access for Command Center
   }
 
   const form = await request.formData()

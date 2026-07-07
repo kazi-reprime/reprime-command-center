@@ -69,7 +69,10 @@ export default function ApexCard() {
             {new Date(focus.gap_end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
-        <button className="bg-[#FFCC33] text-[#08224d] p-2 rounded-md hover:bg-[#FFCC33]/90 transition">
+        <button
+          onClick={() => window.location.href = '/center'}
+          className="bg-[#FFCC33] text-[#08224d] p-2 rounded-md hover:bg-[#FFCC33]/90 transition"
+        >
           <ArrowRight className="h-4 w-4" />
         </button>
       </div>

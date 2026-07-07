@@ -182,165 +182,179 @@ export default function RightFlank() {
   };
 
   return (
-    <div className="w-[380px] flex flex-col space-y-4 h-[calc(100vh-6rem)]">
+    <div className="w-[420px] flex flex-col gap-6 h-[calc(100vh-8rem)]" style={{ fontFamily: 'inherit' }}>
       {/* 1. Nora's Desk AI Secretary */}
-      <div className="flex-1 bg-[#0c2957] border border-[#FFCC33]/20 rounded-xl p-4 flex flex-col overflow-hidden">
-        <div className="flex items-center space-x-2 border-b border-[#FFCC33]/15 pb-3 mb-3">
-          <Sparkles className="h-4 w-4 text-[#FFCC33]" />
-          <h2 className="text-sm font-bold text-[#FFCC33] uppercase tracking-wider">Nora&apos;s Desk (AI)</h2>
+      <div className="flex-[1.5] bg-white border border-black/5 rounded-[32px] p-6 flex flex-col overflow-hidden shadow-sm shadow-black/[0.02]">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-black text-slate-900 tracking-tight">Nora's Desk</h2>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Advanced AI Secretary</p>
+            </div>
+          </div>
+          <div className="px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-lg">
+            <span className="text-[10px] text-indigo-500 font-black uppercase tracking-wider">Online</span>
+          </div>
         </div>
 
         {/* Conversation flow */}
-        <div className="flex-1 overflow-y-auto space-y-3 p-1">
+        <div className="flex-1 overflow-y-auto space-y-4 pr-1 -mr-1">
           {messages.map((msg, i) => (
             <div
               key={i}
-              className={`p-2.5 rounded-lg text-xs leading-normal border ${
+              className={`p-4 rounded-2xl text-sm leading-relaxed transition-all duration-300 ${
                 msg.sender === 'nora'
-                  ? 'bg-[#08224d] border-white/5 text-gray-200'
-                  : 'bg-[#123e80] border-[#FFCC33]/20 text-[#FFCC33] font-mono'
+                  ? 'bg-slate-50 border border-slate-100 text-slate-700'
+                  : 'bg-indigo-500 border border-indigo-400 text-white shadow-lg shadow-indigo-500/20'
               }`}
             >
-              <div className="font-semibold text-[10px] text-gray-400 mb-1 flex justify-between items-center">
-                <span>{msg.sender === 'nora' ? 'NORA AI' : 'GIDEON'}</span>
+              <div className={`text-[10px] font-black uppercase tracking-widest mb-2 flex justify-between items-center ${
+                msg.sender === 'nora' ? 'text-slate-400' : 'text-white/60'
+              }`}>
+                <span>{msg.sender === 'nora' ? 'Nora Intelligence' : 'Gideon Prime'}</span>
                 {msg.sender === 'nora' && (
-                  <div className="opacity-50 hover:opacity-100 transition scale-75 origin-right">
+                  <div className="scale-75 origin-right">
                     <SpeakerButton text={msg.text} />
                   </div>
                 )}
               </div>
-              <p>{msg.text}</p>
+              <p className="font-medium">{msg.text}</p>
             </div>
           ))}
           {loadingNora && (
-            <div className="p-2.5 rounded-lg text-xs bg-[#08224d]/50 border border-white/5 text-gray-400 flex items-center space-x-2">
-              <Loader2 className="h-3 w-3 animate-spin text-[#FFCC33]" />
-              <span>Querying pgvector and drafting reply...</span>
+            <div className="p-4 rounded-2xl bg-slate-50/50 border border-slate-100 flex items-center gap-3">
+              <Loader2 className="h-4 w-4 animate-spin text-indigo-500" />
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Synthesizing Data...</span>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
         {/* Input prompt */}
-        <div className="mt-3 flex items-center bg-[#08224d] border border-[#FFCC33]/20 rounded-lg px-2 py-2">
-          <button
-            onClick={() => {
-              if (isListening) return;
-              setIsListening(true);
-              const SpeechRecognition = (window as unknown as { SpeechRecognition: new () => SpeechRecognition }).SpeechRecognition || (window as unknown as { webkitSpeechRecognition: new () => SpeechRecognition }).webkitSpeechRecognition;
-              if (SpeechRecognition) {
-                const recognition: SpeechRecognition = new SpeechRecognition();
-                recognition.onresult = (event: SpeechRecognitionEvent) => {
-                  setPrompt((prev) => prev + (prev ? ' ' : '') + event.results[0][0].transcript);
+        <div className="mt-6 relative">
+          <div className="flex items-center bg-slate-50 border border-slate-200/50 rounded-2xl px-2 py-2 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+            <button
+              onClick={() => {
+                if (isListening) return;
+                setIsListening(true);
+                const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+                if (SpeechRecognition) {
+                  const recognition = new SpeechRecognition();
+                  recognition.onresult = (event: any) => {
+                    setPrompt((prev) => prev + (prev ? ' ' : '') + event.results[0][0].transcript);
+                    setIsListening(false);
+                  };
+                  recognition.onerror = () => setIsListening(false);
+                  recognition.onend = () => setIsListening(false);
+                  recognition.start();
+                } else {
+                  addToast('Speech recognition not supported.', 'warning');
                   setIsListening(false);
-                };
-                recognition.onerror = () => setIsListening(false);
-                recognition.onend = () => setIsListening(false);
-                recognition.start();
-              } else {
-                addToast('Speech recognition not supported in this browser.', 'warning');
-                setIsListening(false);
-              }
-            }}
-            className={`p-1.5 mr-1 rounded-md transition ${isListening ? 'text-red-400 bg-red-500/10' : 'text-gray-400 hover:text-[#FFCC33]'}`}
-            title="Dictate to Nora"
-          >
-            <Mic className="h-4 w-4" />
-          </button>
-          <input
-            type="text"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handlePromptSend()}
-            disabled={loadingNora}
-            placeholder={loadingNora ? 'Processing...' : 'Instruct Nora...'}
-            className="bg-transparent text-xs text-white outline-none flex-1 placeholder-gray-500 disabled:opacity-50 min-w-0"
-          />
-          <button
-            onClick={handlePromptSend}
-            disabled={loadingNora}
-            className="p-1.5 hover:text-[#FFCC33] text-[#FFCC33]/70 transition disabled:opacity-50 ml-1"
-          >
-            <Send className="h-4 w-4" />
-          </button>
+                }
+              }}
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${isListening ? 'text-red-500 bg-red-50' : 'text-slate-400 hover:bg-white hover:text-indigo-500'}`}
+            >
+              <Mic className="h-5 w-5" />
+            </button>
+            <input
+              type="text"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handlePromptSend()}
+              disabled={loadingNora}
+              placeholder={loadingNora ? 'Processing...' : 'Instruct Nora...'}
+              className="bg-transparent text-sm font-semibold text-slate-900 px-3 outline-none flex-1 placeholder:text-slate-400"
+            />
+            <button
+              onClick={handlePromptSend}
+              disabled={loadingNora}
+              className="w-10 h-10 flex items-center justify-center bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/25 hover:bg-indigo-600 transition-all disabled:opacity-50"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          </div>
         </div>
       </div>
 
       {/* 2. Secondary Panel (Tasks / Notes) */}
-      <div className="h-80 bg-[#0c2957] border border-[#FFCC33]/20 rounded-xl p-4 flex flex-col overflow-hidden">
-        <div className="flex items-center justify-between border-b border-[#FFCC33]/15 pb-3 mb-3">
-          <div className="flex items-center space-x-1">
+      <div className="flex-1 bg-white border border-black/5 rounded-[32px] p-6 flex flex-col overflow-hidden shadow-sm shadow-black/[0.02]">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex bg-slate-50 p-1 rounded-2xl gap-1">
             <button
               onClick={() => setActiveTab('tasks')}
-              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg transition ${
-                activeTab === 'tasks' ? 'bg-[#FFCC33]/10 text-[#FFCC33]' : 'text-gray-400 hover:text-gray-200'
+              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                activeTab === 'tasks' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
               }`}
             >
-              <CheckSquare className="h-4 w-4" />
-              <h2 className="text-sm font-bold uppercase tracking-wider">Tasks Bucket</h2>
+              Tasks
             </button>
             <button
               onClick={() => setActiveTab('notes')}
-              className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg transition ${
-                activeTab === 'notes' ? 'bg-[#FFCC33]/10 text-[#FFCC33]' : 'text-gray-400 hover:text-gray-200'
+              className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                activeTab === 'notes' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
               }`}
             >
-              <StickyNote className="h-4 w-4" />
-              <h2 className="text-sm font-bold uppercase tracking-wider">Notes</h2>
+              Notes
             </button>
           </div>
           {activeTab === 'tasks' && (
             loadingTasks ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin text-gray-400" />
+              <Loader2 className="h-4 w-4 animate-spin text-slate-300" />
             ) : (
-              <CalendarClock className="h-4 w-4 text-gray-400" />
+              <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+                <CalendarClock className="h-4 w-4" />
+              </div>
             )
           )}
         </div>
 
         {activeTab === 'tasks' ? (
-          <div className="flex-1 overflow-y-auto space-y-3">
-          {tasks.length === 0 ? (
-            <div className="h-full flex flex-col items-center justify-center text-center p-4">
-              <span className="text-xs text-gray-500">No active tasks. Instruct Nora to assign items.</span>
-            </div>
-          ) : (
-            <>
-              {['open', 'pending', 'snoozed', 'parked'].map(statusGroup => {
-                const groupTasks = tasks.filter(t => t.status === statusGroup);
-                if (groupTasks.length === 0) return null;
-                return (
-                  <div key={statusGroup} className="space-y-2">
-                    <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1 mb-2 border-b border-white/5 pb-1">{statusGroup}</h3>
-                    {groupTasks.map((task) => (
-                      <div key={task.id} className="p-3 bg-[#08224d] border border-white/5 rounded-lg flex items-center justify-between group hover:border-[#FFCC33]/30 transition">
-                        <div className="flex-1 min-w-0 pr-2">
-                          <div className="flex items-start justify-between">
-                            <span className="text-xs font-bold text-white leading-snug truncate">{task.title}</span>
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1 -mr-1">
+            {tasks.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
+                <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-3">
+                  <CheckSquare className="h-5 w-5 text-slate-300" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Queue Clear</span>
+              </div>
+            ) : (
+              <>
+                {['open', 'pending', 'snoozed', 'parked'].map(statusGroup => {
+                  const groupTasks = tasks.filter(t => t.status === statusGroup);
+                  if (groupTasks.length === 0) return null;
+                  return (
+                    <div key={statusGroup} className="space-y-2">
+                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-3">{statusGroup}</h3>
+                      {groupTasks.map((task) => (
+                        <div key={task.id} className="group p-4 bg-slate-50 border border-slate-100/50 rounded-2xl hover:bg-white hover:border-emerald-500/20 hover:shadow-xl hover:shadow-slate-200/40 transition-all duration-300 flex items-center justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <span className="text-xs font-black text-slate-900 block truncate tracking-tight mb-1">{task.title}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 px-1.5 py-0.5 rounded">#{task.projectTag || 'Gen'}</span>
+                              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest ${
+                                task.priority === 1 ? 'bg-red-500/10 text-red-500' : 'bg-slate-200/50 text-slate-400'
+                              }`}>
+                                Priority {task.priority}
+                              </span>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <span className="text-[9px] text-[#FFCC33] font-semibold">#{task.projectTag || 'General'}</span>
-                            <span className={`text-[8px] font-bold px-1.5 py-0.25 rounded ${
-                              task.priority === 1 ? 'bg-red-500/20 text-red-400' : 'bg-gray-500/20 text-gray-400'
-                            }`}>
-                              P{task.priority}
-                            </span>
-                          </div>
+                          <button
+                            onClick={() => handleCompleteTask(task.id)}
+                            className="w-8 h-8 rounded-xl border-2 border-slate-200 flex items-center justify-center group-hover:border-emerald-500 group-hover:bg-emerald-50 text-transparent group-hover:text-emerald-500 transition-all duration-300"
+                          >
+                            <Check className="h-4 w-4" strokeWidth={4} />
+                          </button>
                         </div>
-                        <button
-                          onClick={() => handleCompleteTask(task.id)}
-                          className="h-6 w-6 rounded-full border border-gray-600 flex items-center justify-center hover:border-green-500 hover:bg-green-500/20 text-transparent hover:text-green-400 shrink-0 transition"
-                        >
-                          <Check className="h-3.5 w-3.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
-            </>
-          )}
-        </div>
+                      ))}
+                    </div>
+                  );
+                })}
+              </>
+            )}
+          </div>
         ) : (
           <div className="flex-1 overflow-hidden">
             <NotesPanel />

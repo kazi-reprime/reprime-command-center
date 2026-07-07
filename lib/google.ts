@@ -166,8 +166,8 @@ export async function getGmailTriageList(): Promise<GmailMessage[]> {
     // Sort by priority score descending
     return detailedList.sort((a, b) => b.score - a.score);
   } catch (err) {
-    console.warn('Google API integration is using simulated data:', err instanceof Error ? err.message : err);
-    return getSimulatedGmailMessages();
+    console.error('[getGmailTriageList] Gmail API failed:', err instanceof Error ? err.message : err);
+    throw err;
   }
 }
 
@@ -222,63 +222,12 @@ export async function getCalendarAgendas(): Promise<CalendarEvent[]> {
       };
     });
   } catch (err) {
-    console.warn('Calendar API integration is using simulated data:', err instanceof Error ? err.message : err);
-    return getSimulatedCalendarEvents();
+    console.error('[getCalendarAgendas] Calendar API failed:', err instanceof Error ? err.message : err);
+    throw err;
   }
 }
 
-// --- Simulation Datasets ---
-
-function getSimulatedGmailMessages(): GmailMessage[] {
-  return [
-    {
-      id: 'm1',
-      threadId: 't_m1',
-      from: 'Steve Philipp <steve@reprime.com>',
-      subject: 'Riverside LP Deal - Term Sheet & Signatures Required ASAP',
-      snippet: 'Gideon, Kazi, I have compiled the legal edits for the Riverside LP capital raise. Please verify page 8 details and sign before 5 PM EST.',
-      date: new Date(Date.now() - 1000 * 60 * 20).toISOString(), // 20 mins ago
-      score: 30, // High score
-    },
-    {
-      id: 'm2',
-      threadId: 't_m2',
-      from: 'Adir Yonasi <adir@reprime.com>',
-      subject: 'Inforuptcy scraping flow update',
-      snippet: 'Running our login scraper tests today. Playwright scripts look good, waiting on Twilio 2FA passcodes to finalize live ingestion stream.',
-      date: new Date(Date.now() - 1000 * 60 * 90).toISOString(), // 90 mins ago
-      score: 18,
-    },
-    {
-      id: 'm3',
-      threadId: 't_m3',
-      from: 'Chaim Abrahams <chaim@reprime.com>',
-      subject: 'NDA Draft Review',
-      snippet: 'Sent over the new NDA template for the upcoming Florida real estate developer partnership. Standard terms apply.',
-      date: new Date(Date.now() - 1000 * 60 * 180).toISOString(), // 3 hours ago
-      score: 16,
-    },
-  ];
-}
-
-function getSimulatedCalendarEvents(): CalendarEvent[] {
-  const now = new Date();
-  return [
-    {
-      id: 'c1',
-      summary: 'Riverside LP Term Sheet Review',
-      description: 'Gideon / Steve / Riverside Investment Committee. Discussing final adjustments to capital call schedules. Zoom link: https://zoom.us/j/91827381273',
-      start: new Date(now.getTime() + 1000 * 60 * 30).toISOString(), // in 30 mins
-      end: new Date(now.getTime() + 1000 * 60 * 90).toISOString(),
-      meetingUrl: 'https://zoom.us/j/91827381273',
-    },
-    {
-      id: 'c2',
-      summary: 'Sync on Playwright Webhook Pipelines',
-      description: 'Adir / Kazi. Technical review of Twilio 2FA automatic verification handlers. Google Meet: https://meet.google.com/abc-defg-hij',
-      start: new Date(now.getTime() + 1000 * 60 * 150).toISOString(), // in 2.5 hours
-      end: new Date(now.getTime() + 1000 * 60 * 210).toISOString(),
-      meetingUrl: 'https://meet.google.com/abc-defg-hij',
-    },
-  ];
-}
+// Simulation datasets REMOVED — errors now propagate to callers.
+// If you see "Gmail API failed" or "Calendar API failed" in logs,
+// check GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN.
+// Use scripts/get-gmail-token.mjs to obtain a valid refresh token.

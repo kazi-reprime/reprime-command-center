@@ -83,15 +83,15 @@ export default function CalendarColumn() {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 0 }}>
+    <div className="flex flex-col h-full bg-white text-slate-800 font-sans">
       {/* Header */}
-      <div style={{ padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="px-4 py-3 flex justify-between items-center">
         <div>
-          <div style={{ color: 'var(--rp-gold, #FFCC33)', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          <div className="text-blue-600 text-xs font-black uppercase tracking-widest">
             📅 {now.toLocaleDateString('en-US', { weekday: 'short' })} · {now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
           </div>
           {hebrew && (
-            <div style={{ color: 'var(--rp-gold-lite, rgba(255,204,51,0.4))', fontSize: 10, marginTop: 2 }}>
+            <div className="text-slate-400 text-[10px] mt-1 font-bold tracking-wider">
               {hebrew.date}
               {hebrew.candles && <span> · 🕯 {hebrew.candles}</span>}
               {hebrew.havdalah && <span> · ✡ {hebrew.havdalah}</span>}
@@ -101,75 +101,91 @@ export default function CalendarColumn() {
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 2, padding: '0 12px 8px', borderBottom: '1px solid rgba(255,204,51,0.08)' }}>
+      <div className="flex gap-1 px-4 pb-3 border-b border-slate-100">
         {(['today', 'tomorrow', 'week'] as TabView[]).map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            style={{
-              padding: '3px 10px', borderRadius: 6, border: 'none', cursor: 'pointer',
-              background: tab === t ? 'rgba(255,204,51,0.15)' : 'transparent',
-              color: tab === t ? 'var(--rp-gold, #FFCC33)' : 'rgba(255,204,51,0.3)',
-              fontSize: 10, fontWeight: 700, fontFamily: 'inherit', textTransform: 'uppercase',
-              letterSpacing: '0.06em',
-            }}
-          >{t}</button>
+          <button 
+            key={t} 
+            onClick={() => setTab(t)}
+            className={`px-3 py-1.5 rounded-lg border-none cursor-pointer text-[10px] font-black uppercase tracking-widest transition-colors ${
+              tab === t 
+                ? 'bg-blue-50 text-blue-600 shadow-sm' 
+                : 'bg-transparent text-slate-400 hover:bg-slate-50'
+            }`}
+          >
+            {t}
+          </button>
         ))}
       </div>
 
       {/* Events */}
-      <div style={{ flex: 1, overflowY: 'auto', padding: '4px 0' }}>
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {briefing.isLoading && (
-          <div style={{ padding: 16, textAlign: 'center', color: 'rgba(255,204,51,0.3)', fontSize: 11 }}>
+          <div className="p-4 text-center text-slate-400 text-xs font-bold">
             Loading calendar...
           </div>
         )}
         {briefing.isError && (
-          <div style={{ padding: 12, margin: '4px 8px', borderRadius: 6, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)', color: '#EF4444', fontSize: 11 }}>
+          <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-xs font-bold shadow-sm">
             ⚠️ Calendar failed to load. Check Google Calendar credentials.
           </div>
         )}
         {!briefing.isLoading && meetings.length === 0 && (
-          <div style={{ padding: 16, textAlign: 'center', color: 'rgba(255,204,51,0.25)', fontSize: 11 }}>
+          <div className="p-4 text-center text-slate-400 text-xs font-bold">
             No meetings today
           </div>
         )}
         {meetings.map(m => {
           const isCurrent = isCurrentMeeting(m)
           const isNext = isUpcoming(m)
+          
+          let cardClasses = 'p-3 rounded-xl shadow-sm transition-all border-l-4 '
+          if (isCurrent) {
+            cardClasses += 'bg-red-50 border border-red-100 border-l-red-500'
+          } else if (isNext) {
+            cardClasses += 'bg-amber-50 border border-amber-100 border-l-amber-500'
+          } else {
+            cardClasses += 'bg-slate-50 border border-slate-100 border-l-blue-400'
+          }
+
           return (
-            <div key={m.id} style={{
-              margin: '2px 6px', padding: '8px 10px', borderRadius: 8,
-              background: isCurrent ? 'rgba(239,68,68,0.08)' : isNext ? 'rgba(255,204,51,0.06)' : 'rgba(0,0,0,0.1)',
-              border: isCurrent ? '1px solid rgba(239,68,68,0.2)' : isNext ? '1px solid rgba(255,204,51,0.1)' : '1px solid transparent',
-              borderLeft: isCurrent ? '3px solid #EF4444' : isNext ? '3px solid var(--rp-gold, #FFCC33)' : '3px solid transparent',
-            }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 2 }}>
-                <span style={{ color: 'var(--rp-gold-lite, rgba(255,204,51,0.5))', fontSize: 10, fontWeight: 600 }}>
+            <div key={m.id} className={cardClasses}>
+              <div className="flex justify-between items-start mb-1">
+                <span className="text-slate-500 text-[10px] font-black tracking-widest">
                   {formatTime(m.startTime)}
                 </span>
                 {isCurrent && (
-                  <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 4, background: '#EF4444', color: '#fff', fontWeight: 700 }}>NOW</span>
+                  <span className="text-[9px] px-2 py-0.5 rounded-md bg-red-500 text-white font-black uppercase tracking-widest">NOW</span>
                 )}
                 {isNext && !isCurrent && (
-                  <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 4, background: 'var(--rp-gold, #FFCC33)', color: '#0E3470', fontWeight: 700 }}>STARTS</span>
+                  <span className="text-[9px] px-2 py-0.5 rounded-md bg-amber-500 text-white font-black uppercase tracking-widest">STARTS SOON</span>
                 )}
               </div>
-              <div style={{ color: '#F5EFD8', fontSize: 12, fontWeight: 500, marginBottom: 2, lineHeight: 1.3 }}>
+              
+              <div className={`text-sm font-bold mb-1 leading-tight ${isCurrent ? 'text-red-900' : isNext ? 'text-amber-900' : 'text-slate-800'}`}>
                 {m.title}
               </div>
+              
               {(m.attendees?.length ?? 0) > 0 && (
-                <div style={{ color: 'rgba(255,204,51,0.35)', fontSize: 10, marginBottom: 4 }}>
+                <div className="text-slate-500 text-[10px] mb-2 font-medium">
                   {(m.attendees ?? []).slice(0, 3).join(', ')}{(m.attendees?.length ?? 0) > 3 ? ` +${(m.attendees?.length ?? 0) - 3}` : ''}
                 </div>
               )}
+              
               {m.zoomLink && (
-                <a href={m.zoomLink} target="_blank" rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-block', padding: '3px 10px', borderRadius: 5,
-                    background: 'var(--rp-gold, #FFCC33)', color: '#0E3470',
-                    fontSize: 10, fontWeight: 700, textDecoration: 'none',
-                    letterSpacing: '0.04em',
-                  }}
-                >Join Zoom</a>
+                <a 
+                  href={m.zoomLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className={`inline-block px-3 py-1.5 rounded-lg text-[10px] font-black no-underline tracking-widest uppercase transition-colors ${
+                    isCurrent 
+                      ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                      : isNext 
+                        ? 'bg-amber-100 text-amber-700 hover:bg-amber-200' 
+                        : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  }`}
+                >
+                  Join Zoom
+                </a>
               )}
             </div>
           )

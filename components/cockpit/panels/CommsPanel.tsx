@@ -93,7 +93,7 @@ export default function CommsPanel() {
         contactPhone: t.phone,
         contactName: t.contact_name || t.phone,
         channel: t.channel_type as 'whatsapp' | 'imessage' | 'sms',
-        laneOverride: t.is_investor ? 'investor' : t.is_family ? 'family' : t.is_staff ? 'staff' : 'general',
+        laneOverride: (t.is_investor ? 'investor' : t.is_family ? 'family' : t.is_staff ? 'staff' : 'general') as Thread['laneOverride'],
         isBlocked: t.is_blocked || false,
         lastMessageAt: t.last_message_at 
           ? new Date(t.last_message_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })

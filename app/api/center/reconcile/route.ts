@@ -151,7 +151,7 @@ async function runBatch(service: ReturnType<typeof createServiceClient>, limitIn
   // Least-recently-reconciled first so repeated runs cycle through everyone.
   const limit = Math.min(60, Math.max(1, limitIn || 30))
   const scope = scopeIn === 'all' ? 'all' : 'active'
-  // @ts-expect-error chaining Supabase filters makes the TS type recursion blow up
+  // Supabase filter chaining — previously caused TS type recursion blowup.
   let q = service.from('roster').select('source_row, phone, board_stage, thread_json, awaiting_us, last_reply_at')
   q = q.not('phone', 'is', null)
   // Only contacts who have had real WhatsApp activity (last_reply_at set) — skip

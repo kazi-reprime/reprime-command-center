@@ -1,75 +1,70 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { 
+  Home, Activity, MessageSquare, Mail, Calendar, Users, Briefcase, 
+  CheckSquare, FileText, Bell, Search, Plus, Mic, Settings, 
+  ChevronLeft, ChevronRight, Menu, Hexagon, UserCircle
+} from 'lucide-react'
+import { ThreeDLogo } from '@/components/ui/ThreeDLogo'
 
-type NavItem = { href: string; label: string; icon: string; shortLabel: string }
+type NavItem = { href: string; label: string; icon: React.ReactNode }
 type NavSection = { title: string; items: NavItem[] }
 
 const NAV_SECTIONS: NavSection[] = [
   {
-    title: 'Command Center',
+    title: 'Core',
     items: [
-      { href: '/center', label: 'Command Center', icon: '🖥️', shortLabel: 'Center' },
-      { href: '/cockpit', label: 'Dashboard', icon: '📊', shortLabel: 'Home' },
+      { href: '/center', label: 'Command Center', icon: <Hexagon className="w-5 h-5" /> },
+      { href: '/cockpit', label: 'Dashboard', icon: <Home className="w-5 h-5" /> },
     ],
   },
   {
-    title: 'Deal Flow',
+    title: 'Intelligence',
     items: [
-      { href: '/cockpit/properties', label: 'Properties', icon: '🏢', shortLabel: 'Props' },
-      { href: '/cockpit/pipeline', label: 'Pipeline', icon: '🎯', shortLabel: 'Pipeline' },
-      { href: '/cockpit/investors', label: 'Investors', icon: '💰', shortLabel: 'Invest' },
-      { href: '/cockpit/scores', label: 'Scores', icon: '⭐', shortLabel: 'Scores' },
-      { href: '/cockpit/brokers', label: 'Brokers', icon: '🤝', shortLabel: 'Brokers' },
+      { href: '/cockpit/pipeline', label: 'Pipeline', icon: <Activity className="w-5 h-5" /> },
+      { href: '/cockpit/investors', label: 'Investors', icon: <Users className="w-5 h-5" /> },
+      { href: '/cockpit/properties', label: 'Properties', icon: <Briefcase className="w-5 h-5" /> },
     ],
   },
   {
-    title: 'Stealth',
+    title: 'Communications',
     items: [
-      { href: '/cockpit/automations', label: 'Automations', icon: '⚡', shortLabel: 'Auto' },
-      { href: '/cockpit/loi', label: 'LOI Creator', icon: '📄', shortLabel: 'LOI' },
-    ],
-  },
-  {
-    title: 'Outreach',
-    items: [
-      { href: '/cockpit/campaigns', label: 'Campaigns', icon: '📡', shortLabel: 'Campaigns' },
-      { href: '/cockpit/comms', label: 'Unified Inbox', icon: '💬', shortLabel: 'Comms' },
+      { href: '/cockpit/comms', label: 'WhatsApp', icon: <MessageSquare className="w-5 h-5" /> },
+      { href: '/cockpit/email', label: 'Gmail', icon: <Mail className="w-5 h-5" /> },
+      { href: '/cockpit/calendar', label: 'Calendar', icon: <Calendar className="w-5 h-5" /> },
     ],
   },
   {
     title: 'Operations',
     items: [
-      { href: '/cockpit/tasks', label: 'Tasks', icon: '✅', shortLabel: 'Tasks' },
-      { href: '/cockpit/agents', label: 'AI Agents', icon: '🤖', shortLabel: 'Agents' },
-      { href: '/cockpit/analytics', label: 'Analytics', icon: '📈', shortLabel: 'Data' },
-    ],
-  },
-  {
-    title: 'System',
-    items: [
-      { href: '/cockpit/health', label: 'System Health', icon: '🏥', shortLabel: 'Health' },
-      { href: '/cockpit/settings', label: 'Settings', icon: '⚙️', shortLabel: 'Config' },
+      { href: '/cockpit/tasks', label: 'Tasks', icon: <CheckSquare className="w-5 h-5" /> },
+      { href: '/cockpit/notes', label: 'Notes', icon: <FileText className="w-5 h-5" /> },
+      { href: '/cockpit/health', label: 'System Health', icon: <Activity className="w-5 h-5" /> },
+      { href: '/cockpit/settings', label: 'Settings', icon: <Settings className="w-5 h-5" /> },
     ],
   },
 ]
 
-// Flatten for command palette search
 const NAV_ITEMS = NAV_SECTIONS.flatMap(s => s.items)
 
 export default function CockpitShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [commandOpen, setCommandOpen] = useState(false)
   const [commandQuery, setCommandQuery] = useState('')
 
-  const toggleSidebar = useCallback(() => setCollapsed(c => !c), [])
+  const [dateStr, setDateStr] = useState('')
+
+  useEffect(() => {
+    setDateStr(new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }))
+  }, [])
 
   // Keyboard shortcut for command palette
-  React.useEffect(() => {
+  useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault()
@@ -86,127 +81,83 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
     ? NAV_ITEMS.filter(i => i.label.toLowerCase().includes(commandQuery.toLowerCase()))
     : NAV_ITEMS
 
-  const sidebarWidth = collapsed ? 64 : 220
+  const sidebarWidth = collapsed ? 80 : 260;
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: '#08224d', color: '#F5EFD8', fontFamily: 'inherit' }}>
+    <div className="flex min-h-screen w-full bg-[#fdfdfd] text-[#0f172a] font-sans relative">
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
           onClick={() => setMobileOpen(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 40 }}
-          className="lg:hidden"
+          className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-sm lg:hidden"
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar Rail */}
       <aside
-        style={{
-          width: sidebarWidth,
-          minWidth: sidebarWidth,
-          background: 'linear-gradient(180deg, rgba(14,52,112,0.95) 0%, rgba(8,30,64,0.98) 100%)',
-          borderRight: '1px solid rgba(255,204,51,0.08)',
-          display: 'flex',
-          flexDirection: 'column',
-          transition: 'width 200ms ease, min-width 200ms ease',
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          bottom: 0,
-          zIndex: 50,
-          transform: mobileOpen ? 'translateX(0)' : undefined,
-          overflowY: 'auto',
-          overflowX: 'hidden',
-        }}
-        className={`sidebar-desktop ${mobileOpen ? 'sidebar-mobile-open' : ''}`}
+        className={`fixed inset-y-0 left-0 z-50 flex flex-col glass-panel transition-all duration-300 ease-in-out lg:translate-x-0 ${
+          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+        style={{ width: sidebarWidth, borderRight: '1px solid rgba(0,0,0,0.05)' }}
       >
-        {/* Logo */}
-        <div style={{
-          padding: collapsed ? '1rem 0.5rem' : '1.25rem 1rem',
-          borderBottom: '1px solid rgba(255,204,51,0.06)',
-          display: 'flex', alignItems: 'center', gap: '0.6rem',
-          justifyContent: collapsed ? 'center' : 'flex-start',
-        }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: 'linear-gradient(135deg, #FFCC33, #F0B400)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '0.85rem', fontWeight: 700, color: '#0E3470',
-            flexShrink: 0,
-          }}>
-            RC
+        {/* Logo Area */}
+        <div className={`flex items-center h-24 ${collapsed ? 'justify-center' : 'px-6'} shrink-0 pt-4`}>
+          <div className="shrink-0 w-12 h-12 flex items-center justify-center">
+            <ThreeDLogo className="scale-50 transform origin-center" />
           </div>
           {!collapsed && (
-            <div style={{ overflow: 'hidden' }}>
-              <div style={{ color: '#FFCC33', fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>Command Center</div>
-              <div style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.6rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>RePrime Group</div>
+            <div className="ml-3 overflow-hidden">
+              <div className="text-base font-bold tracking-tight text-slate-900 whitespace-nowrap">RePrime</div>
+              <div className="text-[0.65rem] font-bold tracking-widest text-slate-400 uppercase">Command</div>
             </div>
           )}
         </div>
 
+        {/* Collapse Toggle */}
+        <button 
+          onClick={() => setCollapsed(!collapsed)}
+          className="absolute -right-3 top-24 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-500 shadow-sm z-50 hidden lg:flex cursor-pointer"
+        >
+          {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+        </button>
+
         {/* Navigation */}
-        <nav style={{ flex: 1, padding: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.1rem', overflowY: 'auto' }}>
-          {NAV_SECTIONS.map(section => (
-            <div key={section.title}>
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-4 px-3 flex flex-col gap-6 custom-scrollbar">
+          {NAV_SECTIONS.map((section, idx) => (
+            <div key={idx} className="flex flex-col gap-1">
               {!collapsed && (
-                <div style={{
-                  padding: '0.6rem 0.75rem 0.2rem',
-                  color: 'rgba(255,204,51,0.25)',
-                  fontSize: '0.55rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                }}>
+                <div className="px-3 pb-2 text-[0.65rem] font-bold tracking-widest text-slate-400 uppercase">
                   {section.title}
                 </div>
               )}
-              {collapsed && section.title !== 'Command Center' && (
-                <div style={{ height: 1, background: 'rgba(255,204,51,0.06)', margin: '0.3rem 0.5rem' }} />
+              {collapsed && idx !== 0 && (
+                <div className="h-px bg-slate-100 mx-3 my-2" />
               )}
-              {section.items.map(item => {
-                const isCenter = item.href === '/center'
-                const isActive = item.href === '/cockpit'
-                  ? pathname === '/cockpit'
-                  : item.href === '/center'
-                    ? pathname === '/center'
-                    : pathname.startsWith(item.href)
+              
+              {section.items.map((item) => {
+                const isActive = item.href === '/cockpit' ? pathname === '/cockpit' : pathname.startsWith(item.href)
+                
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={() => setMobileOpen(false)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: '0.65rem',
-                      padding: collapsed ? '0.5rem' : '0.4rem 0.75rem',
-                      borderRadius: 8, textDecoration: 'none', transition: 'all 150ms',
-                      background: isCenter
-                        ? (isActive ? 'rgba(255,204,51,0.2)' : 'rgba(255,204,51,0.08)')
-                        : (isActive ? 'rgba(255,204,51,0.12)' : 'transparent'),
-                      color: isActive ? '#FFCC33' : 'rgba(255,204,51,0.55)',
-                      fontSize: isCenter ? '0.82rem' : '0.78rem',
-                      fontWeight: isCenter ? 700 : (isActive ? 600 : 500),
-                      justifyContent: collapsed ? 'center' : 'flex-start',
-                      position: 'relative',
-                      border: isCenter ? '1px solid rgba(255,204,51,0.15)' : 'none',
-                      marginBottom: isCenter ? '0.15rem' : 0,
-                    }}
+                    className={`relative flex items-center h-10 rounded-xl transition-all duration-200 group ${
+                      collapsed ? 'justify-center w-10 mx-auto' : 'px-3'
+                    } ${
+                      isActive 
+                        ? 'bg-blue-50 text-blue-600 font-semibold' 
+                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'
+                    }`}
                     title={collapsed ? item.label : undefined}
                   >
                     {isActive && (
-                      <div style={{
-                        position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 3,
-                        background: '#FFCC33', borderRadius: '0 3px 3px 0',
-                      }} />
+                      <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-blue-500 rounded-r-md" />
                     )}
-                    <span style={{ fontSize: '0.9rem', flexShrink: 0 }}>{item.icon}</span>
-                    {!collapsed && <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>}
-                    {isCenter && !collapsed && (
-                      <span style={{
-                        marginLeft: 'auto', fontSize: '0.5rem', padding: '0.1rem 0.3rem',
-                        background: 'rgba(255,204,51,0.15)', color: '#FFCC33',
-                        borderRadius: 4, fontWeight: 700, letterSpacing: '0.05em',
-                      }}>LIVE</span>
-                    )}
+                    <div className={`${isActive ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'} transition-opacity`}>
+                      {item.icon}
+                    </div>
+                    {!collapsed && <span className="ml-3 whitespace-nowrap text-sm">{item.label}</span>}
                   </Link>
                 )
               })}
@@ -214,110 +165,77 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
           ))}
         </nav>
 
-        {/* Collapse toggle */}
-        <div style={{
-          padding: '0.75rem', borderTop: '1px solid rgba(255,204,51,0.06)',
-          display: 'flex', justifyContent: 'center',
-        }}>
-          <button
-            onClick={toggleSidebar}
-            style={{
-              background: 'rgba(255,204,51,0.08)', border: 'none', color: 'rgba(255,204,51,0.5)',
-              width: 32, height: 32, borderRadius: 6, cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '0.8rem', transition: 'transform 200ms',
-              transform: collapsed ? 'rotate(180deg)' : 'none',
-            }}
-            aria-label="Toggle sidebar"
-          >
-            ◀
-          </button>
+        {/* User Profile Footer */}
+        <div className="p-4 border-t border-slate-100 shrink-0">
+          <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
+            <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+              <UserCircle className="w-5 h-5" />
+            </div>
+            {!collapsed && (
+              <div className="overflow-hidden">
+                <div className="text-sm font-semibold text-slate-900 truncate">Gideon Prime</div>
+                <div className="text-xs font-medium text-slate-400 truncate">Administrator</div>
+              </div>
+            )}
+          </div>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <div style={{
-        flex: 1,
-        marginLeft: sidebarWidth,
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: '100vh',
-        transition: 'margin-left 200ms ease',
-      }}
-      className="main-content"
+      {/* Main Content Area */}
+      <div 
+        className="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out w-full"
+        style={{ paddingLeft: '0', '@media (min-width: 1024px)': { paddingLeft: sidebarWidth } } as any}
       >
-        {/* Top Bar */}
-        <header style={{
-          height: 56,
-          borderBottom: '1px solid rgba(255,204,51,0.06)',
-          display: 'flex', alignItems: 'center', padding: '0 1.25rem',
-          gap: '1rem', background: 'rgba(14,52,112,0.3)',
-          position: 'sticky', top: 0, zIndex: 30,
-          backdropFilter: 'blur(12px)',
-        }}>
-          {/* Mobile hamburger */}
-          <button
-            onClick={() => setMobileOpen(true)}
-            className="mobile-menu-btn"
-            style={{
-              display: 'none', background: 'none', border: 'none',
-              color: '#FFCC33', fontSize: '1.2rem', cursor: 'pointer', padding: '0.25rem',
-            }}
-            aria-label="Open menu"
-          >
-            ☰
-          </button>
-
-          {/* Breadcrumb */}
-          <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ color: 'rgba(255,204,51,0.4)', fontSize: '0.75rem', letterSpacing: '0.04em' }}>
-              {NAV_ITEMS.find(i => i.href === '/cockpit' ? pathname === '/cockpit' : pathname.startsWith(i.href))?.label || 'Dashboard'}
-            </span>
+        {/* Top Executive Bar */}
+        <header className="sticky top-0 z-30 flex items-center justify-between h-20 px-4 lg:px-8 glass-panel border-b border-slate-100/50" style={{ marginLeft: sidebarWidth }}>
+          
+          {/* Left section: Mobile menu & Greeting */}
+          <div className="flex items-center gap-4">
+            <button 
+              className="lg:hidden p-2 text-slate-500 hover:text-slate-900"
+              onClick={() => setMobileOpen(true)}
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            <div className="hidden sm:block">
+              <h1 className="text-lg font-semibold text-slate-900">Good Morning, Gideon.</h1>
+              <p className="text-xs font-medium text-slate-500">{dateStr} • APEX Priority: Normal</p>
+            </div>
           </div>
 
-          {/* Command Palette Trigger */}
-          <button
-            onClick={() => { setCommandOpen(true); setCommandQuery('') }}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '0.5rem',
-              padding: '0.4rem 0.85rem', background: 'rgba(0,0,0,0.2)',
-              border: '1px solid rgba(255,204,51,0.1)', borderRadius: 8,
-              color: 'rgba(255,204,51,0.4)', fontSize: '0.75rem', cursor: 'pointer',
-              fontFamily: 'inherit',
-            }}
-          >
-            <span>🔍</span>
-            <span>Search...</span>
-            <kbd style={{
-              padding: '0.1rem 0.35rem', background: 'rgba(255,204,51,0.08)',
-              borderRadius: 4, fontSize: '0.6rem', color: 'rgba(255,204,51,0.5)',
-              border: '1px solid rgba(255,204,51,0.1)', fontFamily: 'inherit',
-            }}>⌘K</kbd>
-          </button>
+          {/* Right section: Search, Actions, Nora */}
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => { setCommandOpen(true); setCommandQuery('') }}
+              className="hidden md:flex items-center gap-3 h-10 px-4 bg-slate-100 hover:bg-slate-200/70 rounded-full text-slate-500 text-sm font-medium transition-colors border border-transparent hover:border-slate-300/50"
+            >
+              <Search className="w-4 h-4" />
+              <span>Command Palette...</span>
+              <kbd className="hidden lg:inline-flex items-center h-5 px-1.5 bg-white rounded border border-slate-200 text-[10px] font-semibold text-slate-400">⌘K</kbd>
+            </button>
 
-          {/* Open Center in new tab */}
-          <a
-            href="/center"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              color: '#FFCC33', fontSize: '0.7rem', textDecoration: 'none',
-              padding: '0.35rem 0.6rem', borderRadius: 6,
-              background: 'rgba(255,204,51,0.1)',
-              border: '1px solid rgba(255,204,51,0.2)',
-              fontWeight: 600,
-            }}
-          >
-            🖥️ Command Center ↗
-          </a>
+            <button className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200/70 flex items-center justify-center text-slate-500 transition-colors relative">
+              <Bell className="w-4 h-4" />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full border-2 border-white" />
+            </button>
+
+            <button className="h-10 px-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm">
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">New Action</span>
+            </button>
+
+            <button className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 border border-blue-100 flex items-center justify-center text-blue-600 transition-all shadow-sm group">
+              <Mic className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            </button>
+          </div>
         </header>
 
-        {/* Page Content */}
-        <main style={{
-          flex: 1, padding: '1.5rem', overflowY: 'auto',
-          maxWidth: 1440, width: '100%', margin: '0 auto',
-        }}>
-          {children}
+        {/* Page Content Container */}
+        {/* We use flex-1 and no overflow restrictions to let the body scroll naturally, fixing scroll traps */}
+        <main className="flex-1 w-full max-w-[1600px] mx-auto p-4 lg:p-8" style={{ marginLeft: sidebarWidth }}>
+          <div>
+            {children}
+          </div>
         </main>
       </div>
 
@@ -325,74 +243,66 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
       {commandOpen && (
         <div
           onClick={() => setCommandOpen(false)}
-          style={{
-            position: 'fixed', inset: 0, zIndex: 9999,
-            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
-            display: 'flex', alignItems: 'flex-start', justifyContent: 'center',
-            paddingTop: '15vh',
-          }}
+          className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] bg-slate-900/20 backdrop-blur-md"
         >
           <div
             onClick={e => e.stopPropagation()}
-            style={{
-              width: '100%', maxWidth: 520,
-              background: '#0A1F44', border: '1px solid rgba(255,204,51,0.15)',
-              borderRadius: 14, overflow: 'hidden',
-              boxShadow: '0 24px 64px rgba(0,0,0,0.5)',
-            }}
+            className="w-[90%] max-w-2xl bg-white/90 backdrop-blur-xl border border-white rounded-3xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(15,23,42,0.15)] animate-in fade-in zoom-in-95 duration-200"
           >
-            <div style={{ padding: '0.85rem 1rem', borderBottom: '1px solid rgba(255,204,51,0.06)' }}>
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
+              <Search className="w-5 h-5 text-blue-500" />
               <input
                 autoFocus
                 value={commandQuery}
                 onChange={e => setCommandQuery(e.target.value)}
-                placeholder="Search modules, actions..."
-                style={{
-                  width: '100%', background: 'transparent', border: 'none',
-                  color: '#fff', fontSize: '1rem', outline: 'none', fontFamily: 'inherit',
-                }}
+                placeholder="Where to, Gideon?"
+                className="flex-1 bg-transparent border-none text-lg font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none"
               />
             </div>
-            <div style={{ maxHeight: 320, overflowY: 'auto' }}>
+            
+            <div className="max-h-[60vh] overflow-y-auto p-2 custom-scrollbar">
               {filteredNav.map(item => (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setCommandOpen(false)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: '0.75rem',
-                    padding: '0.7rem 1rem', textDecoration: 'none',
-                    color: 'rgba(255,204,51,0.7)', fontSize: '0.85rem',
-                    borderBottom: '1px solid rgba(255,204,51,0.03)',
-                    transition: 'background 100ms',
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,204,51,0.06)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  className="flex items-center gap-4 p-4 rounded-2xl hover:bg-blue-50 text-slate-600 hover:text-blue-600 transition-colors group"
                 >
-                  <span>{item.icon}</span>
-                  <span>{item.label}</span>
+                  <div className="p-2 rounded-xl bg-slate-50 group-hover:bg-white shadow-sm transition-colors">
+                    {item.icon}
+                  </div>
+                  <span className="font-semibold">{item.label}</span>
+                  <span className="ml-auto text-[10px] font-bold tracking-widest text-slate-300 group-hover:text-blue-300 uppercase">Return to open</span>
                 </Link>
               ))}
               {filteredNav.length === 0 && (
-                <div style={{ padding: '1.5rem', textAlign: 'center', color: 'rgba(255,204,51,0.3)', fontSize: '0.8rem' }}>
-                  No results found
+                <div className="py-12 text-center text-slate-400">
+                  <Search className="w-8 h-8 mx-auto mb-3 opacity-20" />
+                  <p className="font-medium text-sm">No matching commands found.</p>
                 </div>
               )}
+            </div>
+            
+            <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+              <div className="flex gap-4">
+                <span>ESC to close</span>
+                <span>Enter to select</span>
+              </div>
+              <span className="text-blue-500">RePrime OS</span>
             </div>
           </div>
         </div>
       )}
 
-      {/* Responsive Styles */}
+      {/* Responsive Styles Injection */}
       <style>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.1); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, 0.2); }
+        
         @media (max-width: 1024px) {
-          .sidebar-desktop { transform: translateX(-100%); }
-          .sidebar-mobile-open { transform: translateX(0) !important; }
-          .main-content { margin-left: 0 !important; }
-          .mobile-menu-btn { display: flex !important; }
-        }
-        @media (max-width: 640px) {
-          .main-content > main { padding: 0.75rem !important; }
+          header, main { margin-left: 0 !important; }
         }
       `}</style>
     </div>

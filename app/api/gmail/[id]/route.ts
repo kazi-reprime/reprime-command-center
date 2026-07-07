@@ -58,15 +58,10 @@ export async function GET(
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Internal Server Error';
-    console.error(`Failed to fetch Gmail message: ${msg}`);
-    // Simulated fallback
-    return NextResponse.json({
-      id: 'simulated_id',
-      threadId: 'simulated_thread_id',
-      from: 'Simulated Sender',
-      subject: 'Simulated Subject',
-      date: new Date().toISOString(),
-      body: 'This is a simulated email body because Google API failed or is not configured.\n\nError: ' + msg,
-    });
+    console.error(`[gmail/${(await params).id}] fetch failed:`, msg);
+    return NextResponse.json(
+      { error: 'gmail_fetch_failed', message: msg },
+      { status: 502 }
+    );
   }
 }

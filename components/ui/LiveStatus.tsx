@@ -8,18 +8,9 @@ import React from 'react';
 export function DataSourceBanner({ source, warning }: { source: string; warning?: string }) {
   if (source === 'database') return null;
   return (
-    <div style={{
-      padding: '0.6rem 1rem',
-      background: 'rgba(245,158,11,0.1)',
-      border: '1px solid rgba(245,158,11,0.2)',
-      borderRadius: 8,
-      marginBottom: '1rem',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.5rem',
-    }}>
-      <span style={{ fontSize: '0.9rem' }}>⚠️</span>
-      <span style={{ color: '#F59E0B', fontSize: '0.75rem', fontWeight: 500 }}>
+    <div className="flex items-center gap-3 p-4 mb-4 rounded-xl bg-amber-50 border border-amber-100 text-amber-600">
+      <span className="text-xl">⚠️</span>
+      <span className="text-sm font-semibold">
         {warning || 'Using demo data. Connect a database to enable live persistence.'}
       </span>
     </div>
@@ -31,17 +22,9 @@ export function DataSourceBanner({ source, warning }: { source: string; warning?
  */
 export function ConfigWarning({ message }: { message: string }) {
   return (
-    <div style={{
-      padding: '0.5rem 0.75rem',
-      background: 'rgba(107,114,128,0.1)',
-      border: '1px solid rgba(107,114,128,0.2)',
-      borderRadius: 6,
-      display: 'flex',
-      alignItems: 'center',
-      gap: '0.4rem',
-    }}>
-      <span style={{ fontSize: '0.8rem' }}>🔧</span>
-      <span style={{ color: '#9CA3AF', fontSize: '0.7rem' }}>{message}</span>
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200">
+      <span className="text-sm">🔧</span>
+      <span className="text-xs font-semibold text-slate-500">{message}</span>
     </div>
   );
 }
@@ -51,22 +34,9 @@ export function ConfigWarning({ message }: { message: string }) {
  */
 export function LoadingState({ message = 'Loading...' }: { message?: string }) {
   return (
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '3rem',
-      gap: '0.75rem',
-    }}>
-      <div style={{
-        width: 20, height: 20,
-        border: '2px solid rgba(255,204,51,0.2)',
-        borderTopColor: '#FFCC33',
-        borderRadius: '50%',
-        animation: 'spin 0.8s linear infinite',
-      }} />
-      <span style={{ color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>{message}</span>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    <div className="flex items-center justify-center p-12 gap-3">
+      <div className="w-5 h-5 border-2 border-blue-100 border-t-blue-500 rounded-full animate-spin" />
+      <span className="text-sm font-semibold text-slate-400">{message}</span>
     </div>
   );
 }
@@ -76,29 +46,13 @@ export function LoadingState({ message = 'Loading...' }: { message?: string }) {
  */
 export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
   return (
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '3rem',
-      gap: '0.75rem',
-    }}>
-      <span style={{ fontSize: '2rem' }}>⚠️</span>
-      <span style={{ color: '#EF4444', fontSize: '0.85rem', fontWeight: 500 }}>{message}</span>
+    <div className="flex flex-col items-center justify-center p-12 gap-3">
+      <span className="text-3xl">⚠️</span>
+      <span className="text-sm font-semibold text-red-500">{message}</span>
       {onRetry && (
         <button
           onClick={onRetry}
-          style={{
-            background: 'rgba(239,68,68,0.15)',
-            border: '1px solid rgba(239,68,68,0.3)',
-            borderRadius: 6,
-            color: '#EF4444',
-            padding: '0.4rem 0.8rem',
-            fontSize: '0.75rem',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-          }}
+          className="px-4 py-2 mt-2 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors"
         >
           Retry
         </button>

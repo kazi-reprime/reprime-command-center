@@ -7,17 +7,8 @@ import { formatPhoneDisplay } from '@/lib/timelines/parse'
 import MessageView from '@/components/chat/MessageView'
 import ReplyBox from '@/components/chat/ReplyBox'
 import InvestorProfile, { profileFromThread } from '@/components/panels/InvestorProfile'
+import { Shield } from 'lucide-react'
 import type { DashboardMessage, DashboardThread } from '@/lib/timelines/types'
-
-// ── Theme ────────────────────────────────────────────────────────────────────
-const NAVY   = '#0E3470'
-const SURFACE = 'rgba(14, 52, 112, 0.85)'
-const GOLD   = '#FFCC33'
-const GOLD_LITE = '#FFCC33'
-const BORDER = 'rgba(255, 204, 51,0.25)'
-const TEXT   = '#F5EFD8'
-const MUTED  = '#8C8771'
-const SELECTED_BG = 'rgba(255, 204, 51,0.12)'
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function relativeTime(iso: string | null): string {
@@ -42,12 +33,6 @@ function initials(name: string | null, phone: string): string {
   return phone.replace(/\D/g, '').slice(-2) || '#'
 }
 
-function truncate(s: string | null, n: number): string {
-  if (!s) return ''
-  return s.length > n ? s.slice(0, n - 1) + '…' : s
-}
-
-// ── Component ────────────────────────────────────────────────────────────────
 type TierFilter = 'all' | 'A' | 'B' | 'C' | 'D'
 type RoleFilter = 'both' | 'principal' | 'connector'
 
@@ -117,8 +102,7 @@ export default function InvestorChatPanel() {
     if (fresh && fresh !== selected) setSelected(fresh)
   }, [threadsData, selected])
 
-  // Allow other parts of the dashboard (Search, Briefing) to open an investor
-  // thread by dispatching a window event with { detail: { threadId } }.
+  // Allow other parts of the dashboard to open an investor thread
   useEffect(() => {
     const handler = (e: Event) => {
       const ce = e as CustomEvent<{ threadId?: string }>
@@ -158,8 +142,6 @@ export default function InvestorChatPanel() {
     [queryClient, selected]
   )
 
-  // Per-tier counts (computed across all data, not the filtered subset, so
-  // chip labels stay stable as the user toggles filters)
   const counts = useMemo(() => {
     const all = threadsData || []
     const matchRole = (t: DashboardThread) =>
@@ -174,341 +156,112 @@ export default function InvestorChatPanel() {
     }
   }, [threadsData, roleFilter])
 
-  // Filtered thread list (search + tier + role)
   const threads = useMemo<DashboardThread[]>(() => {
     let list = threadsData || []
-    if (tierFilter !== 'all') {
-      list = list.filter((t) => t.investor_tier === tierFilter)
-    }
-    if (roleFilter !== 'both') {
-      list = list.filter((t) => t.investor_role === roleFilter)
-    }
+    if (tierFilter !== 'all') list = list.filter((t) => t.investor_tier === tierFilter)
+    if (roleFilter !== 'both') list = list.filter((t) => t.investor_role === roleFilter)
     if (search.trim()) {
       const q = search.toLowerCase()
-      list = list.filter(
-        (t) =>
-          (t.contact_name || '').toLowerCase().includes(q) ||
-          (t.phone || '').toLowerCase().includes(q)
-      )
+      list = list.filter(t => (t.contact_name || '').toLowerCase().includes(q) || (t.phone || '').toLowerCase().includes(q))
     }
     return list
   }, [threadsData, search, tierFilter, roleFilter])
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        background: NAVY,
-        color: TEXT,
-        minWidth: 0,
-        minHeight: 0,
-      }}
-    >
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#f8fafc', color: '#1e293b', minWidth: 0, minHeight: 0, fontFamily: 'inherit' }}>
       {/* ── Header ── */}
-      <div
-        style={{
-          padding: '0.75rem 1rem',
-          borderBottom: `2px solid ${GOLD}`,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          flexShrink: 0,
-        }}
-      >
-        <h1 style={{ color: GOLD, fontWeight: 700, fontSize: '1.1rem', margin: 0, letterSpacing: '0.03em' }}>
-          ★ Investors
-        </h1>
-        <span
-          style={{
-            background: GOLD,
-            color: NAVY,
-            borderRadius: 999,
-            padding: '1px 8px',
-            fontSize: 11,
-            fontWeight: 700,
-          }}
-        >
-          {threads.length}
-        </span>
-        <span style={{ fontSize: 11, color: MUTED, marginLeft: 4 }}>718 + 305 combined</span>
+      <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', gap: '1.5rem', flexShrink: 0, background: '#fff' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div style={{ width: 40, height: 40, borderRadius: 14, background: 'rgba(59, 130, 246, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3b82f6' }}>
+            <Shield size={20} />
+          </div>
+          <div>
+            <h1 style={{ color: '#0f172a', fontWeight: 900, fontSize: '1.25rem', margin: 0, letterSpacing: '-0.03em' }}>Investor Syndicate</h1>
+            <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.65rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Secure Channel Protocol</p>
+          </div>
+        </div>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px rgba(16, 185, 129, 0.4)' }} />
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Realtime Active</span>
+          </div>
+        </div>
       </div>
 
       {/* ── Body: list + conversation ── */}
       <div style={{ display: 'flex', flex: 1, minHeight: 0 }}>
         {/* Thread list */}
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            width: 280,
-            flexShrink: 0,
-            borderRight: `1px solid ${BORDER}`,
-            minHeight: 0,
-          }}
-        >
-          {/* Tier filter chips */}
-          <div style={{ padding: '0.6rem 0.75rem 0.4rem', borderBottom: `1px solid ${BORDER}`, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', width: 380, flexShrink: 0, borderRight: '1px solid rgba(0,0,0,0.05)', background: '#fff', minHeight: 0 }}>
+          {/* Filters */}
+          <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {(['all', 'A', 'B', 'C', 'D'] as TierFilter[]).map((tier) => {
                 const active = tierFilter === tier
                 const count = tier === 'all' ? counts.total : counts[tier]
-                const label = tier === 'all' ? 'All' : tier
                 return (
-                  <button
-                    key={tier}
-                    onClick={() => setTierFilter(tier)}
-                    style={{
-                      background: active ? GOLD : 'transparent',
-                      color: active ? NAVY : GOLD,
-                      border: `1px solid ${active ? GOLD : BORDER}`,
-                      borderRadius: 14,
-                      padding: '3px 10px',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      letterSpacing: '0.04em',
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 6,
-                    }}
-                    title={`${label} tier — ${count} investor${count === 1 ? '' : 's'}${roleFilter !== 'both' ? ` (${roleFilter}s only)` : ''}`}
-                  >
-                    <span>{label}</span>
-                    <span style={{
-                      background: active ? 'rgba(14,52,112,0.15)' : 'rgba(255,204,51,0.18)',
-                      color: active ? NAVY : GOLD,
-                      borderRadius: 8,
-                      padding: '0 6px',
-                      fontSize: 10,
-                      fontWeight: 800,
-                      minWidth: 16,
-                      textAlign: 'center',
-                    }}>{count}</span>
+                  <button key={tier} onClick={() => setTierFilter(tier)} style={{
+                    background: active ? '#0f172a' : '#f1f5f9',
+                    color: active ? '#fff' : '#64748b',
+                    border: 'none',
+                    borderRadius: 12, padding: '6px 14px', fontSize: '0.75rem', fontWeight: 800, cursor: 'pointer', transition: 'all 200ms',
+                    display: 'flex', alignItems: 'center', gap: 8
+                  }}>
+                    <span>{tier === 'all' ? 'All' : `Tier ${tier}`}</span>
+                    <span style={{ opacity: 0.5 }}>{count}</span>
                   </button>
                 )
               })}
             </div>
-            {/* Role toggle */}
-            <div style={{ display: 'flex', gap: 4, background: SURFACE, borderRadius: 999, padding: 2, alignSelf: 'flex-start' }}>
-              {(['both', 'principal', 'connector'] as RoleFilter[]).map((role) => {
-                const active = roleFilter === role
-                return (
-                  <button
-                    key={role}
-                    onClick={() => setRoleFilter(role)}
-                    style={{
-                      background: active ? GOLD : 'transparent',
-                      color: active ? NAVY : MUTED,
-                      border: 'none',
-                      borderRadius: 999,
-                      padding: '3px 10px',
-                      fontSize: 10,
-                      fontWeight: 700,
-                      letterSpacing: '0.06em',
-                      cursor: 'pointer',
-                      fontFamily: 'inherit',
-                      textTransform: 'uppercase',
-                    }}
-                  >
-                    {role === 'both' ? 'Both' : role === 'principal' ? 'Principal' : 'Connector'}
-                  </button>
-                )
-              })}
+            
+            <div style={{ position: 'relative' }}>
+              <input type="text" placeholder="Search syndicate..." value={search} onChange={(e) => setSearch(e.target.value)} style={{
+                width: '100%', background: '#f8fafc', color: '#0f172a', border: '1px solid rgba(0,0,0,0.03)', borderRadius: 16, padding: '0.75rem 1rem 0.75rem 2.5rem', fontSize: '0.9rem', fontWeight: 600, outline: 'none', transition: 'all 200ms'
+              }} />
+              <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.4 }}>🔍</span>
             </div>
-          </div>
-
-          {/* Search */}
-          <div style={{ padding: '0.6rem 0.75rem', borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
-            <input
-              type="text"
-              placeholder="Search investor…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: '100%',
-                background: SURFACE,
-                color: TEXT,
-                border: `1px solid ${BORDER}`,
-                borderRadius: 6,
-                padding: '0.4rem 0.6rem',
-                fontFamily: 'inherit',
-                fontSize: 13,
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
-            />
           </div>
 
           {/* Thread rows */}
-          <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
             {isLoading && (
-              <div style={{ padding: '1rem', color: MUTED, fontSize: 13 }}>Loading investors…</div>
-            )}
-            {error && (
-              <div style={{ padding: '1rem', color: '#FF7474', fontSize: 13 }}>
-                Error.{' '}
-                <button
-                  onClick={() => refetch()}
-                  style={{ background: 'none', border: 'none', color: GOLD, cursor: 'pointer', textDecoration: 'underline', fontFamily: 'inherit' }}
-                >
-                  Retry
-                </button>
-              </div>
-            )}
-            {!isLoading && !error && threads.length === 0 && (
-              <div style={{ padding: '1rem', color: MUTED, fontSize: 13 }}>
-                No investor-tagged contacts yet.
-                <br />
-                <span style={{ fontSize: 11 }}>Tag a contact with &ldquo;investor&rdquo; from the main panels to add them here.</span>
+              <div style={{ padding: '3rem', textAlign: 'center' }}>
+                <div style={{ width: 24, height: 24, border: '3px solid #f1f5f9', borderTopColor: '#3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto' }} />
+                <p style={{ marginTop: '1rem', color: '#94a3b8', fontSize: '0.8rem', fontWeight: 700 }}>Synchronizing Hub...</p>
               </div>
             )}
             {threads.map((t) => {
               const isSelected = t.id === selected?.id
               const hasUnread = t.unread_count > 0
-              const isPriority = !!t.is_priority
-              const formattedPhone = formatPhoneDisplay(t.phone)
-              const nameIsDigits = !t.contact_name || /^\+?\d[\d\s\-()]*$/.test(t.contact_name.trim())
-              const displayName = nameIsDigits ? (formattedPhone || t.phone) : t.contact_name!
-              const leftBorder = isSelected
-                ? `3px solid ${GOLD}`
-                : hasUnread
-                ? '3px solid #ef4444'
-                : isPriority
-                ? `3px solid ${GOLD}`
-                : '3px solid transparent'
-              const rowBg = isSelected
-                ? SELECTED_BG
-                : hasUnread
-                ? 'rgba(239,68,68,0.07)'
-                : isPriority
-                ? 'rgba(255, 204, 51,0.06)'
-                : 'transparent'
               return (
-                <button
-                  key={t.id}
-                  onClick={() => setSelected(t)}
-                  style={{
-                    width: '100%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 10,
-                    padding: '0.6rem 0.75rem',
-                    border: 'none',
-                    background: rowBg,
-                    color: TEXT,
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    borderBottom: `1px solid ${BORDER}`,
-                    borderLeft: leftBorder,
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  {/* Avatar — channel-colored circle with line label so 305 vs 718 are distinct */}
-                  <div
-                    style={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: '50%',
-                      background: isSelected
-                        ? GOLD
-                        : hasUnread
-                        ? '#ef4444'
-                        : t.channel_type === 'whatsapp' && t.panel === '305'
-                        ? '#F0B400' // WhatsApp 305 — amber (RePrime, spam-prone)
-                        : t.channel_type === 'whatsapp'
-                        ? '#25D366' // WhatsApp 718 — green (personal)
-                        : t.channel_type === 'imessage'
-                        ? '#0A84FF'
-                        : t.channel_type === 'sms'
-                        ? '#FF9500'
-                        : 'rgba(255, 204, 51, 0.2)',
-                      color: isSelected ? NAVY : '#fff',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: t.channel_type === 'sms' ? 11 : 12,
-                      fontWeight: 800,
-                      flexShrink: 0,
-                      letterSpacing: '0.04em',
-                      border: `1px solid ${hasUnread ? 'rgba(239,68,68,0.5)' : BORDER}`,
-                      boxShadow: '0 1px 2px rgba(0,0,0,0.25)',
-                    }}
-                    title={
-                      t.channel_type === 'whatsapp' && t.panel === '305'
-                        ? 'WhatsApp 305 (RePrime)'
-                        : t.channel_type === 'whatsapp'
-                        ? 'WhatsApp 718 (personal)'
-                        : t.channel_type === 'imessage'
-                        ? 'iMessage (via cloud Mac)'
-                        : t.channel_type === 'sms'
-                        ? 'SMS / text message'
-                        : t.channel_type
-                    }
-                  >
-                    {t.channel_type === 'whatsapp' && t.panel === '305'
-                      ? '305'
-                      : t.channel_type === 'whatsapp'
-                      ? '718'
-                      : t.channel_type === 'imessage'
-                      ? 'iM'
-                      : t.channel_type === 'sms'
-                      ? 'SMS'
-                      : initials(t.contact_name, t.phone)}
+                <button key={t.id} onClick={() => setSelected(t)} style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: '1rem', padding: '1.25rem', border: 'none',
+                  background: isSelected ? 'rgba(59, 130, 246, 0.05)' : 'transparent', borderRadius: 24, cursor: 'pointer', textAlign: 'left',
+                  marginBottom: '0.5rem', transition: 'all 200ms',
+                  position: 'relative'
+                }}>
+                  {isSelected && <div style={{ position: 'absolute', left: 0, top: '20%', bottom: '20%', width: 4, background: '#3b82f6', borderRadius: '0 4px 4px 0' }} />}
+                  <div style={{
+                    width: 52, height: 52, borderRadius: 18,
+                    background: t.panel === '305' ? '#f59e0b' : 
+                                t.channel_type === 'whatsapp' ? '#10b981' :
+                                t.channel_type === 'imessage' ? '#3b82f6' : '#8b5cf6',
+                    color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', fontWeight: 900, flexShrink: 0,
+                    boxShadow: '0 8px 16px rgba(0,0,0,0.08)'
+                  }}>
+                    {t.panel === '305' ? '305' : t.panel === '718' ? '718' : initials(t.contact_name, t.phone)}
                   </div>
-
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 4 }}>
-                      <span style={{ fontWeight: hasUnread ? 800 : 600, fontSize: 13, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: isSelected ? GOLD_LITE : hasUnread ? '#fff' : TEXT }}>
-                        {displayName}
-                        {isPriority && (
-                          <span style={{ marginLeft: 5, fontSize: 11, color: hasUnread ? '#fca5a5' : GOLD }} title="AI-flagged: important">⚡</span>
-                        )}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 4 }}>
+                      <span style={{ fontWeight: 900, fontSize: '0.95rem', color: isSelected ? '#3b82f6' : '#0f172a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', letterSpacing: '-0.01em' }}>
+                        {t.contact_name || formatPhoneDisplay(t.phone)}
                       </span>
-                      <span style={{ fontSize: 10, color: hasUnread ? '#fca5a5' : MUTED, flexShrink: 0, fontWeight: hasUnread ? 600 : 400 }}>
-                        {relativeTime(t.last_message_at)}
-                      </span>
+                      <span style={{ fontSize: '0.7rem', color: '#94a3b8', fontWeight: 800 }}>{relativeTime(t.last_message_at)}</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 4, marginTop: 2 }}>
-                      <span style={{ fontSize: 11, color: hasUnread ? 'rgba(255,255,255,0.7)' : MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: hasUnread ? 'italic' : 'normal' }}>
-                        {truncate(t.last_message_preview, 36)}
-                      </span>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
-                        {/* Panel badge */}
-                        <span
-                          style={{
-                            fontSize: 9,
-                            fontWeight: 700,
-                            padding: '1px 5px',
-                            borderRadius: 4,
-                            background: t.panel === '718' ? 'rgba(99,102,241,0.25)' : 'rgba(255, 204, 51,0.2)',
-                            color: t.panel === '718' ? '#a5b4fc' : GOLD_LITE,
-                            border: `1px solid ${t.panel === '718' ? 'rgba(99,102,241,0.35)' : BORDER}`,
-                            letterSpacing: '0.03em',
-                          }}
-                        >
-                          {t.panel === '718' ? '718' : '305'}
-                        </span>
-                        {hasUnread && (
-                          <span
-                            style={{
-                              background: '#ef4444',
-                              color: '#fff',
-                              borderRadius: 999,
-                              fontSize: 10,
-                              fontWeight: 800,
-                              padding: '2px 6px',
-                              boxShadow: '0 0 0 2px rgba(239,68,68,0.3)',
-                            }}
-                          >
-                            {t.unread_count}
-                          </span>
-                        )}
-                      </div>
+                    <div style={{ fontSize: '0.8rem', color: isSelected ? '#64748b' : '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                      {t.last_message_preview || 'Protocol initiated'}
                     </div>
                   </div>
+                  {hasUnread && <div style={{ width: 10, height: 10, background: '#ef4444', borderRadius: '50%', flexShrink: 0, boxShadow: '0 0 10px rgba(239, 68, 68, 0.4)' }} />}
                 </button>
               )
             })}
@@ -516,118 +269,61 @@ export default function InvestorChatPanel() {
         </div>
 
         {/* Conversation area */}
-        {selected ? (
-          <div
-            style={{
-              flex: 1,
-              display: 'flex',
-              flexDirection: 'column',
-              minWidth: 0,
-              minHeight: 0,
-              overflow: 'hidden',
-            }}
-          >
-            <div style={{ padding: '0.5rem 1rem 0', background: NAVY, flexShrink: 0 }}>
-              {/* Contact header row */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 10,
-                  marginBottom: 2,
-                  paddingLeft: 2,
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: GOLD, lineHeight: 1.2 }}>
-                    ★{' '}
-                    {(() => {
-                      const nameIsDigits =
-                        !selected.contact_name ||
-                        /^\+?\d[\d\s\-()]*$/.test(selected.contact_name.trim())
-                      return nameIsDigits
-                        ? selected.phone
-                        : selected.contact_name
-                    })()}
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#fff', minWidth: 0, minHeight: 0 }}>
+          {selected ? (
+            <>
+              <div style={{ padding: '1.25rem 2rem', borderBottom: '1px solid rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1.5rem', background: '#fff' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                   <div style={{
+                    width: 44, height: 44, borderRadius: 14,
+                    background: '#f8fafc', border: '1px solid rgba(0,0,0,0.05)',
+                    color: '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 900
+                  }}>
+                    {initials(selected.contact_name, selected.phone)}
                   </div>
-                  <div style={{ fontSize: 11, color: MUTED }}>
-                    Sending via{' '}
-                    <span
-                      style={{
-                        color: selected.panel === '718' ? '#a5b4fc' : GOLD_LITE,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {selected.panel === '718' ? '+1 (718) 550-5500' : '+1 (305) 778-4861'}
-                    </span>
+                  <div>
+                    <div style={{ fontSize: '1.1rem', fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>{selected.contact_name || formatPhoneDisplay(selected.phone)}</div>
+                    <div style={{ fontSize: '0.7rem', color: '#3b82f6', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Active {selected.channel_type} protocol</div>
                   </div>
                 </div>
-                <button
-                  onClick={() => setProfileOpen(true)}
-                  style={{
-                    background: GOLD,
-                    color: NAVY,
-                    border: 'none',
-                    padding: '8px 14px',
-                    fontFamily: 'inherit',
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: '0.10em',
-                    textTransform: 'uppercase',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    flexShrink: 0,
-                  }}
-                >
-                  ★ Open Profile
-                </button>
+                <button onClick={() => setProfileOpen(true)} style={{
+                  padding: '10px 20px', background: '#0f172a', color: '#fff', border: 'none', borderRadius: 16, fontSize: '0.75rem', fontWeight: 900, cursor: 'pointer', transition: 'all 200ms', boxShadow: '0 10px 20px rgba(15, 23, 42, 0.15)'
+                }}>SYNTHESIS INSIGHTS</button>
               </div>
-              <ReplyBox
-                panel={selected.panel}
-                threadId={selected.id}
-                threadHistory={messages || []}
-                contact={{ name: selected.contact_name, phone: selected.phone }}
-                onOptimistic={onOptimistic}
-                onStatus={onStatus}
-              />
+              <div style={{ flex: 1, overflowY: 'auto', background: '#f8fafc' }}>
+                <MessageView thread={selected} messages={messages || []} />
+              </div>
+              <div style={{ padding: '1.5rem 2rem', borderTop: '1px solid rgba(0,0,0,0.05)', background: '#fff' }}>
+                <ReplyBox panel={selected.panel} threadId={selected.id} threadHistory={messages || []} contact={{ name: selected.contact_name, phone: selected.phone }} onOptimistic={onOptimistic} onStatus={onStatus} />
+              </div>
+            </>
+          ) : (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', color: '#94a3b8', gap: '1.5rem', background: '#f8fafc' }}>
+              <div style={{ width: 120, height: 120, borderRadius: 40, background: '#fff', border: '1px solid rgba(0,0,0,0.03)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.02)' }}>
+                <Shield size={48} color="#3b82f6" style={{ opacity: 0.2 }} />
+              </div>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontWeight: 900, fontSize: '1.25rem', color: '#0f172a', marginBottom: '0.5rem', letterSpacing: '-0.02em' }}>Select Syndicate Node</div>
+                <p style={{ fontSize: '0.9rem', fontWeight: 600, maxWidth: 320, color: '#64748b', lineHeight: 1.6 }}>Choose an investor contact to initiate the deal synthesis and communication protocol.</p>
+              </div>
             </div>
-            <MessageView thread={selected} messages={messages || []} />
-          </div>
-        ) : (
-          <div
-            style={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexDirection: 'column',
-              gap: 12,
-              color: MUTED,
-              fontSize: 13,
-            }}
-          >
-            <span style={{ fontSize: 32 }}>★</span>
-            <span>Select an investor to start a conversation.</span>
-            <span style={{ fontSize: 11, maxWidth: 260, textAlign: 'center', lineHeight: 1.5 }}>
-              Tag any contact as &ldquo;investor&rdquo; from the 718 or 305 panels — they will appear here automatically.
-            </span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {profileOpen && selected && (
-        <InvestorProfile
-          data={profileFromThread({
-            contact_name: selected.contact_name,
-            phone: selected.phone,
-            pipedrive_contact_id: selected.pipedrive_contact_id,
-            investor_tier: selected.investor_tier ?? null,
-            investor_role: selected.investor_role ?? null,
-          })}
-          onClose={() => setProfileOpen(false)}
-        />
+        <InvestorProfile data={profileFromThread({
+          contact_name: selected.contact_name, phone: selected.phone, pipedrive_contact_id: selected.pipedrive_contact_id,
+          investor_tier: selected.investor_tier ?? null, investor_role: selected.investor_role ?? null,
+        })} onClose={() => setProfileOpen(false)} />
       )}
+      
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   )
 }

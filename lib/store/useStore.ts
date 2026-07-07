@@ -33,12 +33,17 @@ export interface Email {
 export interface CalendarEvent {
   id: string;
   title: string;
+  summary?: string;
+  start?: string;
+  end?: string;
   startTime: string;
   endTime: string;
+  meetingUrl?: string | null;
   zoomLink: string | null;
   hangoutLink: string | null;
   location: string | null;
-  attendees: string[];
+  description?: string | null;
+  attendees: { displayName?: string; email?: string; responseStatus?: string }[];
 }
 
 interface CockpitState {

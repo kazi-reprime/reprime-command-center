@@ -134,10 +134,10 @@ function initials(identifier: string): string {
 }
 
 const CHANNEL_COLOR: Record<OutboundAskChannel, string> = {
-  email: 'var(--rp-gold)',
-  whatsapp: 'var(--c-channel-718)',
-  imessage: 'var(--c-channel-imsg)',
-  sms: 'var(--c-channel-sms)',
+  email: 'border-l-blue-500 text-blue-600 bg-blue-50',
+  whatsapp: 'border-l-emerald-500 text-emerald-600 bg-emerald-50',
+  imessage: 'border-l-indigo-500 text-indigo-600 bg-indigo-50',
+  sms: 'border-l-purple-500 text-purple-600 bg-purple-50',
 }
 
 const CHANNEL_LABEL: Record<OutboundAskChannel, string> = {
@@ -149,32 +149,6 @@ const CHANNEL_LABEL: Record<OutboundAskChannel, string> = {
 
 // ── Visual primitives ────────────────────────────────────────────────────────
 
-const sectionStyle: React.CSSProperties = {
-  padding: '0.85rem 1rem',
-  borderBottom: '1px solid var(--rp-border)',
-}
-
-const sectionLabel: React.CSSProperties = {
-  color: 'var(--rp-gold)',
-  fontSize: 11,
-  fontWeight: 700,
-  textTransform: 'uppercase',
-  letterSpacing: 0.6,
-  marginBottom: 8,
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'baseline',
-  gap: 8,
-}
-
-const sectionCount: React.CSSProperties = {
-  color: 'var(--rp-gold-lite)',
-  fontSize: 11,
-  fontWeight: 500,
-  letterSpacing: 0,
-  textTransform: 'none',
-}
-
 function AskRow({
   ask,
   overdue,
@@ -184,19 +158,18 @@ function AskRow({
   overdue?: boolean
   resolvedName?: ResolvedName
 }) {
-  const accent = CHANNEL_COLOR[ask.channel]
+  const channelClasses = CHANNEL_COLOR[ask.channel]
   const sentAgo = formatRelativePast(ask.sent_at)
   const expected = formatRelativeFuture(ask.expected_reply_by)
   const replied = ask.status === 'replied'
   const expectedColor = replied
-    ? 'var(--c-channel-718)'
+    ? 'text-emerald-500'
     : overdue
-      ? 'var(--c-fail)'
-      : 'var(--rp-gold-lite)'
+      ? 'text-red-500'
+      : 'text-slate-400'
 
   const onClick = () => {
     if (ask.related_thread_id) {
-      // Reuse the existing investor/chat panel listener wired in the kiosk.
       window.dispatchEvent(
         new CustomEvent('open-thread', {
           detail: { thread_id: ask.related_thread_id, channel: ask.channel },
@@ -220,56 +193,19 @@ function AskRow({
             }
           : undefined
       }
-      style={{
-        background: 'var(--rp-surface)',
-        border: '1px solid var(--rp-border)',
-        borderLeft: `3px solid ${accent}`,
-        borderRadius: 6,
-        padding: '0.55rem 0.75rem',
-        marginBottom: 6,
-        fontSize: 13,
-        color: 'var(--rp-white)',
-        cursor: ask.related_thread_id ? 'pointer' : 'default',
-        display: 'flex',
-        gap: 10,
-        alignItems: 'flex-start',
-      }}
+      className={`flex items-start gap-3 p-3 mb-2 rounded-xl bg-slate-50 border border-slate-100 border-l-4 shadow-sm ${channelClasses.split(' ')[0]} ${ask.related_thread_id ? 'cursor-pointer hover:bg-slate-100 hover:border-slate-200 transition-colors' : ''}`}
     >
       <div
         aria-hidden
-        style={{
-          flexShrink: 0,
-          width: 32,
-          height: 32,
-          borderRadius: '50%',
-          background: 'rgba(255, 204, 51, 0.10)',
-          color: accent,
-          fontSize: 12,
-          fontWeight: 700,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${channelClasses.split(' ').slice(1).join(' ')}`}
       >
         {initials(ask.recipient_identifier)}
       </div>
 
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'baseline',
-            gap: 8,
-          }}
-        >
+      <div className="flex-1 min-w-0">
+        <div className="flex justify-between items-baseline gap-2">
           <span
-            style={{
-              fontWeight: 600,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
+            className="font-bold text-slate-800 truncate text-sm"
             title={
               resolvedName
                 ? `${resolvedName} — ${ask.recipient_identifier}`
@@ -279,15 +215,8 @@ function AskRow({
             {resolvedName ? (
               <>
                 {resolvedName}
-                <span
-                  style={{
-                    color: 'var(--rp-gold-lite)',
-                    fontWeight: 400,
-                    opacity: 0.7,
-                  }}
-                >
-                  {' — '}
-                  {ask.recipient_identifier}
+                <span className="text-slate-400 font-normal ml-1">
+                  — {ask.recipient_identifier}
                 </span>
               </>
             ) : (
@@ -296,17 +225,7 @@ function AskRow({
           </span>
           <span
             aria-label={`channel ${CHANNEL_LABEL[ask.channel]}`}
-            style={{
-              fontSize: 10,
-              fontWeight: 600,
-              color: accent,
-              border: `1px solid ${accent}`,
-              borderRadius: 4,
-              padding: '1px 6px',
-              flexShrink: 0,
-              letterSpacing: 0.4,
-              textTransform: 'uppercase',
-            }}
+            className={`text-[10px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider shrink-0 ${channelClasses.split(' ').slice(1).join(' ')}`}
           >
             {CHANNEL_LABEL[ask.channel]}
           </span>
@@ -314,34 +233,18 @@ function AskRow({
 
         {ask.body && (
           <div
-            style={{
-              color: 'var(--rp-gold-lite)',
-              fontSize: 12,
-              marginTop: 3,
-              opacity: 0.9,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
+            className="text-slate-500 text-xs mt-1 truncate"
             title={ask.body}
           >
             {clipPreview(ask.body)}
           </div>
         )}
 
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            gap: 8,
-            marginTop: 4,
-            fontSize: 11,
-          }}
-        >
-          <span style={{ color: 'var(--rp-gold-lite)', opacity: 0.75 }}>
+        <div className="flex justify-between gap-2 mt-2 text-[10px] font-bold uppercase tracking-wider">
+          <span className="text-slate-400">
             sent {sentAgo}
           </span>
-          <span style={{ color: expectedColor, fontWeight: 600 }}>
+          <span className={expectedColor}>
             {replied ? `replied ${formatRelativePast(ask.closed_at)}` : expected}
           </span>
         </div>
@@ -351,26 +254,11 @@ function AskRow({
 }
 
 function EmptyHint({ text }: { text: string }) {
-  return <div style={{ color: 'var(--rp-gold-lite)', fontSize: 12 }}>{text}</div>
+  return <div className="text-slate-400 text-xs font-semibold">{text}</div>
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
 
-/**
- * SecretaryTab — outbound-ask tracker.
- *
- * Lives inside the future "sidekick" column tab. Until that column ships, the
- * component is also mountable standalone (e.g. inside any column body) — it
- * owns its own scroll and refetch.
- *
- * Sections (top-down):
- *   1. Overdue          — open asks past expected_reply_by (red expected pill)
- *   2. Awaiting Reply   — open asks still inside the reply window
- *   3. Replied This Week — closed asks with closed_at < 7d
- *
- * Auto-refreshes every 60s. Click a row with a related_thread_id to dispatch
- * `open-thread` so the parent dashboard surfaces the original conversation.
- */
 export default function SecretaryTab() {
   const asks = useQuery({
     queryKey: ['secretary', 'asks'],
@@ -393,10 +281,6 @@ export default function SecretaryTab() {
     return showRepliedAll ? repliedRecent : repliedRecent.slice(0, 5)
   }, [repliedRecent, showRepliedAll])
 
-  // Collect identifiers across all sections so each unique recipient is
-  // resolved once. Pipedrive lookup runs in parallel and never blocks the
-  // initial render — rows show the raw identifier first, then the name
-  // appears as the query resolves.
   const allIdentifiers = useMemo(() => {
     const ids: string[] = []
     for (const a of overdue) ids.push(a.recipient_identifier)
@@ -410,20 +294,14 @@ export default function SecretaryTab() {
   return (
     <div
       data-component="secretary-tab"
-      style={{
-        background: 'var(--rp-navy)',
-        color: 'var(--rp-white)',
-        height: '100%',
-        overflowY: 'auto',
-        fontFamily: 'inherit',
-      }}
+      className="bg-white text-slate-800 h-full overflow-y-auto"
     >
-      {/* 1. Overdue — only renders when there's something to fix */}
+      {/* 1. Overdue */}
       {overdue.length > 0 && (
-        <section style={sectionStyle} data-section="overdue">
-          <div style={sectionLabel}>
-            <span>Overdue</span>
-            <span style={sectionCount}>{overdue.length}</span>
+        <section className="px-4 py-4 border-b border-slate-100" data-section="overdue">
+          <div className="flex justify-between items-baseline gap-2 mb-3">
+            <span className="text-red-500 text-xs font-black uppercase tracking-widest">Overdue</span>
+            <span className="text-slate-400 text-xs font-bold">{overdue.length}</span>
           </div>
           {overdue.map((ask) => (
             <AskRow
@@ -437,14 +315,14 @@ export default function SecretaryTab() {
       )}
 
       {/* 2. Awaiting Reply */}
-      <section style={sectionStyle} data-section="awaiting">
-        <div style={sectionLabel}>
-          <span>Awaiting Reply</span>
-          <span style={sectionCount}>{awaiting.length}</span>
+      <section className="px-4 py-4 border-b border-slate-100" data-section="awaiting">
+        <div className="flex justify-between items-baseline gap-2 mb-3">
+          <span className="text-blue-600 text-xs font-black uppercase tracking-widest">Awaiting Reply</span>
+          <span className="text-slate-400 text-xs font-bold">{awaiting.length}</span>
         </div>
         {asks.isLoading && <EmptyHint text="Loading…" />}
         {asks.isError && (
-          <div style={{ color: 'var(--c-fail)', fontSize: 12 }}>
+          <div className="text-red-500 text-xs font-semibold">
             Failed: {(asks.error as Error).message}
           </div>
         )}
@@ -462,12 +340,12 @@ export default function SecretaryTab() {
 
       {/* 3. Replied This Week */}
       <section
-        style={{ ...sectionStyle, borderBottom: 'none' }}
+        className="px-4 py-4"
         data-section="replied"
       >
-        <div style={sectionLabel}>
-          <span>Replied This Week</span>
-          <span style={sectionCount}>{repliedRecent.length}</span>
+        <div className="flex justify-between items-baseline gap-2 mb-3">
+          <span className="text-emerald-500 text-xs font-black uppercase tracking-widest">Replied This Week</span>
+          <span className="text-slate-400 text-xs font-bold">{repliedRecent.length}</span>
         </div>
         {!asks.isLoading && repliedRecent.length === 0 && (
           <EmptyHint text="No replies yet this week." />
@@ -483,15 +361,7 @@ export default function SecretaryTab() {
           <button
             type="button"
             onClick={() => setShowRepliedAll((v) => !v)}
-            style={{
-              marginTop: 4,
-              background: 'transparent',
-              color: 'var(--rp-gold)',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: 12,
-              padding: 0,
-            }}
+            className="mt-2 text-blue-500 hover:text-blue-600 text-[10px] font-bold uppercase tracking-wider cursor-pointer"
           >
             {showRepliedAll
               ? 'Show fewer'

@@ -1,6 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { X } from 'lucide-react'
 
 const REFETCH_MS = 30_000
 
@@ -66,110 +67,132 @@ export default function ActiveTaskBanner() {
 
   return (
     <div
+      data-banner
+      className="animate-in slide-in-from-top duration-500"
       style={{
         flexShrink: 0,
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
-        padding: '6px 16px',
+        gap: 16,
+        padding: '8px 24px',
         background: activeMeeting
-          ? 'linear-gradient(90deg, rgba(239,68,68,0.15) 0%, rgba(239,68,68,0.05) 100%)'
-          : 'linear-gradient(90deg, rgba(255,204,51,0.1) 0%, rgba(255,204,51,0.03) 100%)',
-        borderBottom: activeMeeting
-          ? '1px solid rgba(239,68,68,0.2)'
-          : '1px solid rgba(255,204,51,0.1)',
+          ? 'linear-gradient(90deg, rgba(239, 68, 68, 0.08) 0%, rgba(255, 255, 255, 0) 100%)'
+          : 'linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, rgba(255, 255, 255, 0) 100%)',
+        borderBottom: '1px solid var(--border-main)',
         fontFamily: 'inherit',
-        minHeight: 36,
+        minHeight: 44,
+        position: 'relative',
+        zIndex: 10,
       }}
     >
-      {/* Status dot */}
-      <div style={{
-        width: 8, height: 8, borderRadius: '50%',
-        background: activeMeeting ? '#EF4444' : 'var(--rp-gold, #FFCC33)',
-        boxShadow: activeMeeting ? '0 0 8px rgba(239,68,68,0.5)' : '0 0 6px rgba(255,204,51,0.3)',
-        animation: 'pulse 2s ease-in-out infinite',
-        flexShrink: 0,
-      }} />
-
-      {/* Status label */}
-      <span style={{
-        fontSize: 9,
-        fontWeight: 800,
-        textTransform: 'uppercase',
-        letterSpacing: '0.1em',
-        color: activeMeeting ? '#EF4444' : 'var(--rp-gold, #FFCC33)',
-        flexShrink: 0,
-      }}>
-        {currentMeeting ? 'In progress' : nextMeeting ? 'Starting soon' : 'Focus'}
-      </span>
+      {/* Status indicator */}
+      <div className="flex items-center gap-3">
+        <div style={{
+          width: 8, height: 8, borderRadius: '50%',
+          background: activeMeeting ? 'var(--status-error)' : 'var(--accent-blue)',
+          boxShadow: activeMeeting ? '0 0 12px rgba(239, 68, 68, 0.4)' : '0 0 12px rgba(59, 130, 246, 0.4)',
+          animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          flexShrink: 0,
+        }} />
+        <span style={{
+          fontSize: '0.65rem',
+          fontWeight: 900,
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          color: activeMeeting ? 'var(--status-error)' : 'var(--accent-blue)',
+          flexShrink: 0,
+        }}>
+          {currentMeeting ? 'Live Now' : nextMeeting ? 'Up Next' : 'Core Focus'}
+        </span>
+      </div>
 
       {/* Task/Meeting title */}
       <span style={{
         flex: 1,
-        fontSize: 11,
-        fontWeight: 500,
-        color: '#F5EFD8',
+        fontSize: '0.85rem',
+        fontWeight: 700,
+        color: 'var(--text-main)',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
+        letterSpacing: '-0.01em',
       }}>
         {activeMeeting ? activeMeeting.title : focusItem?.title}
       </span>
 
-      {/* Time */}
-      {activeMeeting && (
-        <span style={{ fontSize: 10, color: 'rgba(255,204,51,0.4)', flexShrink: 0 }}>
-          {formatTime(activeMeeting.startTime)}
-        </span>
-      )}
+      {/* Details & Actions */}
+      <div className="flex items-center gap-4">
+        {activeMeeting && (
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.02em' }}>
+            {formatTime(activeMeeting.startTime)} — {formatTime(activeMeeting.endTime)}
+          </span>
+        )}
 
-      {/* Zoom button */}
-      {activeMeeting?.zoomLink && (
-        <a
-          href={activeMeeting.zoomLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            padding: '3px 12px',
-            borderRadius: 5,
-            background: 'var(--rp-gold, #FFCC33)',
-            color: '#0E3470',
-            fontSize: 10,
-            fontWeight: 800,
-            textDecoration: 'none',
-            letterSpacing: '0.04em',
-            flexShrink: 0,
+        {activeMeeting?.zoomLink && (
+          <a
+            href={activeMeeting.zoomLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              padding: '6px 16px',
+              borderRadius: 12,
+              background: 'var(--accent-blue)',
+              color: '#fff',
+              fontSize: '0.7rem',
+              fontWeight: 900,
+              textDecoration: 'none',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+              flexShrink: 0,
+              boxShadow: '0 4px 12px rgba(59, 130, 246, 0.25)',
+              transition: 'all 200ms',
+            }}
+            onMouseOver={e => {
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.35)';
+            }}
+            onMouseOut={e => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.25)';
+            }}
+          >
+            Launch Meeting
+          </a>
+        )}
+
+        {/* Dismiss */}
+        <button
+          onClick={(e) => {
+            const banner = (e.target as HTMLElement).closest('[data-banner]') as HTMLElement
+            if (banner) {
+              banner.style.opacity = '0';
+              banner.style.transform = 'translateY(-10px)';
+              setTimeout(() => banner.style.display = 'none', 300);
+            }
           }}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-muted)',
+            cursor: 'pointer',
+            fontSize: '0.75rem',
+            padding: '4px',
+            flexShrink: 0,
+            opacity: 0.5,
+            transition: 'opacity 200ms',
+          }}
+          onMouseOver={e => e.currentTarget.style.opacity = '1'}
+          onMouseOut={e => e.currentTarget.style.opacity = '0.5'}
+          title="Dismiss"
         >
-          Join Now
-        </a>
-      )}
-
-      {/* Dismiss */}
-      <button
-        onClick={(e) => {
-          // Hide the banner for this session
-          const banner = (e.target as HTMLElement).closest('[data-banner]') as HTMLElement
-          if (banner) banner.style.display = 'none'
-        }}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: 'rgba(255,204,51,0.3)',
-          cursor: 'pointer',
-          fontSize: 12,
-          padding: '2px 4px',
-          flexShrink: 0,
-        }}
-        title="Dismiss"
-      >
-        ✕
-      </button>
+          <X size={14} strokeWidth={3} />
+        </button>
+      </div>
 
       <style>{`
         @keyframes pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.4; }
+          0%, 100% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.6; transform: scale(0.9); }
         }
       `}</style>
     </div>

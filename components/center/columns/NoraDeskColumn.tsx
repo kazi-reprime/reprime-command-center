@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react'
 import { useQuery, useMutation } from '@tanstack/react-query'
+import { OrbPlaceholder } from '@/components/ui/OrbPlaceholder'
 
 const REFETCH_MS = 30_000
 
@@ -25,7 +26,6 @@ export default function NoraDeskColumn() {
   const [filter, setFilter] = useState<'all' | 'overdue' | 'today' | 'upcoming'>('all')
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Load history
   const historyQ = useQuery<NoraHistoryPayload>({
     queryKey: ['nora-history'],
     queryFn: async () => {
@@ -44,7 +44,6 @@ export default function NoraDeskColumn() {
     }
   }, [historyQ.data])
 
-  // Secretary asks
   const asksQ = useQuery({
     queryKey: ['secretary-asks'],
     queryFn: async () => {
@@ -59,7 +58,6 @@ export default function NoraDeskColumn() {
 
   const asks = asksQ.data?.asks ?? []
 
-  // Chat mutation
   const chatMut = useMutation({
     mutationFn: async (query: string) => {
       const res = await fetch('/api/nora/chat', {
@@ -96,98 +94,111 @@ export default function NoraDeskColumn() {
   const noApiKey = !chatMut.isPending && messages.length === 0 && historyQ.data?.messages?.length === 0
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <div className="flex flex-col h-full bg-white text-slate-800 font-sans">
       {/* Header */}
-      <div style={{ padding: '8px 12px', borderBottom: '1px solid rgba(168,85,247,0.15)' }}>
-        <div style={{ color: '#A855F7', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          🧠 Nora&apos;s Desk <span style={{ fontWeight: 400, fontSize: 9, opacity: 0.6 }}>she + you</span>
+      <div className="px-4 py-3 border-b border-purple-100 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <OrbPlaceholder className="w-6 h-6 transform scale-75 origin-left" />
+          <div className="text-purple-600 text-xs font-black uppercase tracking-widest flex items-center gap-2">
+            Nora&apos;s Desk 
+            <span className="font-bold text-[9px] opacity-60 px-1.5 py-0.5 bg-purple-50 rounded-md">she + you</span>
+          </div>
         </div>
       </div>
 
-      {/* Filter tabs for secretary items */}
-      <div style={{ display: 'flex', gap: 2, padding: '4px 8px', borderBottom: '1px solid rgba(168,85,247,0.08)' }}>
+      {/* Filter tabs */}
+      <div className="flex gap-1 px-4 py-2 border-b border-purple-50">
         {(['all', 'overdue', 'today', 'upcoming'] as const).map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            style={{
-              padding: '2px 8px', borderRadius: 4, border: 'none', cursor: 'pointer',
-              background: filter === f ? 'rgba(168,85,247,0.15)' : 'transparent',
-              color: filter === f ? '#A855F7' : 'rgba(168,85,247,0.3)',
-              fontSize: 9, fontWeight: 700, fontFamily: 'inherit', textTransform: 'uppercase',
-            }}
-          >{f}</button>
+          <button 
+            key={f} 
+            onClick={() => setFilter(f)}
+            className={`px-3 py-1 rounded-lg border-none cursor-pointer text-[9px] font-black uppercase tracking-widest transition-colors ${
+              filter === f 
+                ? 'bg-purple-100 text-purple-700 shadow-sm' 
+                : 'bg-transparent text-slate-400 hover:bg-purple-50 hover:text-purple-600'
+            }`}
+          >
+            {f}
+          </button>
         ))}
       </div>
 
       {/* Secretary Items */}
       {asks.length > 0 && (
-        <div style={{ maxHeight: 120, overflowY: 'auto', borderBottom: '1px solid rgba(168,85,247,0.08)' }}>
-          <div style={{ padding: '4px 10px 2px', color: 'rgba(168,85,247,0.5)', fontSize: 9, fontWeight: 700, textTransform: 'uppercase' }}>
+        <div className="max-h-[120px] overflow-y-auto border-b border-purple-50 bg-slate-50/50 p-2">
+          <div className="px-2 pb-1 text-[9px] font-black uppercase tracking-widest text-slate-400">
             Nora + You ({asks.length})
           </div>
-          {asks.slice(0, 5).map((ask: any, i: number) => (
-            <div key={i} style={{
-              padding: '4px 10px', borderBottom: '1px solid rgba(168,85,247,0.03)',
-              color: '#F5EFD8', fontSize: 10,
-            }}>
-              <span style={{ fontWeight: 500 }}>{ask.title || ask.question || 'Task'}</span>
-              {ask.due_at && <span style={{ color: 'rgba(168,85,247,0.4)', marginLeft: 6, fontSize: 9 }}>{new Date(ask.due_at).toLocaleDateString()}</span>}
-            </div>
-          ))}
+          <div className="flex flex-col gap-1">
+            {asks.slice(0, 5).map((ask: any, i: number) => (
+              <div 
+                key={i} 
+                className="px-3 py-2 bg-white rounded-lg border border-slate-100 shadow-sm text-[10px] flex justify-between items-center"
+              >
+                <span className="font-bold text-slate-700 truncate mr-2">
+                  {ask.title || ask.question || 'Task'}
+                </span>
+                {ask.due_at && (
+                  <span className="text-[9px] font-bold text-slate-400 whitespace-nowrap">
+                    {new Date(ask.due_at).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {/* Chat Messages */}
-      <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: '8px 6px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         {messages.length === 0 && (
-          <div style={{ padding: 20, textAlign: 'center', color: 'rgba(168,85,247,0.25)', fontSize: 11 }}>
+          <div className="p-5 text-center text-slate-400 text-xs font-bold whitespace-pre-wrap">
             {noApiKey
               ? 'No items need your attention right now.\nAsk Nora anything below.'
               : 'Ask Nora anything...'}
           </div>
         )}
+        
         {messages.map((m, i) => (
-          <div key={i} style={{
-            padding: '6px 10px', borderRadius: 8, maxWidth: '90%',
-            alignSelf: m.role === 'user' ? 'flex-end' : 'flex-start',
-            background: m.role === 'user' ? 'rgba(255,204,51,0.12)' : 'rgba(168,85,247,0.08)',
-            color: m.role === 'user' ? 'var(--rp-gold, #FFCC33)' : '#F5EFD8',
-            fontSize: 11, lineHeight: 1.4, whiteSpace: 'pre-wrap',
-          }}>
+          <div 
+            key={i} 
+            className={`px-3 py-2 rounded-xl max-w-[90%] text-xs leading-relaxed whitespace-pre-wrap shadow-sm border ${
+              m.role === 'user' 
+                ? 'self-end bg-blue-50 text-blue-900 border-blue-100 rounded-br-none' 
+                : 'self-start bg-purple-50 text-purple-900 border-purple-100 rounded-bl-none'
+            }`}
+          >
             {m.content}
           </div>
         ))}
+        
         {chatMut.isPending && (
-          <div style={{ padding: '6px 10px', borderRadius: 8, background: 'rgba(168,85,247,0.06)', color: 'rgba(168,85,247,0.5)', fontSize: 11, alignSelf: 'flex-start' }}>
+          <div className="self-start px-3 py-2 rounded-xl rounded-bl-none bg-purple-50 text-purple-400 border border-purple-100 text-xs font-bold shadow-sm animate-pulse">
             Nora is thinking...
           </div>
         )}
       </div>
 
       {/* Input */}
-      <div style={{
-        padding: '8px 10px', borderTop: '1px solid rgba(168,85,247,0.1)',
-        display: 'flex', gap: 6,
-      }}>
+      <div className="p-3 border-t border-purple-100 bg-slate-50 flex gap-2">
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleSend()}
           placeholder="Ask Nora anything..."
-          style={{
-            flex: 1, padding: '6px 10px', borderRadius: 6,
-            background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(168,85,247,0.15)',
-            color: '#F5EFD8', fontSize: 11, fontFamily: 'inherit', outline: 'none',
-          }}
+          className="flex-1 bg-white border border-slate-200 text-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all shadow-sm"
         />
         <button
           onClick={handleSend}
           disabled={!input.trim() || chatMut.isPending}
-          style={{
-            padding: '4px 12px', borderRadius: 6, border: 'none', cursor: 'pointer',
-            background: input.trim() ? '#A855F7' : 'rgba(168,85,247,0.1)',
-            color: '#fff', fontSize: 10, fontWeight: 700, fontFamily: 'inherit',
-          }}
-        >→</button>
+          className={`px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest transition-all shadow-sm ${
+            input.trim() 
+              ? 'bg-purple-600 hover:bg-purple-700 text-white cursor-pointer' 
+              : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+          }`}
+        >
+          →
+        </button>
       </div>
     </div>
   )

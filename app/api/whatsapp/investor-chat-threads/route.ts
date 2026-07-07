@@ -193,6 +193,8 @@ export async function GET() {
       investor_tier: tier,
       investor_role: role,
       is_priority: t.is_priority ?? false,
+      is_family: false,
+      is_staff: false,
     })
   }
 
@@ -217,6 +219,8 @@ export async function GET() {
       investor_role: p.role,
       is_stub: true,
       is_priority: false,
+      is_family: false,
+      is_staff: false,
     })
   }
 

@@ -12,7 +12,7 @@ export default function FilesPage() {
         <h1 style={{ margin: 0, color: '#FFCC33', fontSize: '1.5rem', fontWeight: 700 }}>Files</h1>
         <p style={{ margin: '0.25rem 0 0', color: 'rgba(255,204,51,0.5)', fontSize: '0.8rem' }}>Document management</p>
       </div>
-      <EmptyState icon="🗄️" title="No files configured" message="Connect file storage in Settings to manage deal documents, LOIs, and data rooms." />
+      <EmptyState icon="🗄️" title="No files configured" description="Connect file storage in Settings to manage deal documents, LOIs, and data rooms." />
     </div>
   )
 }

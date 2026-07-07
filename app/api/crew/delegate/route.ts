@@ -105,8 +105,8 @@ export async function POST(request: NextRequest) {
       body: itemBody || null,
       status: 'open',
       assigned_to: toEmail,
-      assigned_by: user.email ?? ALLOWED_EMAIL,
-      created_by: user.email ?? ALLOWED_EMAIL,
+      assigned_by: user?.email ?? ALLOWED_EMAIL,
+      created_by: user?.email ?? ALLOWED_EMAIL,
       due_at: dueAt,
     })
     .select('*')

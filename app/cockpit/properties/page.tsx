@@ -35,6 +35,7 @@ export default function PropertiesPage() {
       const params = new URLSearchParams({ page: String(page), limit: String(limit) })
       if (search) params.set('search', search)
       if (typeFilter !== 'All') params.set('type', typeFilter)
+      if (listingTypeFilter !== 'All') params.set('listing_type', listingTypeFilter)
       const res = await fetch(`/api/cockpit/listings?${params}`)
       const data = await res.json()
       setListings(data.data || [])
@@ -43,7 +44,7 @@ export default function PropertiesPage() {
       setTotal(data.total || 0)
     } catch { addToast('Failed to load listings', 'error') }
     finally { setLoading(false) }
-  }, [page, search, typeFilter, addToast])
+  }, [page, search, typeFilter, listingTypeFilter, addToast])
 
   useEffect(() => { fetchData() }, [fetchData])
 

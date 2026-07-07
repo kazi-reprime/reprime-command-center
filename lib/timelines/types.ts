@@ -67,6 +67,12 @@ export interface DashboardThread {
   is_stub?: boolean
   /** AI-flagged as important (deal interest, urgency, commitment language) */
   is_priority: boolean
+  /** Contact is flagged as family */
+  is_family: boolean
+  /** Contact is flagged as staff */
+  is_staff: boolean
+  /** Contact is blocked */
+  is_blocked?: boolean
 }
 
 export interface DashboardMessage {

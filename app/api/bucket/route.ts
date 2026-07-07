@@ -223,8 +223,8 @@ export async function POST(request: NextRequest) {
       source_url: payload.source_url ?? null,
       source_type: payload.source_type ?? 'manual',
       assigned_to: payload.assigned_to ?? null,
-      assigned_by: user.email ?? ALLOWED_EMAIL,
-      created_by: user.email ?? ALLOWED_EMAIL,
+      assigned_by: user?.email ?? ALLOWED_EMAIL,
+      created_by: user?.email ?? ALLOWED_EMAIL,
       status: 'open',
     })
     .select('*')

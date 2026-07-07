@@ -438,6 +438,8 @@ export async function GET(request: NextRequest) {
         pipedrive_contact_id: number | null
         timelines_chat_id: number | null
         is_priority: boolean | null
+        is_family: boolean | null
+        is_staff: boolean | null
       }) => ({
         id: t.id,
         panel: t.panel,

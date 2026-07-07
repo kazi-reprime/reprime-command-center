@@ -206,6 +206,12 @@ export default function VoiceShell() {
   const [lastCommand, setLastCommand] = useState('')
   const [statusMsg, setStatusMsg] = useState('')
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('nora-state-change', { detail: { state } }))
+    }
+  }, [state])
+
   // Refs survive re-renders — keyboard listener captures startRecording
   // synchronously, and the SR/MediaRecorder callbacks fire outside React.
   const recogRef = useRef<SRLike | null>(null)
@@ -480,42 +486,66 @@ export default function VoiceShell() {
   })()
 
   return (
-    <>
+    <div style={{
+      position: 'fixed',
+      bottom: '2rem',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 2000,
+      display: 'flex',
+      alignItems: 'center',
+      gap: '1rem',
+      padding: '0.75rem 1.5rem',
+      background: 'rgba(255, 255, 255, 0.8)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      border: '1px solid rgba(0, 0, 0, 0.05)',
+      borderRadius: '999px',
+      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.08)',
+      minWidth: '320px',
+      maxWidth: '90vw',
+      fontFamily: 'inherit'
+    }}>
       <style>{`
         @keyframes voice-pulse {
           0%, 100% { transform: scale(1); opacity: 1; }
-          50%      { transform: scale(1.18); opacity: 0.7; }
+          50%      { transform: scale(1.3); opacity: 0.6; }
         }
         @keyframes voice-flash {
-          0%   { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.55); }
-          100% { box-shadow: 0 0 0 14px rgba(34, 197, 94, 0); }
+          0%   { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+          100% { box-shadow: 0 0 0 20px rgba(34, 197, 94, 0); }
         }
       `}</style>
-      <span
+      <div
         aria-hidden
         style={{
-          display: 'inline-block',
-          width: 14,
-          height: 14,
+          width: 12,
+          height: 12,
           borderRadius: '50%',
-          background: DOT_COLOR[state],
-          boxShadow: `0 0 0 1px ${DOT_GLOW[state]}`,
+          background: state === 'idle' ? 'var(--accent-blue)' : 
+                      state === 'recording' ? 'var(--status-error)' :
+                      state === 'parsing' ? 'var(--accent-purple)' :
+                      state === 'sent' ? 'var(--status-success)' : 'var(--accent-blue)',
+          boxShadow: `0 0 15px ${state === 'idle' ? 'rgba(59, 130, 246, 0.3)' : 
+                                  state === 'recording' ? 'rgba(239, 68, 68, 0.3)' :
+                                  state === 'parsing' ? 'rgba(168, 85, 247, 0.3)' :
+                                  state === 'sent' ? 'rgba(34, 197, 94, 0.3)' : 'transparent'}`,
           flexShrink: 0,
-          transition: 'background 0.18s, box-shadow 0.18s',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           animation: pulsing
-            ? 'voice-pulse 1.1s ease-in-out infinite'
+            ? 'voice-pulse 1.2s ease-in-out infinite'
             : state === 'sent'
               ? 'voice-flash 1s ease-out'
               : undefined,
         }}
       />
-      <span
+      <div
         aria-live="polite"
         style={{
-          color: state === 'recording' && liveTranscript ? '#FFE0A8' : '#F5EFD8',
-          fontSize: 16,
-          fontWeight: 500,
-          letterSpacing: '0.02em',
+          color: 'var(--text-main)',
+          fontSize: '0.95rem',
+          fontWeight: 800,
+          letterSpacing: '-0.02em',
           flex: 1,
           minWidth: 0,
           overflow: 'hidden',
@@ -524,26 +554,29 @@ export default function VoiceShell() {
         }}
       >
         {leftLine}
-      </span>
+      </div>
       {lastCommand && state !== 'recording' && (
-        <span
+        <div
           aria-hidden
           style={{
-            color: 'rgba(245, 239, 216, 0.55)',
-            fontSize: 13,
-            fontWeight: 400,
-            letterSpacing: '0.02em',
+            color: 'var(--text-muted)',
+            fontSize: '0.8rem',
+            fontWeight: 600,
+            letterSpacing: '0.01em',
+            padding: '4px 10px',
+            background: 'rgba(0,0,0,0.03)',
+            borderRadius: '99px',
             flexShrink: 0,
-            maxWidth: '40%',
+            maxWidth: '150px',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
           }}
           title={lastCommand}
         >
-          “{lastCommand}”
-        </span>
+          {lastCommand}
+        </div>
       )}
-    </>
+    </div>
   )
 }

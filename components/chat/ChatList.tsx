@@ -6,6 +6,34 @@ import { formatPhoneDisplay } from '@/lib/timelines/parse'
 import type { DashboardThread, Panel } from '@/lib/timelines/types'
 import { useToast } from '@/lib/contexts/ToastContext'
 
+/** Extract initials from a name, falling back to first char of phone */
+function initials(name: string | null | undefined, phone?: string): string {
+  if (name) {
+    return name.split(' ').map(w => w[0]).filter(Boolean).join('').slice(0, 2).toUpperCase()
+  }
+  return phone ? phone.slice(-2) : '??'
+}
+
+/** Format a timestamp as a relative time string (e.g., "2h", "3d") */
+function relativeTime(ts: string | null | undefined): string {
+  if (!ts) return ''
+  const diff = Date.now() - new Date(ts).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'now'
+  if (mins < 60) return `${mins}m`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h`
+  const days = Math.floor(hrs / 24)
+  if (days < 7) return `${days}d`
+  return `${Math.floor(days / 7)}w`
+}
+
+/** Truncate a string to a max length, appending "…" if truncated */
+function truncate(text: string | null | undefined, maxLen: number): string {
+  if (!text) return ''
+  return text.length > maxLen ? text.slice(0, maxLen) + '…' : text
+}
+
 async function blockThread(thread: DashboardThread): Promise<void> {
   const res = await fetch('/api/contacts/block', {
     method: 'POST',
@@ -29,58 +57,7 @@ type Props = {
 type SortMode = 'recent' | 'unread'
 type FilterMode = 'direct' | 'groups' | 'all'
 
-const PANEL_THEME = {
-  '718': {
-    bg: 'var(--personal-bg)',
-    surface: 'var(--personal-surface)',
-    border: 'var(--personal-border)',
-    text: 'var(--personal-text)',
-    muted: 'var(--personal-muted)',
-    accent: 'var(--personal-accent)',
-    selected: 'var(--personal-warm)',
-    inputBg: '#fff',
-  },
-  '305': {
-    bg: 'var(--rp-navy)',
-    surface: 'var(--rp-surface)',
-    border: 'var(--rp-border)',
-    text: 'var(--rp-white)',
-    muted: 'var(--rp-gold-lite)',
-    accent: 'var(--rp-gold)',
-    selected: 'var(--rp-blue)',
-    inputBg: 'var(--rp-surface)',
-  },
-} as const
-
-function relativeTime(iso: string | null): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  const diffMs = Date.now() - d.getTime()
-  const min = Math.floor(diffMs / 60_000)
-  if (min < 1) return 'now'
-  if (min < 60) return `${min}m`
-  const hr = Math.floor(min / 60)
-  if (hr < 24) return `${hr}h`
-  const day = Math.floor(hr / 24)
-  if (day < 7) return `${day}d`
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-}
-
-function initials(name: string | null, phone: string): string {
-  if (name && name.trim().length > 0) {
-    const parts = name.trim().split(/\s+/).slice(0, 2)
-    return parts.map((p) => p[0]?.toUpperCase() || '').join('') || '#'
-  }
-  return phone.replace(/\D/g, '').slice(-2) || '#'
-}
-
-function truncate(s: string | null, n: number): string {
-  if (!s) return ''
-  return s.length > n ? s.slice(0, n - 1) + '…' : s
-}
-
 export default function ChatList({ panel, selectedThreadId, onSelect, hideInvestors = false }: Props) {
-  const theme = PANEL_THEME[panel]
   const queryClient = useQueryClient()
   const { addToast } = useToast()
   const [search, setSearch] = useState('')
@@ -106,7 +83,6 @@ export default function ChatList({ panel, selectedThreadId, onSelect, hideInvest
 
   const threads = useMemo<DashboardThread[]>(() => {
     let list = data || []
-    // Remove investor-tagged contacts from 718/305 panels — they live in the Investors panel
     if (hideInvestors) {
       list = list.filter((t) => !t.is_investor)
     }
@@ -142,62 +118,73 @@ export default function ChatList({ panel, selectedThreadId, onSelect, hideInvest
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        background: theme.bg,
-        color: theme.text,
-        borderRight: `1px solid ${theme.border}`,
+        background: '#fff',
+        color: 'var(--text-main)',
         minWidth: 280,
-        maxWidth: 360,
       }}
     >
-      <div style={{ padding: '0.75rem', borderBottom: `1px solid ${theme.border}`, display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <input
-          type="text"
-          placeholder="Search name or phone…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            background: theme.inputBg,
-            color: theme.text,
-            border: `1px solid ${theme.border}`,
-            borderRadius: 6,
-            padding: '0.4rem 0.6rem',
-            fontFamily: 'inherit',
-            fontSize: 13,
-            outline: 'none',
-          }}
-        />
+      <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid rgba(0,0,0,0.04)', display: 'flex', flexDirection: 'column', gap: 10, background: 'var(--surface-soft)' }}>
+        <div style={{ position: 'relative' }}>
+          <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 12, opacity: 0.5 }}>🔍</span>
+          <input
+            type="text"
+            placeholder="Search conversations..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              width: '100%',
+              background: '#fff',
+              color: 'var(--text-main)',
+              border: '1px solid rgba(0,0,0,0.08)',
+              borderRadius: 10,
+              padding: '8px 12px 8px 32px',
+              fontFamily: 'inherit',
+              fontSize: 12,
+              fontWeight: 600,
+              outline: 'none',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.02)',
+            }}
+          />
+        </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           <select
             value={sort}
             onChange={(e) => setSort(e.target.value as SortMode)}
             style={{
-              background: theme.inputBg,
-              color: theme.text,
-              border: `1px solid ${theme.border}`,
-              borderRadius: 6,
-              padding: '0.3rem 0.4rem',
+              background: '#fff',
+              color: 'var(--text-main)',
+              border: '1px solid rgba(0,0,0,0.08)',
+              borderRadius: 8,
+              padding: '6px 10px',
               fontFamily: 'inherit',
-              fontSize: 12,
+              fontSize: 11,
+              fontWeight: 700,
+              outline: 'none',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.01)',
             }}
           >
-            <option value="recent">Last activity</option>
-            <option value="unread">Unread first</option>
+            <option value="recent">Recent Activity</option>
+            <option value="unread">Unread First</option>
           </select>
-          <div style={{ display: 'flex', gap: 2, marginLeft: 'auto', background: theme.surface, borderRadius: 999, padding: 2 }}>
+          <div style={{ display: 'flex', gap: 2, marginLeft: 'auto', background: 'rgba(0,0,0,0.04)', borderRadius: 10, padding: 2 }}>
             {(['direct', 'groups', 'all'] as FilterMode[]).map((m) => (
               <button
                 key={m}
                 onClick={() => setFilter(m)}
                 style={{
-                  background: filter === m ? theme.accent : 'transparent',
-                  color: filter === m ? (panel === '305' ? 'var(--rp-navy)' : '#fff') : theme.muted,
+                  background: filter === m ? '#fff' : 'transparent',
+                  color: filter === m ? 'var(--text-main)' : 'var(--text-muted)',
                   border: 'none',
-                  borderRadius: 999,
-                  padding: '0.2rem 0.6rem',
-                  fontSize: 11,
+                  borderRadius: 8,
+                  padding: '4px 10px',
+                  fontSize: 10,
+                  fontWeight: 800,
                   fontFamily: 'inherit',
                   cursor: 'pointer',
-                  textTransform: 'capitalize',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.02em',
+                  boxShadow: filter === m ? '0 2px 4px rgba(0,0,0,0.05)' : 'none',
+                  transition: 'all 200ms',
                 }}
               >
                 {m}
@@ -207,26 +194,21 @@ export default function ChatList({ panel, selectedThreadId, onSelect, hideInvest
         </div>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto' }}>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0.5rem 0' }}>
         {isLoading && (
-          <div style={{ padding: '1rem', color: theme.muted, fontSize: 13 }}>Loading threads…</div>
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, fontWeight: 600 }}>Syncing...</div>
         )}
         {error && (
-          <div style={{ padding: '1rem', color: '#FF7474', fontSize: 13 }}>
-            Error loading threads.{' '}
-            <button onClick={() => refetch()} style={{ background: 'none', border: 'none', color: theme.accent, cursor: 'pointer', textDecoration: 'underline' }}>
+          <div style={{ padding: '1rem', color: 'var(--status-error)', fontSize: 12, fontWeight: 700, textAlign: 'center' }}>
+            Connection error.{' '}
+            <button onClick={() => refetch()} style={{ background: 'none', border: 'none', color: 'var(--accent-blue)', cursor: 'pointer', fontWeight: 800, textDecoration: 'underline' }}>
               Retry
             </button>
           </div>
         )}
         {!isLoading && threads.length === 0 && !error && (
-          <div style={{ padding: '1rem', color: theme.muted, fontSize: 13 }}>
-            No conversations.
-            {hideInvestors && (
-              <div style={{ marginTop: 6, fontSize: 11, lineHeight: 1.5 }}>
-                Investor-tagged contacts appear in the <strong style={{ color: theme.accent }}>★ Investors</strong> panel on the right.
-              </div>
-            )}
+          <div style={{ padding: '3rem 1.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: 13, fontWeight: 500 }}>
+            No conversations found.
           </div>
         )}
         {threads.map((t) => {
@@ -234,21 +216,8 @@ export default function ChatList({ panel, selectedThreadId, onSelect, hideInvest
           const formattedPhone = formatPhoneDisplay(t.phone)
           const nameIsDigits = !t.contact_name || /^\+?\d[\d\s\-()]*$/.test(t.contact_name.trim())
           const displayName = nameIsDigits ? (formattedPhone || t.phone) : t.contact_name!
-          const showPhoneLine = !nameIsDigits && formattedPhone && formattedPhone !== displayName
           const hasUnread = t.unread_count > 0
-          const isPriority = !!t.is_priority
-          const leftBorder = hasUnread
-            ? '3px solid #ef4444'
-            : isPriority
-            ? '3px solid #FFCC33'
-            : '3px solid transparent'
-          const rowBg = isSelected
-            ? theme.selected
-            : hasUnread
-            ? 'rgba(239,68,68,0.07)'
-            : isPriority
-            ? 'rgba(255, 204, 51,0.06)'
-            : 'transparent'
+          
           return (
             <div
               key={t.id}
@@ -261,105 +230,67 @@ export default function ChatList({ panel, selectedThreadId, onSelect, hideInvest
                 width: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                gap: 10,
-                padding: '0.6rem 0.75rem',
+                gap: 12,
+                padding: '12px 16px',
                 border: 'none',
-                borderLeft: leftBorder,
-                background: rowBg,
-                color: theme.text,
+                borderLeft: isSelected ? '4px solid var(--accent-blue)' : hasUnread ? '4px solid var(--status-error)' : '4px solid transparent',
+                background: isSelected ? 'var(--surface-soft)' : 'transparent',
+                color: 'var(--text-main)',
                 cursor: 'pointer',
                 textAlign: 'left',
-                borderBottom: `1px solid ${theme.border}`,
+                borderBottom: '1px solid rgba(0,0,0,0.03)',
                 fontFamily: 'inherit',
                 position: 'relative',
+                transition: 'all 150ms',
               }}
+              onMouseEnter={(e) => !isSelected && (e.currentTarget.style.background = 'rgba(0,0,0,0.02)')}
+              onMouseLeave={(e) => !isSelected && (e.currentTarget.style.background = 'transparent')}
             >
               <div
                 style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '50%',
-                  background: hasUnread
-                    ? '#ef4444'
-                    : t.channel_type === 'whatsapp' && t.panel === '305'
-                    ? '#F0B400' // WhatsApp 305 — warm amber (RePrime corporate, spam-prone)
-                    : t.channel_type === 'whatsapp'
-                    ? '#25D366' // WhatsApp 718 — brand green (personal)
-                    : t.channel_type === 'imessage'
-                    ? '#0A84FF' // Apple iMessage blue
-                    : t.channel_type === 'sms'
-                    ? '#FF9500' // Orange — SMS / plain text
-                    : theme.accent,
+                  width: 40,
+                  height: 40,
+                  borderRadius: 14,
+                  background: t.channel_type === 'whatsapp' ? '#25D366' : t.channel_type === 'imessage' ? '#0A84FF' : '#FF9500',
                   color: '#fff',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: t.channel_type === 'sms' ? 11 : 12,
+                  fontSize: 12,
                   fontWeight: 800,
                   flexShrink: 0,
-                  letterSpacing: '0.04em',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.25)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                 }}
-                title={
-                  t.channel_type === 'whatsapp' && t.panel === '305'
-                    ? 'WhatsApp 305 (RePrime)'
-                    : t.channel_type === 'whatsapp'
-                    ? 'WhatsApp 718 (personal)'
-                    : t.channel_type === 'imessage'
-                    ? 'iMessage (via cloud Mac)'
-                    : t.channel_type === 'sms'
-                    ? 'SMS / text message'
-                    : t.channel_type
-                }
               >
-                {t.channel_type === 'whatsapp' && t.panel === '305'
-                  ? '305'
-                  : t.channel_type === 'whatsapp'
-                  ? '718'
-                  : t.channel_type === 'imessage'
-                  ? 'iM'
-                  : t.channel_type === 'sms'
-                  ? 'SMS'
-                  : initials(t.contact_name, t.phone)}
+                {initials(t.contact_name, t.phone)}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 6 }}>
-                  <span style={{ fontWeight: hasUnread ? 800 : 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: hasUnread ? '#fff' : theme.text }}>
+                  <span style={{ fontWeight: hasUnread ? 800 : 700, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text-main)' }}>
                     {displayName}
                     {t.is_investor && (
-                      <span style={{ marginLeft: 6, color: theme.accent, fontSize: 11 }}>★</span>
-                    )}
-                    {isPriority && !hasUnread && (
-                      <span style={{ marginLeft: 5, fontSize: 11, color: '#FFCC33' }} title="AI-flagged: important">⚡</span>
-                    )}
-                    {isPriority && hasUnread && (
-                      <span style={{ marginLeft: 5, fontSize: 11, color: '#fca5a5' }} title="AI-flagged: important">⚡</span>
+                      <span style={{ marginLeft: 6, color: 'var(--accent-purple)', fontSize: 10 }}>★</span>
                     )}
                   </span>
-                  <span style={{ fontSize: 11, color: hasUnread ? '#fca5a5' : theme.muted, flexShrink: 0, fontWeight: hasUnread ? 600 : 400 }}>
+                  <span style={{ fontSize: 10, color: 'var(--text-muted)', flexShrink: 0, fontWeight: 600 }}>
                     {relativeTime(t.last_message_at)}
                   </span>
                 </div>
-                {showPhoneLine && (
-                  <div style={{ fontSize: 11, color: theme.muted, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {formattedPhone}
-                  </div>
-                )}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                  <span style={{ fontSize: 12, color: hasUnread ? 'rgba(255,255,255,0.7)' : theme.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontStyle: hasUnread ? 'italic' : 'normal' }}>
-                    {truncate(t.last_message_preview, 40)}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                  <span style={{ fontSize: 12, color: 'var(--text-muted)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {truncate(t.last_message_preview, 45)}
                   </span>
                   {hasUnread && (
                     <span
                       style={{
-                        background: '#ef4444',
+                        background: 'var(--status-error)',
                         color: '#fff',
-                        borderRadius: 999,
+                        borderRadius: 8,
                         fontSize: 10,
                         fontWeight: 800,
-                        padding: '2px 7px',
+                        padding: '2px 6px',
                         flexShrink: 0,
-                        boxShadow: '0 0 0 2px rgba(239,68,68,0.3)',
+                        boxShadow: '0 4px 10px rgba(239, 68, 68, 0.25)',
                       }}
                     >
                       {t.unread_count}
@@ -367,32 +298,28 @@ export default function ChatList({ panel, selectedThreadId, onSelect, hideInvest
                   )}
                 </div>
               </div>
-              {/* Block button — appears on hover, click → confirm modal */}
               <button
                 type="button"
-                aria-label={`Block ${t.contact_name || t.phone}`}
-                title="Block this contact across all channels"
                 onClick={(e) => { e.stopPropagation(); setConfirmBlock(t) }}
                 className="rp-thread-block-btn"
                 style={{
                   position: 'absolute',
-                  right: 8,
+                  right: 12,
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  width: 26,
-                  height: 26,
-                  borderRadius: 999,
-                  background: 'rgba(239, 68, 68, 0.10)',
-                  border: '1px solid rgba(239, 68, 68, 0.45)',
-                  color: '#FF7474',
-                  fontSize: 13,
+                  width: 32,
+                  height: 32,
+                  borderRadius: 10,
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  color: 'var(--status-error)',
+                  fontSize: 14,
                   cursor: 'pointer',
                   display: 'none',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontFamily: 'inherit',
                   padding: 0,
-                  lineHeight: 1,
+                  transition: 'all 200ms',
                 }}
               >
                 🚫
@@ -401,84 +328,58 @@ export default function ChatList({ panel, selectedThreadId, onSelect, hideInvest
           )
         })}
       </div>
-      {isFetching && !isLoading && (
-        <div style={{ padding: '0.3rem 0.75rem', fontSize: 11, color: theme.muted, borderTop: `1px solid ${theme.border}` }}>
-          Refreshing…
-        </div>
-      )}
 
-      {/* Hover styles for the block button — hidden by default, shown on row hover */}
       <style jsx>{`
         :global(.rp-thread-row):hover :global(.rp-thread-block-btn) {
           display: flex !important;
         }
         :global(.rp-thread-block-btn):hover {
-          background: rgba(239, 68, 68, 0.20) !important;
-          border-color: #FF7474 !important;
+          background: var(--status-error) !important;
+          color: #fff !important;
         }
       `}</style>
 
-      {/* Block confirmation modal */}
       {confirmBlock && (
         <div
-          role="dialog"
-          aria-modal="true"
           onClick={(e) => { if (e.target === e.currentTarget) setConfirmBlock(null) }}
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(7, 16, 30, 0.78)',
+            background: 'rgba(0, 0, 0, 0.4)',
+            backdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 9000,
-            padding: '1rem',
+            padding: '1.5rem',
           }}
         >
           <div style={{
-            background: '#0E3470',
-            border: '1px solid rgba(255, 204, 51, 0.35)',
-            padding: '24px 28px',
-            maxWidth: 480,
+            background: '#fff',
+            borderRadius: 24,
+            padding: '2rem',
+            maxWidth: 400,
             width: '100%',
-            color: '#fff',
-            fontFamily: 'inherit',
+            boxShadow: '0 20px 50px rgba(0,0,0,0.15)',
           }}>
-            <h3 style={{ margin: 0, fontSize: 18, color: '#FFCC33', letterSpacing: '0.02em' }}>Block this contact?</h3>
-            <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.6, color: '#F5EFD8' }}>
-              <b style={{ color: '#FFCC33' }}>{confirmBlock.contact_name || confirmBlock.phone}</b> will be blocked
-              <b> across every channel</b> — WhatsApp 305, WhatsApp 718, SMS, and email — for any matching Pipedrive
-              contact ID, phone number, or email. They will not appear in any panel until you unblock.
+            <h3 style={{ margin: 0, fontSize: 18, fontWeight: 800, color: 'var(--text-main)' }}>Block Contact?</h3>
+            <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.6, color: 'var(--text-muted)', fontWeight: 500 }}>
+              This will block <strong style={{ color: 'var(--text-main)' }}>{confirmBlock.contact_name || confirmBlock.phone}</strong> across all channels.
             </p>
-            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 22 }}>
+            <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
               <button
-                type="button"
                 onClick={() => setConfirmBlock(null)}
-                disabled={blockingId === confirmBlock.id}
                 style={{
-                  background: 'transparent',
-                  border: '1px solid rgba(255, 204, 51, 0.35)',
-                  color: '#FFCC33',
-                  padding: '8px 18px',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  letterSpacing: '0.10em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
+                  flex: 1, background: 'var(--surface-soft)', border: 'none', borderRadius: 12,
+                  padding: '12px', fontSize: 13, fontWeight: 700, cursor: 'pointer', color: 'var(--text-main)',
                 }}
-              >
-                Cancel
-              </button>
+              >Cancel</button>
               <button
-                type="button"
                 onClick={async () => {
-                  if (!confirmBlock) return
                   setBlockingId(confirmBlock.id)
                   try {
                     await blockThread(confirmBlock)
                     queryClient.invalidateQueries({ queryKey: ['threads', panel] })
-                    queryClient.invalidateQueries({ queryKey: ['investor-chat-threads'] })
                     setConfirmBlock(null)
                   } catch (err) {
                     addToast(`Block failed: ${(err as Error).message}`, 'error')
@@ -486,23 +387,12 @@ export default function ChatList({ panel, selectedThreadId, onSelect, hideInvest
                     setBlockingId(null)
                   }
                 }}
-                disabled={blockingId === confirmBlock.id}
                 style={{
-                  background: '#FF7474',
-                  border: 0,
-                  color: '#fff',
-                  padding: '8px 18px',
-                  fontSize: 12,
-                  fontWeight: 700,
-                  letterSpacing: '0.10em',
-                  textTransform: 'uppercase',
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                  opacity: blockingId === confirmBlock.id ? 0.6 : 1,
+                  flex: 1, background: 'var(--status-error)', border: 'none', borderRadius: 12,
+                  padding: '12px', fontSize: 13, fontWeight: 800, cursor: 'pointer', color: '#fff',
+                  boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)',
                 }}
-              >
-                {blockingId === confirmBlock.id ? 'Blocking…' : 'Block everywhere'}
-              </button>
+              >{blockingId ? 'Blocking...' : 'Block'}</button>
             </div>
           </div>
         </div>

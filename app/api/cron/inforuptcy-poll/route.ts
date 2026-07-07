@@ -9,13 +9,13 @@ import { createServiceClient } from '@/lib/supabase/server'
 // (playwright-core / @sparticuz/chromium cause webpack resolution failures)
 interface InforuptcyCase {
   case_no: string
-  debtor: string
-  chapter: string
-  date_filed: string
-  court: string
+  tenant: string
+  party_title: string | null
+  court: string | null
+  filed_at: string | null
+  raw: Record<string, unknown>
   judge?: string
   status?: string
-  tenant?: string
 }
 
 export const dynamic = 'force-dynamic'

@@ -73,9 +73,40 @@ export const navy = {
 } as const
 
 /**
- * Convenience export matching the contract in TerminalLogo.jsx.
- * Use this when JS code wants the same shape as the React component's exports.
+ * Pro Max Light Theme tokens — high-contrast, modern, glassmorphic.
+ * Used for the Command Center redesign.
  */
+export const PRO_MAX = {
+  background: '#FFFFFF',
+  surface: {
+    main: '#FFFFFF',
+    soft: '#F9FAFB',
+    glass: 'rgba(255, 255, 255, 0.85)',
+  },
+  border: {
+    main: 'rgba(0, 0, 0, 0.05)',
+    soft: 'rgba(0, 0, 0, 0.03)',
+  },
+  text: {
+    main: '#111827',
+    muted: '#6B7280',
+    inverse: '#FFFFFF',
+  },
+  accent: {
+    blue: '#3B82F6',
+    purple: '#A855F7',
+    gold: '#FFCC33',
+    navy: '#0E3470',
+  },
+  status: {
+    success: '#22C55E',
+    warning: '#F59E0B',
+    error: '#EF4444',
+    info: '#3B82F6',
+  }
+} as const
+
+/** Convenience export matching the contract in TerminalLogo.jsx. */
 export const REPRIME_BRAND = {
   gold: GOLD,
   navy: NAVY,
@@ -84,12 +115,12 @@ export const REPRIME_BRAND = {
   white: '#FFFFFF',
 } as const
 
-/** Non-brand functional colors — kept as-is per migration brief §2 "Specific exceptions". */
+/** Non-brand functional colors — updated for Pro Max parity. */
 export const status = {
-  success: '#00A980',
-  warning: GOLD, // unified to gold per migration brief
-  error:   '#FF7474',
-  info:    '#1D5FB8',
+  success: PRO_MAX.status.success,
+  warning: PRO_MAX.status.warning,
+  error:   PRO_MAX.status.error,
+  info:    PRO_MAX.status.info,
   amber:   '#FFBC7D',
   teal:    '#009080',
 } as const

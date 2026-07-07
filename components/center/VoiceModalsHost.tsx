@@ -78,7 +78,7 @@ export default function VoiceModalsHost() {
     contact_name?: string | null
     phone?: string | null
     pipedrive_contact_id?: number | null
-    panel?: string
+    panel?: string | null
     is_investor?: boolean
   }
 

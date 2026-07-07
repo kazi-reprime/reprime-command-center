@@ -17,9 +17,9 @@ export default function SystemStatus() {
 
   const getStatusColor = (s?: string) => {
     switch (s) {
-      case 'connected': return 'var(--status-success)'
-      case 'error': return 'var(--status-error)'
-      case 'unconfigured': return 'var(--status-warning)'
+      case 'connected': return 'var(--success)'
+      case 'error': return 'var(--error)'
+      case 'unconfigured': return 'var(--warning)'
       default: return 'var(--text-muted)'
     }
   }
@@ -47,15 +47,15 @@ export default function SystemStatus() {
       {services.map((svc) => (
         <div key={svc.id} style={{ 
           padding: '0.5rem 0.75rem', 
-          background: 'var(--surface-soft)', 
+          background: 'var(--surface-raised)', 
           borderRadius: 12, 
-          color: 'var(--text-main)', 
+          color: 'var(--text-primary)', 
           fontWeight: 800,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          border: '1px solid var(--border-main)',
-          boxShadow: '0 2px 6px rgba(0,0,0,0.02)'
+          border: '1px solid var(--border)',
+          boxShadow: 'var(--glass-shadow)'
         }}>
           <span style={{ color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{svc.label}</span>
           <span style={{ 

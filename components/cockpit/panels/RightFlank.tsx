@@ -184,19 +184,19 @@ export default function RightFlank() {
   return (
     <div className="w-[420px] flex flex-col gap-6 h-[calc(100vh-8rem)]" style={{ fontFamily: 'inherit' }}>
       {/* 1. Nora's Desk AI Secretary */}
-      <div className="flex-[1.5] bg-white border border-black/5 rounded-[32px] p-6 flex flex-col overflow-hidden shadow-sm shadow-black/[0.02]">
+      <div className="flex-[1.5] bg-surface border border-black/5 rounded-[32px] p-6 flex flex-col overflow-hidden shadow-sm shadow-black/[0.02]">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-accent">
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-black text-slate-900 tracking-tight">Nora's Desk</h2>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Advanced AI Secretary</p>
+              <h2 className="text-lg font-black text-text-primary tracking-tight">Nora's Desk</h2>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Advanced AI Secretary</p>
             </div>
           </div>
-          <div className="px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-lg">
-            <span className="text-[10px] text-indigo-500 font-black uppercase tracking-wider">Online</span>
+          <div className="px-3 py-1 bg-accent/10 border border-accent/20 rounded-lg">
+            <span className="text-[10px] text-accent font-black uppercase tracking-wider">Online</span>
           </div>
         </div>
 
@@ -207,12 +207,12 @@ export default function RightFlank() {
               key={i}
               className={`p-4 rounded-2xl text-sm leading-relaxed transition-all duration-300 ${
                 msg.sender === 'nora'
-                  ? 'bg-slate-50 border border-slate-100 text-slate-700'
-                  : 'bg-indigo-500 border border-indigo-400 text-white shadow-lg shadow-indigo-500/20'
+                  ? 'bg-surface-raised border border-border text-text-primary'
+                  : 'bg-indigo-500 border border-indigo-400 text-text-primary shadow-lg shadow-indigo-500/20'
               }`}
             >
               <div className={`text-[10px] font-black uppercase tracking-widest mb-2 flex justify-between items-center ${
-                msg.sender === 'nora' ? 'text-slate-400' : 'text-white/60'
+                msg.sender === 'nora' ? 'text-text-muted' : 'text-text-primary/60'
               }`}>
                 <span>{msg.sender === 'nora' ? 'Nora Intelligence' : 'Gideon Prime'}</span>
                 {msg.sender === 'nora' && (
@@ -225,9 +225,9 @@ export default function RightFlank() {
             </div>
           ))}
           {loadingNora && (
-            <div className="p-4 rounded-2xl bg-slate-50/50 border border-slate-100 flex items-center gap-3">
-              <Loader2 className="h-4 w-4 animate-spin text-indigo-500" />
-              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Synthesizing Data...</span>
+            <div className="p-4 rounded-2xl bg-surface-raised/50 border border-border flex items-center gap-3">
+              <Loader2 className="h-4 w-4 animate-spin text-accent" />
+              <span className="text-xs font-bold text-text-muted uppercase tracking-widest">Synthesizing Data...</span>
             </div>
           )}
           <div ref={messagesEndRef} />
@@ -235,7 +235,7 @@ export default function RightFlank() {
 
         {/* Input prompt */}
         <div className="mt-6 relative">
-          <div className="flex items-center bg-slate-50 border border-slate-200/50 rounded-2xl px-2 py-2 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
+          <div className="flex items-center bg-surface-raised border border-border/50 rounded-2xl px-2 py-2 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
             <button
               onClick={() => {
                 if (isListening) return;
@@ -255,7 +255,7 @@ export default function RightFlank() {
                   setIsListening(false);
                 }
               }}
-              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${isListening ? 'text-red-500 bg-red-50' : 'text-slate-400 hover:bg-white hover:text-indigo-500'}`}
+              className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${isListening ? 'text-error bg-error/10' : 'text-text-muted hover:bg-surface hover:text-accent'}`}
             >
               <Mic className="h-5 w-5" />
             </button>
@@ -266,12 +266,12 @@ export default function RightFlank() {
               onKeyDown={(e) => e.key === 'Enter' && handlePromptSend()}
               disabled={loadingNora}
               placeholder={loadingNora ? 'Processing...' : 'Instruct Nora...'}
-              className="bg-transparent text-sm font-semibold text-slate-900 px-3 outline-none flex-1 placeholder:text-slate-400"
+              className="bg-transparent text-sm font-semibold text-text-primary px-3 outline-none flex-1 placeholder:text-text-muted"
             />
             <button
               onClick={handlePromptSend}
               disabled={loadingNora}
-              className="w-10 h-10 flex items-center justify-center bg-indigo-500 text-white rounded-xl shadow-lg shadow-indigo-500/25 hover:bg-indigo-600 transition-all disabled:opacity-50"
+              className="w-10 h-10 flex items-center justify-center bg-indigo-500 text-text-primary rounded-xl shadow-lg shadow-indigo-500/25 hover:bg-indigo-600 transition-all disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
             </button>
@@ -280,13 +280,13 @@ export default function RightFlank() {
       </div>
 
       {/* 2. Secondary Panel (Tasks / Notes) */}
-      <div className="flex-1 bg-white border border-black/5 rounded-[32px] p-6 flex flex-col overflow-hidden shadow-sm shadow-black/[0.02]">
+      <div className="flex-1 bg-surface border border-black/5 rounded-[32px] p-6 flex flex-col overflow-hidden shadow-sm shadow-black/[0.02]">
         <div className="flex items-center justify-between mb-6">
-          <div className="flex bg-slate-50 p-1 rounded-2xl gap-1">
+          <div className="flex bg-surface-raised p-1 rounded-2xl gap-1">
             <button
               onClick={() => setActiveTab('tasks')}
               className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
-                activeTab === 'tasks' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                activeTab === 'tasks' ? 'bg-surface text-text-primary shadow-sm' : 'text-text-muted hover:text-text-secondary'
               }`}
             >
               Tasks
@@ -294,7 +294,7 @@ export default function RightFlank() {
             <button
               onClick={() => setActiveTab('notes')}
               className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
-                activeTab === 'notes' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                activeTab === 'notes' ? 'bg-surface text-text-primary shadow-sm' : 'text-text-muted hover:text-text-secondary'
               }`}
             >
               Notes
@@ -302,9 +302,9 @@ export default function RightFlank() {
           </div>
           {activeTab === 'tasks' && (
             loadingTasks ? (
-              <Loader2 className="h-4 w-4 animate-spin text-slate-300" />
+              <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
             ) : (
-              <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400">
+              <div className="w-8 h-8 rounded-lg bg-surface-raised flex items-center justify-center text-text-muted">
                 <CalendarClock className="h-4 w-4" />
               </div>
             )
@@ -315,10 +315,10 @@ export default function RightFlank() {
           <div className="flex-1 overflow-y-auto space-y-4 pr-1 -mr-1">
             {tasks.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center opacity-40">
-                <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center mb-3">
-                  <CheckSquare className="h-5 w-5 text-slate-300" />
+                <div className="w-12 h-12 rounded-2xl bg-surface-raised flex items-center justify-center mb-3">
+                  <CheckSquare className="h-5 w-5 text-text-muted" />
                 </div>
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Queue Clear</span>
+                <span className="text-[11px] font-bold text-text-muted uppercase tracking-widest">Queue Clear</span>
               </div>
             ) : (
               <>
@@ -327,15 +327,15 @@ export default function RightFlank() {
                   if (groupTasks.length === 0) return null;
                   return (
                     <div key={statusGroup} className="space-y-2">
-                      <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1 mb-3">{statusGroup}</h3>
+                      <h3 className="text-[10px] font-black text-text-muted uppercase tracking-widest pl-1 mb-3">{statusGroup}</h3>
                       {groupTasks.map((task) => (
-                        <div key={task.id} className="group p-4 bg-slate-50 border border-slate-100/50 rounded-2xl hover:bg-white hover:border-emerald-500/20 hover:shadow-xl hover:shadow-slate-200/40 transition-all duration-300 flex items-center justify-between gap-4">
+                        <div key={task.id} className="group p-4 bg-surface-raised border border-border/50 rounded-2xl hover:bg-surface hover:border-emerald-500/20 hover:shadow-xl hover:shadow-slate-200/40 transition-all duration-300 flex items-center justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <span className="text-xs font-black text-slate-900 block truncate tracking-tight mb-1">{task.title}</span>
+                            <span className="text-xs font-black text-text-primary block truncate tracking-tight mb-1">{task.title}</span>
                             <div className="flex items-center gap-2">
-                              <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest bg-indigo-50 px-1.5 py-0.5 rounded">#{task.projectTag || 'Gen'}</span>
+                              <span className="text-[9px] font-black text-accent uppercase tracking-widest bg-accent/10 px-1.5 py-0.5 rounded">#{task.projectTag || 'Gen'}</span>
                               <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-widest ${
-                                task.priority === 1 ? 'bg-red-500/10 text-red-500' : 'bg-slate-200/50 text-slate-400'
+                                task.priority === 1 ? 'bg-red-500/10 text-error' : 'bg-surface-hover/50 text-text-muted'
                               }`}>
                                 Priority {task.priority}
                               </span>
@@ -343,7 +343,7 @@ export default function RightFlank() {
                           </div>
                           <button
                             onClick={() => handleCompleteTask(task.id)}
-                            className="w-8 h-8 rounded-xl border-2 border-slate-200 flex items-center justify-center group-hover:border-emerald-500 group-hover:bg-emerald-50 text-transparent group-hover:text-emerald-500 transition-all duration-300"
+                            className="w-8 h-8 rounded-xl border-2 border-border flex items-center justify-center group-hover:border-emerald-500 group-hover:bg-success/10 text-transparent group-hover:text-success transition-all duration-300"
                           >
                             <Check className="h-4 w-4" strokeWidth={4} />
                           </button>

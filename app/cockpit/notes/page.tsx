@@ -173,12 +173,12 @@ export default function NotesPage() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center shadow-sm">
-              <FileText className="w-5 h-5 text-blue-600" />
+            <div className="w-10 h-10 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center shadow-sm">
+              <FileText className="w-5 h-5 text-accent" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Notes</h1>
-              <p className="text-xs font-bold tracking-widest text-slate-400 uppercase">
+              <h1 className="text-2xl font-bold text-text-primary tracking-tight">Notes</h1>
+              <p className="text-xs font-bold tracking-widest text-text-muted uppercase">
                 {notes.length} note{notes.length !== 1 ? 's' : ''} total
               </p>
             </div>
@@ -187,13 +187,13 @@ export default function NotesPage() {
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="flex-1 sm:w-64">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search notes..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:border-accent transition-all"
               />
             </div>
           </div>
@@ -203,7 +203,7 @@ export default function NotesPage() {
               setNewBody('')
               setShowCreate(true)
             }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors shadow-sm cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-text-primary text-sm font-semibold transition-colors shadow-sm cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             <span>New Note</span>
@@ -222,7 +222,7 @@ export default function NotesPage() {
               !search ? (
                 <button
                   onClick={() => setShowCreate(true)}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors shadow-sm cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-text-primary text-sm font-semibold transition-colors shadow-sm cursor-pointer"
                 >
                   <Plus className="w-4 h-4" />
                   Create Note
@@ -252,8 +252,8 @@ export default function NotesPage() {
                   {/* Title Row */}
                   <div className="flex items-start justify-between gap-2 mb-3">
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <FileText className="w-4 h-4 text-blue-500 shrink-0" />
-                      <h3 className="text-sm font-bold text-slate-900 truncate">{note.title}</h3>
+                      <FileText className="w-4 h-4 text-accent shrink-0" />
+                      <h3 className="text-sm font-bold text-text-primary truncate">{note.title}</h3>
                     </div>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                       <button
@@ -261,14 +261,14 @@ export default function NotesPage() {
                           e.stopPropagation()
                           handleEdit(note)
                         }}
-                        className="p-1.5 rounded-lg hover:bg-blue-50 text-slate-400 hover:text-blue-600 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg hover:bg-accent/10 text-text-muted hover:text-accent transition-colors cursor-pointer"
                         title="Edit"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                       </button>
                       <button
                         onClick={(e) => handleDelete(note.id, e)}
-                        className="p-1.5 rounded-lg hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg hover:bg-error/10 text-text-muted hover:text-error transition-colors cursor-pointer"
                         title="Delete"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -277,12 +277,12 @@ export default function NotesPage() {
                   </div>
 
                   {/* Body */}
-                  <p className={`text-sm text-slate-500 leading-relaxed mb-4 ${isExpanded ? '' : 'line-clamp-3'}`}>
+                  <p className={`text-sm text-text-secondary leading-relaxed mb-4 ${isExpanded ? '' : 'line-clamp-3'}`}>
                     {isExpanded ? note.body || 'No content' : bodyPreview || 'No content'}
                   </p>
 
                   {/* Footer */}
-                  <div className="flex items-center gap-2 text-xs text-slate-400">
+                  <div className="flex items-center gap-2 text-xs text-text-muted">
                     <Clock className="w-3 h-3" />
                     <span>{formatDate(note.updated_at || note.created_at)}</span>
                   </div>
@@ -297,27 +297,27 @@ export default function NotesPage() {
       {showCreate && (
         <div
           onClick={() => setShowCreate(false)}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/20 backdrop-blur-md p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/20 backdrop-blur-md p-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg bg-white/95 backdrop-blur-xl border border-white rounded-3xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(15,23,42,0.15)] animate-in fade-in zoom-in-95 duration-200"
+            className="w-full max-w-lg bg-surface/95 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(15,23,42,0.15)] animate-in fade-in zoom-in-95 duration-200"
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
               <div className="flex items-center gap-2">
-                <Plus className="w-5 h-5 text-blue-500" />
-                <h2 className="text-base font-bold text-slate-900">Create New Note</h2>
+                <Plus className="w-5 h-5 text-accent" />
+                <h2 className="text-base font-bold text-text-primary">Create New Note</h2>
               </div>
               <button
                 onClick={() => setShowCreate(false)}
-                className="text-slate-400 hover:text-slate-600 text-lg cursor-pointer"
+                className="text-text-muted hover:text-text-secondary text-lg cursor-pointer"
               >
                 ✕
               </button>
             </div>
             <div className="p-6 flex flex-col gap-4">
               <div>
-                <label className="block text-xs font-bold tracking-widest text-slate-400 uppercase mb-2">
+                <label className="block text-xs font-bold tracking-widest text-text-muted uppercase mb-2">
                   Title <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -325,11 +325,11 @@ export default function NotesPage() {
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="Note title"
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-raised border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:border-accent transition-all"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold tracking-widest text-slate-400 uppercase mb-2">
+                <label className="block text-xs font-bold tracking-widest text-text-muted uppercase mb-2">
                   Content
                 </label>
                 <textarea
@@ -337,20 +337,20 @@ export default function NotesPage() {
                   onChange={(e) => setNewBody(e.target.value)}
                   placeholder="Write your note..."
                   rows={6}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all resize-vertical"
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-raised border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:border-accent transition-all resize-vertical"
                 />
               </div>
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={handleCreate}
                   disabled={createMutation.isPending}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-text-primary text-sm font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
                 >
                   {createMutation.isPending ? 'Creating...' : 'Create Note'}
                 </button>
                 <button
                   onClick={() => setShowCreate(false)}
-                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-surface-raised hover:bg-surface-hover text-text-secondary text-sm font-semibold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -364,58 +364,58 @@ export default function NotesPage() {
       {showEdit && (
         <div
           onClick={() => setShowEdit(false)}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/20 backdrop-blur-md p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/20 backdrop-blur-md p-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-lg bg-white/95 backdrop-blur-xl border border-white rounded-3xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(15,23,42,0.15)] animate-in fade-in zoom-in-95 duration-200"
+            className="w-full max-w-lg bg-surface/95 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(15,23,42,0.15)] animate-in fade-in zoom-in-95 duration-200"
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
               <div className="flex items-center gap-2">
-                <Edit3 className="w-5 h-5 text-blue-500" />
-                <h2 className="text-base font-bold text-slate-900">Edit Note</h2>
+                <Edit3 className="w-5 h-5 text-accent" />
+                <h2 className="text-base font-bold text-text-primary">Edit Note</h2>
               </div>
               <button
                 onClick={() => setShowEdit(false)}
-                className="text-slate-400 hover:text-slate-600 text-lg cursor-pointer"
+                className="text-text-muted hover:text-text-secondary text-lg cursor-pointer"
               >
                 ✕
               </button>
             </div>
             <div className="p-6 flex flex-col gap-4">
               <div>
-                <label className="block text-xs font-bold tracking-widest text-slate-400 uppercase mb-2">
+                <label className="block text-xs font-bold tracking-widest text-text-muted uppercase mb-2">
                   Title <span className="text-red-400">*</span>
                 </label>
                 <input
                   autoFocus
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-raised border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:border-accent transition-all"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold tracking-widest text-slate-400 uppercase mb-2">
+                <label className="block text-xs font-bold tracking-widest text-text-muted uppercase mb-2">
                   Content
                 </label>
                 <textarea
                   value={editBody}
                   onChange={(e) => setEditBody(e.target.value)}
                   rows={6}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all resize-vertical"
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-raised border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:border-accent transition-all resize-vertical"
                 />
               </div>
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={handleUpdate}
                   disabled={updateMutation.isPending}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-text-primary text-sm font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
                 >
                   {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
                 </button>
                 <button
                   onClick={() => setShowEdit(false)}
-                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-surface-raised hover:bg-surface-hover text-text-secondary text-sm font-semibold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>

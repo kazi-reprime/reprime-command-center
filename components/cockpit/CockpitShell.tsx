@@ -88,12 +88,12 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
   const sidebarWidth = collapsed ? 80 : 260;
 
   return (
-    <div className="flex min-h-screen w-full bg-[#fdfdfd] text-[#0f172a] font-sans relative">
+    <div className="flex min-h-screen w-full bg-background text-text-primary font-sans relative">
       {/* Mobile overlay */}
       {mobileOpen && (
         <div
           onClick={() => setMobileOpen(false)}
-          className="fixed inset-0 z-40 bg-slate-900/20 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-40 bg-surface/20 backdrop-blur-sm lg:hidden"
         />
       )}
 
@@ -102,7 +102,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
         className={`fixed inset-y-0 left-0 z-50 flex flex-col glass-panel transition-all duration-300 ease-in-out lg:translate-x-0 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
-        style={{ width: sidebarWidth, borderRight: '1px solid rgba(0,0,0,0.05)' }}
+        style={{ width: sidebarWidth, borderRight: '1px solid var(--border)' }}
       >
         {/* Logo Area */}
         <div className={`flex items-center h-24 ${collapsed ? 'justify-center' : 'px-6'} shrink-0 pt-4`}>
@@ -111,8 +111,8 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
           </div>
           {!collapsed && (
             <div className="ml-3 overflow-hidden">
-              <div className="text-base font-bold tracking-tight text-slate-900 whitespace-nowrap">RePrime</div>
-              <div className="text-[0.65rem] font-bold tracking-widest text-slate-400 uppercase">Command</div>
+              <div className="text-base font-bold tracking-tight text-text-primary whitespace-nowrap">RePrime</div>
+              <div className="text-[0.65rem] font-bold tracking-widest text-text-muted uppercase">Command</div>
             </div>
           )}
         </div>
@@ -120,7 +120,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
         {/* Collapse Toggle */}
         <button 
           onClick={() => setCollapsed(!collapsed)}
-          className="absolute -right-3 top-24 w-6 h-6 bg-white border border-slate-200 rounded-full flex items-center justify-center text-slate-400 hover:text-blue-500 shadow-sm z-50 hidden lg:flex cursor-pointer"
+          className="absolute -right-3 top-24 w-6 h-6 bg-surface border border-border rounded-full flex items-center justify-center text-text-secondary hover:text-accent shadow-sm z-50 hidden lg:flex cursor-pointer"
         >
           {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
         </button>
@@ -130,12 +130,12 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
           {NAV_SECTIONS.map((section, idx) => (
             <div key={idx} className="flex flex-col gap-1">
               {!collapsed && (
-                <div className="px-3 pb-2 text-[0.65rem] font-bold tracking-widest text-slate-400 uppercase">
+                <div className="px-3 pb-2 text-[0.65rem] font-bold tracking-widest text-text-muted uppercase">
                   {section.title}
                 </div>
               )}
               {collapsed && idx !== 0 && (
-                <div className="h-px bg-slate-100 mx-3 my-2" />
+                <div className="h-px bg-border mx-3 my-2" />
               )}
               
               {section.items.map((item) => {
@@ -150,13 +150,13 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
                       collapsed ? 'justify-center w-10 mx-auto' : 'px-3'
                     } ${
                       isActive 
-                        ? 'bg-blue-50 text-blue-600 font-semibold' 
-                        : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'
+                        ? 'bg-accent/10 text-accent font-semibold' 
+                        : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary font-medium'
                     }`}
                     title={collapsed ? item.label : undefined}
                   >
                     {isActive && (
-                      <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-blue-500 rounded-r-md" />
+                      <div className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-accent rounded-r-md" />
                     )}
                     <div className={`${isActive ? 'opacity-100' : 'opacity-70 group-hover:opacity-100'} transition-opacity`}>
                       {item.icon}
@@ -170,15 +170,15 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
         </nav>
 
         {/* User Profile Footer */}
-        <div className="p-4 border-t border-slate-100 shrink-0">
+        <div className="p-4 border-t border-border shrink-0">
           <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'}`}>
-            <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 shrink-0">
+            <div className="w-9 h-9 rounded-full bg-surface-raised flex items-center justify-center text-text-secondary shrink-0">
               <UserCircle className="w-5 h-5" />
             </div>
             {!collapsed && (
               <div className="overflow-hidden">
-                <div className="text-sm font-semibold text-slate-900 truncate">Gideon Prime</div>
-                <div className="text-xs font-medium text-slate-400 truncate">Administrator</div>
+                <div className="text-sm font-semibold text-text-primary truncate">Gideon Prime</div>
+                <div className="text-xs font-medium text-text-muted truncate">Administrator</div>
               </div>
             )}
           </div>
@@ -190,19 +190,19 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
         className="flex-1 flex flex-col min-h-screen transition-all duration-300 ease-in-out w-full"
       >
         {/* Top Executive Bar */}
-        <header className="sticky top-0 z-30 flex items-center justify-between h-20 px-4 lg:px-8 glass-panel border-b border-slate-100/50" style={{ marginLeft: sidebarWidth }}>
+        <header className="sticky top-0 z-30 flex items-center justify-between h-20 px-4 lg:px-8 glass-panel border-b border-border" style={{ marginLeft: sidebarWidth }}>
           
           {/* Left section: Mobile menu & Greeting */}
           <div className="flex items-center gap-4">
             <button 
-              className="lg:hidden p-2 text-slate-500 hover:text-slate-900"
+              className="lg:hidden p-2 text-text-secondary hover:text-text-primary"
               onClick={() => setMobileOpen(true)}
             >
               <Menu className="w-6 h-6" />
             </button>
             <div className="hidden sm:block">
-              <h1 className="text-lg font-semibold text-slate-900">{greeting}, Gideon.</h1>
-              <p className="text-xs font-medium text-slate-500">{dateStr} • APEX Priority: Normal</p>
+              <h1 className="text-lg font-semibold text-text-primary">{greeting}, Gideon.</h1>
+              <p className="text-xs font-medium text-text-muted">{dateStr} • APEX Priority: Normal</p>
             </div>
           </div>
 
@@ -210,25 +210,25 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
           <div className="flex items-center gap-3">
             <button
               onClick={() => { setCommandOpen(true); setCommandQuery('') }}
-              className="hidden md:flex items-center gap-3 h-10 px-4 bg-slate-100 hover:bg-slate-200/70 rounded-full text-slate-500 text-sm font-medium transition-colors border border-transparent hover:border-slate-300/50"
+              className="hidden md:flex items-center gap-3 h-10 px-4 bg-surface-raised hover:bg-surface-hover rounded-full text-text-secondary text-sm font-medium transition-colors border border-transparent hover:border-border-strong"
             >
               <Search className="w-4 h-4" />
               <span>Command Palette...</span>
-              <kbd className="hidden lg:inline-flex items-center h-5 px-1.5 bg-white rounded border border-slate-200 text-[10px] font-semibold text-slate-400">⌘K</kbd>
+              <kbd className="hidden lg:inline-flex items-center h-5 px-1.5 bg-surface rounded border border-border text-[10px] font-semibold text-text-muted">⌘K</kbd>
             </button>
 
             <button
               onClick={() => router.push('/cockpit/inbox')}
-              className="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200/70 flex items-center justify-center text-slate-500 transition-colors relative cursor-pointer"
+              className="w-10 h-10 rounded-full bg-surface-raised hover:bg-surface-hover flex items-center justify-center text-text-secondary transition-colors relative cursor-pointer"
               title="Notifications"
             >
               <Bell className="w-4 h-4" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-blue-500 rounded-full border-2 border-white" />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-accent rounded-full border-2 border-surface" />
             </button>
 
             <button
               onClick={() => { setCommandOpen(true); setCommandQuery(''); }}
-              className="h-10 px-4 rounded-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm cursor-pointer"
+              className="h-10 px-4 rounded-full bg-accent hover:bg-accent-hover text-accent-foreground text-sm font-semibold transition-colors flex items-center gap-2 shadow-sm cursor-pointer"
               title="New Action"
             >
               <Plus className="w-4 h-4" />
@@ -237,7 +237,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
 
             <button
               onClick={() => window.open('/center', '_blank')}
-              className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-50 to-blue-50 hover:from-indigo-100 hover:to-blue-100 border border-blue-100 flex items-center justify-center text-blue-600 transition-all shadow-sm group cursor-pointer"
+              className="w-10 h-10 rounded-full bg-surface-raised hover:bg-surface-hover border border-border flex items-center justify-center text-accent transition-all shadow-sm group cursor-pointer"
               title="Voice Command Center"
             >
               <Mic className="w-4 h-4 group-hover:scale-110 transition-transform" />
@@ -258,20 +258,20 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
       {commandOpen && (
         <div
           onClick={() => setCommandOpen(false)}
-          className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] bg-slate-900/20 backdrop-blur-md"
+          className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] bg-surface/20 backdrop-blur-md"
         >
           <div
             onClick={e => e.stopPropagation()}
-            className="w-[90%] max-w-2xl bg-white/90 backdrop-blur-xl border border-white rounded-3xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(15,23,42,0.15)] animate-in fade-in zoom-in-95 duration-200"
+            className="w-[90%] max-w-2xl bg-surface/90 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(15,23,42,0.15)] animate-in fade-in zoom-in-95 duration-200"
           >
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-slate-100">
-              <Search className="w-5 h-5 text-blue-500" />
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-border">
+              <Search className="w-5 h-5 text-accent" />
               <input
                 autoFocus
                 value={commandQuery}
                 onChange={e => setCommandQuery(e.target.value)}
                 placeholder="Where to, Gideon?"
-                className="flex-1 bg-transparent border-none text-lg font-semibold text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                className="flex-1 bg-transparent border-none text-lg font-semibold text-text-primary placeholder:text-text-muted focus:outline-none"
               />
             </div>
             
@@ -281,29 +281,29 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
                   key={item.href}
                   href={item.href}
                   onClick={() => setCommandOpen(false)}
-                  className="flex items-center gap-4 p-4 rounded-2xl hover:bg-blue-50 text-slate-600 hover:text-blue-600 transition-colors group"
+                  className="flex items-center gap-4 p-4 rounded-2xl hover:bg-surface-hover text-text-secondary hover:text-accent transition-colors group"
                 >
-                  <div className="p-2 rounded-xl bg-slate-50 group-hover:bg-white shadow-sm transition-colors">
+                  <div className="p-2 rounded-xl bg-surface-raised group-hover:bg-surface shadow-sm transition-colors">
                     {item.icon}
                   </div>
-                  <span className="font-semibold">{item.label}</span>
-                  <span className="ml-auto text-[10px] font-bold tracking-widest text-slate-300 group-hover:text-blue-300 uppercase">Return to open</span>
+                  <span className="font-semibold text-text-primary">{item.label}</span>
+                  <span className="ml-auto text-[10px] font-bold tracking-widest text-text-muted group-hover:text-accent uppercase">Return to open</span>
                 </Link>
               ))}
               {filteredNav.length === 0 && (
-                <div className="py-12 text-center text-slate-400">
+                <div className="py-12 text-center text-text-muted">
                   <Search className="w-8 h-8 mx-auto mb-3 opacity-20" />
                   <p className="font-medium text-sm">No matching commands found.</p>
                 </div>
               )}
             </div>
             
-            <div className="px-6 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+            <div className="px-6 py-3 bg-surface-raised border-t border-border flex items-center justify-between text-[10px] font-bold tracking-widest text-text-muted uppercase">
               <div className="flex gap-4">
                 <span>ESC to close</span>
                 <span>Enter to select</span>
               </div>
-              <span className="text-blue-500">RePrime OS</span>
+              <span className="text-accent">RePrime OS</span>
             </div>
           </div>
         </div>

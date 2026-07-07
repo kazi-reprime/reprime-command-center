@@ -12,16 +12,16 @@ interface CrewListResponse {
 }
 
 const AVATAR_TINTS = [
-  'text-blue-600 border-blue-200',      // Gideon
-  'text-emerald-600 border-emerald-200', // green
-  'text-amber-600 border-amber-200',     // amber
+  'text-accent border-blue-200',      // Gideon
+  'text-success border-emerald-200', // green
+  'text-warning border-amber-200',     // amber
   'text-purple-600 border-purple-200',   // gold/purple
   'text-pink-600 border-pink-200',       // violet
   'text-orange-600 border-orange-200',   // orange
 ] as const
 
 function tintFor(email: string, isPrincipal: boolean, investorSide: boolean): string {
-  if (isPrincipal) return 'text-blue-600 border-blue-200'
+  if (isPrincipal) return 'text-accent border-blue-200'
   if (investorSide) return 'text-purple-600 border-purple-200'
   let hash = 0
   for (let i = 0; i < email.length; i++) {
@@ -125,17 +125,17 @@ export default function CrewColumn() {
   }, [emails, supabase, queryClient])
 
   return (
-    <div data-component="crew-column" className="bg-white h-full overflow-y-auto px-4 py-4 text-slate-800">
+    <div data-component="crew-column" className="bg-surface h-full overflow-y-auto px-4 py-4 text-text-primary">
       {crewQuery.isLoading && (
-        <div className="text-slate-400 text-xs font-bold">Loading crew…</div>
+        <div className="text-text-muted text-xs font-bold">Loading crew…</div>
       )}
       {crewQuery.isError && (
-        <div className="text-red-500 text-xs font-bold">
+        <div className="text-error text-xs font-bold">
           Crew failed: {(crewQuery.error as Error).message}
         </div>
       )}
       {!crewQuery.isLoading && !crewQuery.isError && (crewQuery.data ?? []).length === 0 && (
-        <div className="text-slate-400 text-xs font-bold">No active crew</div>
+        <div className="text-text-muted text-xs font-bold">No active crew</div>
       )}
       
       <div className="flex flex-col gap-2">
@@ -179,20 +179,20 @@ function CrewRow({
             setExpanded((v) => !v)
           }
         }}
-        className={`flex items-center gap-3 p-3 bg-slate-50 border rounded-xl cursor-pointer text-sm text-slate-800 transition-all ${
-          expanded ? 'border-blue-300 bg-white shadow-sm' : 'border-slate-100 hover:border-slate-200 hover:bg-white hover:shadow-sm'
+        className={`flex items-center gap-3 p-3 bg-surface-raised border rounded-xl cursor-pointer text-sm text-text-primary transition-all ${
+          expanded ? 'border-blue-300 bg-surface shadow-sm' : 'border-border hover:border-border hover:bg-surface hover:shadow-sm'
         }`}
       >
         <div
           aria-hidden
-          className={`w-10 h-10 rounded-full bg-white border-2 flex items-center justify-center font-black text-sm shrink-0 ${tintClass}`}
+          className={`w-10 h-10 rounded-full bg-surface border-2 flex items-center justify-center font-black text-sm shrink-0 ${tintClass}`}
         >
           {initials}
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="font-bold leading-tight truncate">{member.display_name}</div>
-          <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-2 flex-wrap font-medium">
+          <div className="text-xs text-text-muted mt-0.5 flex items-center gap-2 flex-wrap font-medium">
             <span>{member.role}</span>
             {member.is_investor_side_only && (
               <span className="bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-widest">
@@ -216,8 +216,8 @@ function CrewRow({
           aria-label={`Show bucket items assigned to ${member.display_name}`}
           className={`min-w-[44px] h-8 px-3 rounded-full text-xs font-black transition-colors ${
             openCount > 0 
-              ? 'bg-blue-100 text-blue-700 hover:bg-blue-200' 
-              : 'bg-transparent text-slate-300 border border-slate-200 hover:text-slate-500 hover:border-slate-300'
+              ? 'bg-accent/20 text-accent-hover hover:bg-blue-200' 
+              : 'bg-transparent text-text-muted border border-border hover:text-text-secondary hover:border-border-strong'
           }`}
         >
           {openCount}
@@ -287,11 +287,11 @@ function DelegateForm({
 
   return (
     <div
-      className="bg-slate-50 border border-slate-200 rounded-xl p-3 -mt-2 mb-2 pt-4 relative z-0 shadow-inner"
+      className="bg-surface-raised border border-border rounded-xl p-3 -mt-2 mb-2 pt-4 relative z-0 shadow-inner"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="mb-3">
-        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1" htmlFor={`crew-title-${member.email}`}>
+        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-1" htmlFor={`crew-title-${member.email}`}>
           Task for {member.display_name}
         </label>
         <input
@@ -300,14 +300,14 @@ function DelegateForm({
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="What needs doing?"
-          className="w-full bg-white border border-slate-200 text-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
+          className="w-full bg-surface border border-border text-text-primary rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus transition-all shadow-sm"
           autoFocus
           disabled={busy}
         />
       </div>
 
       <div className="mb-3">
-        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1" htmlFor={`crew-remind-${member.email}`}>
+        <label className="block text-[10px] font-black text-text-muted uppercase tracking-widest mb-1" htmlFor={`crew-remind-${member.email}`}>
           Remind (optional)
         </label>
         <input
@@ -316,13 +316,13 @@ function DelegateForm({
           value={remindAt}
           min={minRemind}
           onChange={(e) => setRemindAt(e.target.value)}
-          className="w-full bg-white border border-slate-200 text-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
+          className="w-full bg-surface border border-border text-text-primary rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-focus transition-all shadow-sm"
           disabled={busy}
         />
       </div>
 
       {error && (
-        <div className="text-red-500 text-xs font-bold mb-2">{error}</div>
+        <div className="text-error text-xs font-bold mb-2">{error}</div>
       )}
 
       <div className="flex gap-2">
@@ -330,7 +330,7 @@ function DelegateForm({
           type="button"
           onClick={submit}
           disabled={busy}
-          className={`flex-1 bg-blue-600 hover:bg-blue-700 text-white border-none rounded-lg px-4 py-2 font-bold text-sm transition-colors shadow-sm ${busy ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
+          className={`flex-1 bg-accent hover:bg-accent-hover text-text-primary border-none rounded-lg px-4 py-2 font-bold text-sm transition-colors shadow-sm ${busy ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
         >
           {busy ? 'Delegating…' : 'Delegate'}
         </button>
@@ -338,7 +338,7 @@ function DelegateForm({
           type="button"
           onClick={onClose}
           disabled={busy}
-          className={`bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-lg px-4 py-2 font-bold text-sm transition-colors shadow-sm ${busy ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
+          className={`bg-surface hover:bg-surface-raised text-text-secondary border border-border rounded-lg px-4 py-2 font-bold text-sm transition-colors shadow-sm ${busy ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
         >
           Cancel
         </button>

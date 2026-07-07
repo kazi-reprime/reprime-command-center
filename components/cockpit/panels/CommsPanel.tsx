@@ -329,11 +329,11 @@ export default function CommsPanel() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search conversations..."
-              className="bg-transparent text-xs text-white outline-none w-full"
+              className="bg-transparent text-xs text-text-primary outline-none w-full"
             />
           </div>
 
-          <div className="flex space-x-1 bg-[#09224d] p-0.5 rounded-lg border border-white/5 text-[10px] font-semibold overflow-x-auto hide-scrollbar">
+          <div className="flex space-x-1 bg-[#09224d] p-0.5 rounded-lg border border-border/5 text-[10px] font-semibold overflow-x-auto hide-scrollbar">
             {(['all', 'whatsapp', 'imessage', 'sms', 'investor', 'family', 'staff'] as const).map((lane) => (
               <button
                 key={lane}
@@ -341,7 +341,7 @@ export default function CommsPanel() {
                 className={`flex-1 py-1 rounded text-center capitalize transition ${
                   activeLane === lane
                     ? 'bg-[#FFCC33] text-[#0E3470]'
-                    : 'text-gray-400 hover:text-white'
+                    : 'text-gray-400 hover:text-text-primary'
                 }`}
               >
                 {lane}
@@ -354,7 +354,7 @@ export default function CommsPanel() {
         <div className="flex-1 overflow-y-auto divide-y divide-[#FFCC33]/10">
           {(activeLane !== 'all' && activeLane !== 'investor' && adapterHealth[activeLane] && !adapterHealth[activeLane].isConfigured) ? (
             <div className="p-8 flex flex-col items-center justify-center text-center space-y-4 h-full">
-              <div className="p-4 bg-white/5 rounded-full border border-white/10">
+              <div className="p-4 bg-surface/5 rounded-full border border-border/10">
                  <Shield className="h-6 w-6 text-gray-400" />
               </div>
               <div>
@@ -421,12 +421,12 @@ export default function CommsPanel() {
                   selectedThreadId === thread.id ? 'bg-[#123e80]/50 border-l-2 border-[#FFCC33]' : ''
                 }`}
               >
-                <div className="p-2 bg-[#09224d] border border-white/10 rounded-full">
+                <div className="p-2 bg-[#09224d] border border-border/10 rounded-full">
                   <User className="h-4 w-4 text-gray-300" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white truncate flex items-center space-x-1">
+                    <span className="text-xs font-bold text-text-primary truncate flex items-center space-x-1">
                       <span>{thread.contactName || thread.contactPhone}</span>
                       {thread.laneOverride === 'investor' && <span className="text-[#FFCC33]">★</span>}
                     </span>
@@ -464,7 +464,7 @@ export default function CommsPanel() {
             {/* Header info */}
             <div className="h-14 border-b border-[#FFCC33]/15 px-6 flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <span className="text-sm font-bold text-white">
+                <span className="text-sm font-bold text-text-primary">
                   {activeThread.contactName || activeThread.contactPhone}
                 </span>
                 <span className="text-xs text-gray-400">({activeThread.laneOverride})</span>
@@ -472,21 +472,21 @@ export default function CommsPanel() {
               <div className="flex items-center space-x-1">
                 <button 
                   onClick={() => window.open(`tel:${activeThread.contactPhone}`, '_blank')}
-                  className="p-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-white/5"
+                  className="p-2 text-gray-400 hover:text-text-primary transition rounded-lg hover:bg-surface/5"
                   title="Call"
                 >
                   <Phone className="h-4 w-4" />
                 </button>
                 <button 
                   onClick={() => handleArchive(activeThread.id)}
-                  className="p-2 text-gray-400 hover:text-white transition rounded-lg hover:bg-white/5"
+                  className="p-2 text-gray-400 hover:text-text-primary transition rounded-lg hover:bg-surface/5"
                   title="Archive"
                 >
                   <FolderArchive className="h-4 w-4" />
                 </button>
                 <button 
                   onClick={() => handleDelete(activeThread.id)}
-                  className="p-2 text-gray-400 hover:text-red-400 transition rounded-lg hover:bg-white/5"
+                  className="p-2 text-gray-400 hover:text-red-400 transition rounded-lg hover:bg-surface/5"
                   title="Delete"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -496,19 +496,19 @@ export default function CommsPanel() {
 
             {/* Action Bar */}
             <div className="bg-[#08224d] border-b border-[#FFCC33]/15 px-6 py-2 flex items-center space-x-2">
-              <button onClick={() => handleNoraAction('Translate the last 5 messages to English')} className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
+              <button onClick={() => handleNoraAction('Translate the last 5 messages to English')} className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-surface/5 border border-border/10 rounded hover:bg-surface/10 text-gray-300 transition">
                 <Languages className="h-3 w-3" />
                 <span>Translate</span>
               </button>
-              <button onClick={() => handleNoraAction('Summarize this conversation')} className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
+              <button onClick={() => handleNoraAction('Summarize this conversation')} className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-surface/5 border border-border/10 rounded hover:bg-surface/10 text-gray-300 transition">
                 <FileText className="h-3 w-3" />
                 <span>Summarize</span>
               </button>
-              <button onClick={() => handleNoraAction('Extract key details and add a note')} className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
+              <button onClick={() => handleNoraAction('Extract key details and add a note')} className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-surface/5 border border-border/10 rounded hover:bg-surface/10 text-gray-300 transition">
                 <StickyNote className="h-3 w-3" />
                 <span>Add Note</span>
               </button>
-              <button onClick={() => handleNoraAction('Create a follow-up task for this contact')} className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-white/5 border border-white/10 rounded hover:bg-white/10 text-gray-300 transition">
+              <button onClick={() => handleNoraAction('Create a follow-up task for this contact')} className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-surface/5 border border-border/10 rounded hover:bg-surface/10 text-gray-300 transition">
                 <Clock className="h-3 w-3" />
                 <span>Follow-up</span>
               </button>
@@ -535,8 +535,8 @@ export default function CommsPanel() {
                       <div
                         className={`max-w-[70%] rounded-xl px-4 py-2.5 text-xs shadow-md border ${
                           msg.direction === 'outbound'
-                            ? 'bg-[#123e80] border-[#FFCC33]/30 text-white rounded-br-none'
-                            : 'bg-[#08224d] border-white/5 text-gray-100 rounded-bl-none'
+                            ? 'bg-[#123e80] border-[#FFCC33]/30 text-text-primary rounded-br-none'
+                            : 'bg-[#08224d] border-border/5 text-gray-100 rounded-bl-none'
                         }`}
                         dir={rtl ? 'rtl' : 'ltr'}
                       >
@@ -578,7 +578,7 @@ export default function CommsPanel() {
                       setIsListening(false);
                     }
                   }}
-                  className={`p-1.5 transition rounded-lg ${isListening ? 'text-red-400 bg-red-500/10' : 'text-gray-400 hover:text-[#FFCC33] hover:bg-white/5'}`}
+                  className={`p-1.5 transition rounded-lg ${isListening ? 'text-red-400 bg-red-500/10' : 'text-gray-400 hover:text-[#FFCC33] hover:bg-surface/5'}`}
                   title="Dictate message"
                 >
                   <Mic className="h-4 w-4" />
@@ -589,7 +589,7 @@ export default function CommsPanel() {
                   onChange={(e) => setReplyText(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                   placeholder="Type a reply in English or Hebrew..."
-                  className="bg-transparent text-xs text-white outline-none flex-1 placeholder-gray-500"
+                  className="bg-transparent text-xs text-text-primary outline-none flex-1 placeholder-gray-500"
                 />
                 <button
                   onClick={handleSend}

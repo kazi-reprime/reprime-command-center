@@ -94,7 +94,7 @@ export default function NoraDeskColumn() {
   const noApiKey = !chatMut.isPending && messages.length === 0 && historyQ.data?.messages?.length === 0
 
   return (
-    <div className="flex flex-col h-full bg-white text-slate-800 font-sans">
+    <div className="flex flex-col h-full bg-surface text-text-primary font-sans">
       {/* Header */}
       <div className="px-4 py-3 border-b border-purple-100 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -115,7 +115,7 @@ export default function NoraDeskColumn() {
             className={`px-3 py-1 rounded-lg border-none cursor-pointer text-[9px] font-black uppercase tracking-widest transition-colors ${
               filter === f 
                 ? 'bg-purple-100 text-purple-700 shadow-sm' 
-                : 'bg-transparent text-slate-400 hover:bg-purple-50 hover:text-purple-600'
+                : 'bg-transparent text-text-muted hover:bg-purple-50 hover:text-purple-600'
             }`}
           >
             {f}
@@ -125,21 +125,21 @@ export default function NoraDeskColumn() {
 
       {/* Secretary Items */}
       {asks.length > 0 && (
-        <div className="max-h-[120px] overflow-y-auto border-b border-purple-50 bg-slate-50/50 p-2">
-          <div className="px-2 pb-1 text-[9px] font-black uppercase tracking-widest text-slate-400">
+        <div className="max-h-[120px] overflow-y-auto border-b border-purple-50 bg-surface-raised/50 p-2">
+          <div className="px-2 pb-1 text-[9px] font-black uppercase tracking-widest text-text-muted">
             Nora + You ({asks.length})
           </div>
           <div className="flex flex-col gap-1">
             {asks.slice(0, 5).map((ask: any, i: number) => (
               <div 
                 key={i} 
-                className="px-3 py-2 bg-white rounded-lg border border-slate-100 shadow-sm text-[10px] flex justify-between items-center"
+                className="px-3 py-2 bg-surface rounded-lg border border-border shadow-sm text-[10px] flex justify-between items-center"
               >
-                <span className="font-bold text-slate-700 truncate mr-2">
+                <span className="font-bold text-text-primary truncate mr-2">
                   {ask.title || ask.question || 'Task'}
                 </span>
                 {ask.due_at && (
-                  <span className="text-[9px] font-bold text-slate-400 whitespace-nowrap">
+                  <span className="text-[9px] font-bold text-text-muted whitespace-nowrap">
                     {new Date(ask.due_at).toLocaleDateString()}
                   </span>
                 )}
@@ -152,7 +152,7 @@ export default function NoraDeskColumn() {
       {/* Chat Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
         {messages.length === 0 && (
-          <div className="p-5 text-center text-slate-400 text-xs font-bold whitespace-pre-wrap">
+          <div className="p-5 text-center text-text-muted text-xs font-bold whitespace-pre-wrap">
             {noApiKey
               ? 'No items need your attention right now.\nAsk Nora anything below.'
               : 'Ask Nora anything...'}
@@ -164,7 +164,7 @@ export default function NoraDeskColumn() {
             key={i} 
             className={`px-3 py-2 rounded-xl max-w-[90%] text-xs leading-relaxed whitespace-pre-wrap shadow-sm border ${
               m.role === 'user' 
-                ? 'self-end bg-blue-50 text-blue-900 border-blue-100 rounded-br-none' 
+                ? 'self-end bg-accent/10 text-accent border-accent/20 rounded-br-none' 
                 : 'self-start bg-purple-50 text-purple-900 border-purple-100 rounded-bl-none'
             }`}
           >
@@ -180,21 +180,21 @@ export default function NoraDeskColumn() {
       </div>
 
       {/* Input */}
-      <div className="p-3 border-t border-purple-100 bg-slate-50 flex gap-2">
+      <div className="p-3 border-t border-purple-100 bg-surface-raised flex gap-2">
         <input
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && handleSend()}
           placeholder="Ask Nora anything..."
-          className="flex-1 bg-white border border-slate-200 text-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all shadow-sm"
+          className="flex-1 bg-surface border border-border text-text-primary rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-purple-200 transition-all shadow-sm"
         />
         <button
           onClick={handleSend}
           disabled={!input.trim() || chatMut.isPending}
           className={`px-4 py-2 rounded-lg font-black text-xs uppercase tracking-widest transition-all shadow-sm ${
             input.trim() 
-              ? 'bg-purple-600 hover:bg-purple-700 text-white cursor-pointer' 
-              : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+              ? 'bg-purple-600 hover:bg-purple-700 text-text-primary cursor-pointer' 
+              : 'bg-surface-hover text-text-muted cursor-not-allowed'
           }`}
         >
           →

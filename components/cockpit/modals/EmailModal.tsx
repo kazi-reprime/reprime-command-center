@@ -63,14 +63,14 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface/50 backdrop-blur-sm">
       <div className="bg-[#0c2957] border border-[#FFCC33]/30 w-full max-w-3xl rounded-xl shadow-2xl flex flex-col max-h-[85vh]">
         
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-[#FFCC33]/20 bg-[#08224d] rounded-t-xl">
           <div className="flex items-center space-x-3">
             <Mail className="h-5 w-5 text-[#FFCC33]" />
-            <h2 className="text-white font-bold text-lg">Email Details</h2>
+            <h2 className="text-text-primary font-bold text-lg">Email Details</h2>
           </div>
           <div className="flex items-center space-x-2">
             <button 
@@ -80,7 +80,7 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
               <span>Open in Gmail</span>
               <ExternalLink className="h-3 w-3" />
             </button>
-            <button onClick={onClose} className="p-1 text-gray-400 hover:text-white transition rounded hover:bg-white/10">
+            <button onClick={onClose} className="p-1 text-gray-400 hover:text-text-primary transition rounded hover:bg-surface/10">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -101,7 +101,7 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
             <div className="space-y-6">
               <div className="space-y-2">
                 <div className="flex items-start justify-between">
-                  <h1 className="text-xl font-bold text-white leading-tight">{emailData.subject}</h1>
+                  <h1 className="text-xl font-bold text-text-primary leading-tight">{emailData.subject}</h1>
                   <span className="text-xs text-gray-400 whitespace-nowrap ml-4">
                     {new Date(emailData.date).toLocaleString()}
                   </span>
@@ -112,7 +112,7 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
                 </div>
               </div>
               
-              <div className="border-t border-white/10 pt-6">
+              <div className="border-t border-border/10 pt-6">
                 <div 
                   className="prose prose-invert prose-sm max-w-none prose-a:text-[#FFCC33] prose-a:no-underline hover:prose-a:underline"
                   dangerouslySetInnerHTML={{ __html: emailData.body }} 
@@ -127,7 +127,7 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
             <button 
               onClick={handleCreateFollowup}
               disabled={loadingAction}
-              className="flex items-center space-x-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-bold rounded-lg transition disabled:opacity-50"
+              className="flex items-center space-x-2 px-4 py-2 bg-surface/5 hover:bg-surface/10 border border-border/10 text-text-primary text-sm font-bold rounded-lg transition disabled:opacity-50"
             >
               {loadingAction ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
               <span>Create Follow-up</span>

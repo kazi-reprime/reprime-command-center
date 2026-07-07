@@ -5,6 +5,7 @@ import { useStore } from '@/lib/store/useStore';
 import { Clock, Shield, Sparkles, Presentation, Layers, Users } from 'lucide-react';
 import BriefingModal from '@/components/briefing/BriefingModal';
 import ContactsModal from '@/components/cockpit/modals/ContactsModal';
+import { ThemeSwitcher } from '@/components/ui/ThemeSwitcher';
 
 export interface CrewMember {
   email: string;
@@ -84,23 +85,23 @@ export default function TopChrome() {
   }, [language]);
 
   return (
-    <header className="h-14 bg-[#0E3470] border-b border-[#FFCC33]/30 px-6 flex items-center justify-between text-white select-none">
+    <header className="h-14 bg-surface border-b border-border px-6 flex items-center justify-between text-text-primary select-none z-50 relative">
       {/* Brand Logo & active status */}
       <div className="flex items-center space-x-3">
-        <Sparkles className="h-5 w-5 text-[#FFCC33]" />
-        <span className="text-xl font-extrabold tracking-wider text-[#FFCC33] font-sans">
+        <Sparkles className="h-5 w-5 text-accent" />
+        <span className="text-xl font-extrabold tracking-wider text-text-primary font-sans">
           REPRIME
         </span>
-        <span className="text-xs uppercase px-2 py-0.5 bg-[#FFCC33]/15 border border-[#FFCC33]/30 rounded text-[#FFCC33] font-semibold">
+        <span className="text-xs uppercase px-2 py-0.5 bg-surface-hover border border-border rounded text-text-secondary font-semibold">
           COCKPIT v0.3
         </span>
       </div>
 
       {/* Center metadata and time */}
-      <div className="flex items-center space-x-6 text-sm text-gray-300">
-        <div className="flex items-center space-x-2 bg-[#09224d] px-3 py-1 rounded-lg border border-white/5">
-          <Clock className="h-4 w-4 text-[#FFCC33]" />
-          <span className="font-mono text-white font-bold">{timeString || '00:00:00'}</span>
+      <div className="flex items-center space-x-6 text-sm text-text-secondary">
+        <div className="flex items-center space-x-2 bg-surface-raised px-3 py-1 rounded-lg border border-border-glass">
+          <Clock className="h-4 w-4 text-accent" />
+          <span className="font-mono text-text-primary font-bold">{timeString || '00:00:00'}</span>
         </div>
 
         {/* Shabbat Alert Helper Indicator */}
@@ -123,8 +124,8 @@ export default function TopChrome() {
             <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
             <span>iMessage: <span className="font-bold text-green-400">{unreadCounts.imessage}</span></span>
           </div>
-          <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-amber-500/10 border border-amber-500/20 rounded-md">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+          <div className="flex items-center space-x-1.5 px-2.5 py-1 bg-warning/10 border border-amber-500/20 rounded-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-warning"></span>
             <span>SMS: <span className="font-bold text-amber-400">{unreadCounts.sms}</span></span>
           </div>
         </div>
@@ -132,21 +133,21 @@ export default function TopChrome() {
         {/* Language Toggle */}
         <button
           onClick={() => setLanguage(language === 'EN' ? 'HE' : 'EN')}
-          className="flex items-center justify-center h-7 w-9 bg-[#08224d] hover:bg-white/10 border border-white/20 rounded transition text-xs font-bold text-gray-300 hover:text-white"
+          className="flex items-center justify-center h-7 w-9 bg-surface-raised hover:bg-surface-hover border border-border rounded transition text-xs font-bold text-text-secondary hover:text-text-primary focus:outline-none focus:ring-2 focus:ring-focus"
         >
           {language}
         </button>
 
         {/* Identity selector dropdown */}
-        <div className="flex items-center space-x-2 bg-[#08224d] border border-white/10 rounded-lg px-3 py-1.5">
-          <Shield className="h-4 w-4 text-[#FFCC33]" />
+        <div className="flex items-center space-x-2 bg-surface-raised border border-border rounded-lg px-3 py-1.5 focus-within:ring-2 focus-within:ring-focus transition-shadow">
+          <Shield className="h-4 w-4 text-text-secondary" />
           <select
             value={activeCrewId || ''}
             onChange={(e) => setActiveCrewId(e.target.value)}
-            className="bg-transparent text-xs text-white font-semibold outline-none cursor-pointer border-none"
+            className="bg-transparent text-xs text-text-primary font-semibold outline-none cursor-pointer border-none"
           >
             {crewMembers.map((member) => (
-              <option key={member.email} value={member.email} className="bg-[#0E3470]">
+              <option key={member.email} value={member.email} className="bg-surface text-text-primary">
                 {member.display_name} ({member.role})
               </option>
             ))}
@@ -155,7 +156,7 @@ export default function TopChrome() {
 
         <button 
           onClick={() => setShowContacts(true)}
-          className="flex items-center space-x-1.5 px-3 py-1.5 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 rounded text-sky-400 transition"
+          className="flex items-center space-x-1.5 px-3 py-1.5 bg-surface-raised hover:bg-surface-hover border border-border rounded text-text-secondary transition focus:outline-none focus:ring-2 focus:ring-focus"
         >
           <Users className="h-4 w-4" />
           <span className="text-xs font-bold uppercase tracking-wider">Contacts</span>
@@ -164,14 +165,14 @@ export default function TopChrome() {
         <div className="flex items-center space-x-1">
           <button 
             onClick={() => setBriefingMode('morning')}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#FFCC33]/10 hover:bg-[#FFCC33]/20 border border-[#FFCC33]/30 rounded-l text-[#FFCC33] transition"
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-surface-raised hover:bg-surface-hover border border-border rounded-l text-text-secondary transition focus:outline-none focus:ring-2 focus:ring-focus"
           >
             <Presentation className="h-4 w-4" />
             <span className="text-xs font-bold uppercase tracking-wider">Morning</span>
           </button>
           <button 
             onClick={() => setBriefingMode('evening')}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-r text-indigo-400 transition"
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-surface-raised hover:bg-surface-hover border border-border border-l-0 rounded-r text-text-secondary transition focus:outline-none focus:ring-2 focus:ring-focus"
           >
             <span className="text-xs font-bold uppercase tracking-wider">Evening</span>
           </button>
@@ -181,11 +182,13 @@ export default function TopChrome() {
           href="https://portal.reprimeterminal.com/dashboard"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 rounded text-emerald-400 transition"
+          className="flex items-center space-x-1.5 px-3 py-1.5 bg-surface-raised hover:bg-surface-hover border border-border rounded text-text-secondary transition focus:outline-none focus:ring-2 focus:ring-focus"
         >
           <Layers className="h-4 w-4" />
           <span className="text-xs font-bold uppercase tracking-wider">Reprime Portal</span>
         </a>
+
+        <ThemeSwitcher />
       </div>
 
       <BriefingModal open={briefingMode !== null} mode={briefingMode || 'morning'} onClose={() => setBriefingMode(null)} />

@@ -64,7 +64,7 @@ export default function EventModal({ eventId, onClose }: EventModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface/60 backdrop-blur-sm" onClick={onClose}>
       <div 
         className="bg-[#0c2957] border border-[#FFCC33]/30 w-full max-w-lg rounded-xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden" 
         onClick={e => e.stopPropagation()}
@@ -74,9 +74,9 @@ export default function EventModal({ eventId, onClose }: EventModalProps) {
             <div className="p-2 bg-[#FFCC33]/10 rounded-lg">
               <Calendar className="h-5 w-5 text-[#FFCC33]" />
             </div>
-            <h2 className="text-white font-bold text-base line-clamp-1">{event.summary}</h2>
+            <h2 className="text-text-primary font-bold text-base line-clamp-1">{event.summary}</h2>
           </div>
-          <button onClick={onClose} className="p-1 text-gray-400 hover:text-white transition rounded hover:bg-white/10 shrink-0 ml-2">
+          <button onClick={onClose} className="p-1 text-gray-400 hover:text-text-primary transition rounded hover:bg-surface/10 shrink-0 ml-2">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -86,7 +86,7 @@ export default function EventModal({ eventId, onClose }: EventModalProps) {
             <div className="flex items-center space-x-2 text-gray-300">
               <Clock className="h-4 w-4 text-[#FFCC33]" />
               <div className="text-sm">
-                <span className="font-semibold text-white">{dateStr}</span> <span className="mx-1">•</span> <span>{timeStr}</span>
+                <span className="font-semibold text-text-primary">{dateStr}</span> <span className="mx-1">•</span> <span>{timeStr}</span>
               </div>
             </div>
           </div>
@@ -109,7 +109,7 @@ export default function EventModal({ eventId, onClose }: EventModalProps) {
                 <Users className="h-3 w-3" />
                 <span>Attendees ({event.attendees.length})</span>
               </div>
-              <div className="bg-[#08224d] rounded-lg border border-white/5 p-3 space-y-2">
+              <div className="bg-[#08224d] rounded-lg border border-border/5 p-3 space-y-2">
                 {event.attendees.map((attendee, idx) => (
                   <div key={idx} className="flex items-center justify-between">
                     <span className="text-sm text-gray-200">{attendee.displayName || attendee.email}</span>
@@ -132,7 +132,7 @@ export default function EventModal({ eventId, onClose }: EventModalProps) {
                 <FileText className="h-3 w-3" />
                 <span>Description</span>
               </div>
-              <div className="text-sm text-gray-300 bg-[#08224d] p-3 rounded-lg border border-white/5 whitespace-pre-wrap leading-relaxed">
+              <div className="text-sm text-gray-300 bg-[#08224d] p-3 rounded-lg border border-border/5 whitespace-pre-wrap leading-relaxed">
                 {event.description}
               </div>
             </div>
@@ -143,7 +143,7 @@ export default function EventModal({ eventId, onClose }: EventModalProps) {
           <button 
             onClick={handleCreateNote}
             disabled={loadingAction !== null}
-            className="flex items-center space-x-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 text-white text-sm font-bold rounded-lg transition disabled:opacity-50"
+            className="flex items-center space-x-2 px-4 py-2 bg-surface/5 hover:bg-surface/10 border border-border/10 text-text-primary text-sm font-bold rounded-lg transition disabled:opacity-50"
           >
             {loadingAction === 'note' ? <Loader2 className="h-4 w-4 animate-spin" /> : <StickyNote className="h-4 w-4" />}
             <span>Create Note</span>

@@ -54,47 +54,47 @@ export default function GlobalSearch() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-black/60 backdrop-blur-sm">
-      <div className="bg-zinc-950 border border-zinc-800 rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col">
-        <div className="flex items-center px-4 py-3 border-b border-zinc-800">
-          <span className="text-zinc-500 mr-3">🔍</span>
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh] bg-surface/60 backdrop-blur-sm">
+      <div className="bg-surface border border-border rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col">
+        <div className="flex items-center px-4 py-3 border-b border-border">
+          <span className="text-text-muted mr-3">🔍</span>
           <input
             type="text"
-            className="flex-1 bg-transparent border-none text-white focus:outline-none font-mono text-sm placeholder:text-zinc-600"
+            className="flex-1 bg-transparent border-none text-text-primary focus:outline-none font-mono text-sm placeholder:text-zinc-600"
             placeholder="Search memory, deals, messages, or ask Nora..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoFocus
           />
-          <button onClick={() => setIsOpen(false)} className="text-xs text-zinc-500 font-mono hover:text-white px-2 py-1 rounded bg-zinc-900 ml-2">ESC</button>
+          <button onClick={() => setIsOpen(false)} className="text-xs text-text-muted font-mono hover:text-text-primary px-2 py-1 rounded bg-surface ml-2">ESC</button>
         </div>
 
         <div className="max-h-[60vh] overflow-y-auto p-2">
           {loading ? (
-            <div className="p-4 text-center text-zinc-500 text-xs font-mono">Searching memory matrix...</div>
+            <div className="p-4 text-center text-text-muted text-xs font-mono">Searching memory matrix...</div>
           ) : results.length > 0 ? (
             <div className="flex flex-col gap-1">
               <div className="px-3 py-1 text-[10px] uppercase font-mono text-zinc-600 mb-1">Semantic Results</div>
               {results.map(r => (
-                <div key={r.id} className="p-3 rounded hover:bg-zinc-900 cursor-pointer flex gap-3 group transition-colors">
+                <div key={r.id} className="p-3 rounded hover:bg-surface cursor-pointer flex gap-3 group transition-colors">
                   <div className="mt-0.5">
-                    <span className="text-[10px] px-1.5 py-0.5 rounded font-mono uppercase bg-zinc-800 text-zinc-400 group-hover:text-white transition-colors">{r.source}</span>
+                    <span className="text-[10px] px-1.5 py-0.5 rounded font-mono uppercase bg-surface-raised text-text-secondary group-hover:text-text-primary transition-colors">{r.source}</span>
                   </div>
                   <div>
-                    <p className="text-sm text-zinc-300">...{r.snippet}...</p>
+                    <p className="text-sm text-text-secondary">...{r.snippet}...</p>
                     <p className="text-xs text-zinc-600 font-mono mt-1">{new Date(r.date).toLocaleDateString()} &bull; Match: {Math.round(r.score * 100)}%</p>
                   </div>
                 </div>
               ))}
             </div>
           ) : query.trim().length > 2 ? (
-            <div className="p-4 text-center text-zinc-500 text-xs font-mono">No relevant memories found.</div>
+            <div className="p-4 text-center text-text-muted text-xs font-mono">No relevant memories found.</div>
           ) : (
             <div className="p-4">
               <div className="text-[10px] uppercase font-mono text-zinc-600 mb-2">Suggested Actions</div>
               <div className="flex flex-col gap-1">
                 {['Create a new deal', 'Summarize today', 'Launch capital campaign', 'View overdue payments'].map(action => (
-                  <button key={action} className="text-left px-3 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-900 rounded transition-colors flex items-center gap-2">
+                  <button key={action} className="text-left px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-surface rounded transition-colors flex items-center gap-2">
                     <span className="text-zinc-600">&rarr;</span> {action}
                   </button>
                 ))}

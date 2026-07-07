@@ -101,19 +101,19 @@ export default function CommsColumn() {
   }
 
   const TABS: { key: CommsTab; label: string; count: number; activeClass: string; idleClass: string; underlineClass: string }[] = [
-    { key: '305', label: '305', count: count305, activeClass: 'text-amber-600 bg-amber-50', idleClass: 'text-slate-400 hover:bg-slate-50', underlineClass: 'border-b-amber-500' },
-    { key: '718', label: '718', count: count718, activeClass: 'text-emerald-600 bg-emerald-50', idleClass: 'text-slate-400 hover:bg-slate-50', underlineClass: 'border-b-emerald-500' },
-    { key: 'staff', label: 'Staff', count: staffCount, activeClass: 'text-blue-600 bg-blue-50', idleClass: 'text-slate-400 hover:bg-slate-50', underlineClass: 'border-b-blue-500' },
-    { key: 'investors', label: 'Inv', count: investorCount, activeClass: 'text-purple-600 bg-purple-50', idleClass: 'text-slate-400 hover:bg-slate-50', underlineClass: 'border-b-purple-500' },
+    { key: '305', label: '305', count: count305, activeClass: 'text-warning bg-warning/10', idleClass: 'text-text-muted hover:bg-surface-raised', underlineClass: 'border-b-amber-500' },
+    { key: '718', label: '718', count: count718, activeClass: 'text-success bg-success/10', idleClass: 'text-text-muted hover:bg-surface-raised', underlineClass: 'border-b-emerald-500' },
+    { key: 'staff', label: 'Staff', count: staffCount, activeClass: 'text-accent bg-accent/10', idleClass: 'text-text-muted hover:bg-surface-raised', underlineClass: 'border-b-blue-500' },
+    { key: 'investors', label: 'Inv', count: investorCount, activeClass: 'text-purple-600 bg-purple-50', idleClass: 'text-text-muted hover:bg-surface-raised', underlineClass: 'border-b-purple-500' },
   ]
 
   const isLoading = tab === '305' ? q305.isLoading : tab === '718' ? q718.isLoading : q305.isLoading || q718.isLoading
   const isError = tab === '305' ? q305.isError : tab === '718' ? q718.isError : false
 
   return (
-    <div className="flex flex-col h-full bg-white text-slate-800 font-sans">
+    <div className="flex flex-col h-full bg-surface text-text-primary font-sans">
       {/* Tab Bar */}
-      <div className="flex gap-1 px-4 py-2 border-b border-slate-100">
+      <div className="flex gap-1 px-4 py-2 border-b border-border">
         {TABS.map(t => (
           <button 
             key={t.key} 
@@ -131,13 +131,13 @@ export default function CommsColumn() {
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {isError && (
-          <div className="p-3 rounded-xl bg-red-50 border border-red-100 text-red-600 text-xs font-bold shadow-sm">
+          <div className="p-3 rounded-xl bg-error/10 border border-error/20 text-error text-xs font-bold shadow-sm">
             ⚠️ Failed to load threads. Check WhatsApp API credentials.
           </div>
         )}
         
         {(tab === '305' || tab === '718') && (
-          <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+          <div className="bg-surface rounded-xl shadow-sm border border-border overflow-hidden">
              <ChatList
                 panel={tab as Panel}
                 selectedThreadId={selectedThread}
@@ -186,8 +186,8 @@ function StaffList({ threads305, threads718, loading, selectedId, onSelect }: {
       })
   }, [threads305, threads718])
 
-  if (loading) return <div className="p-4 text-center text-slate-400 text-xs font-bold">Loading...</div>
-  if (staff.length === 0) return <div className="p-6 text-center text-slate-400 text-xs font-bold">No staff threads</div>
+  if (loading) return <div className="p-4 text-center text-text-muted text-xs font-bold">Loading...</div>
+  if (staff.length === 0) return <div className="p-6 text-center text-text-muted text-xs font-bold">No staff threads</div>
 
   return <ThreadList threads={staff} selectedId={selectedId} onSelect={onSelect} />
 }
@@ -207,8 +207,8 @@ function InvestorList({ threads305, threads718, loading, selectedId, onSelect }:
       })
   }, [threads305, threads718])
 
-  if (loading) return <div className="p-4 text-center text-slate-400 text-xs font-bold">Loading...</div>
-  if (investors.length === 0) return <div className="p-6 text-center text-slate-400 text-xs font-bold">No investor threads</div>
+  if (loading) return <div className="p-4 text-center text-text-muted text-xs font-bold">Loading...</div>
+  if (investors.length === 0) return <div className="p-6 text-center text-text-muted text-xs font-bold">No investor threads</div>
 
   return <ThreadList threads={investors} selectedId={selectedId} onSelect={onSelect} />
 }
@@ -236,22 +236,22 @@ function ThreadList({ threads, selectedId, onSelect }: {
             onClick={() => onSelect(t)}
             className={`p-3 rounded-xl border cursor-pointer transition-colors ${
               isSelected 
-                ? 'bg-blue-50 border-blue-200 border-l-4 border-l-blue-500 shadow-sm' 
-                : 'bg-slate-50 border-slate-100 border-l-4 border-l-transparent hover:bg-white hover:border-slate-200 hover:shadow-sm'
+                ? 'bg-accent/10 border-blue-200 border-l-4 border-l-blue-500 shadow-sm' 
+                : 'bg-surface-raised border-border border-l-4 border-l-transparent hover:bg-surface hover:border-border hover:shadow-sm'
             }`}
           >
             <div className="flex justify-between items-center mb-2">
-              <span className={`text-sm truncate flex-1 ${isSelected ? 'font-black text-blue-900' : (t.unread_count || 0) > 0 ? 'font-black text-slate-800' : 'font-bold text-slate-600'}`}>
+              <span className={`text-sm truncate flex-1 ${isSelected ? 'font-black text-accent' : (t.unread_count || 0) > 0 ? 'font-black text-text-primary' : 'font-bold text-text-secondary'}`}>
                 {t.contact_name || t.phone || 'Unknown'}
               </span>
               
               <div className="flex items-center gap-2 shrink-0">
                 {(t.unread_count || 0) > 0 && (
-                  <span className="w-5 h-5 rounded-full bg-blue-600 text-white text-[9px] font-black flex items-center justify-center shadow-sm">
+                  <span className="w-5 h-5 rounded-full bg-accent text-accent-foreground text-[9px] font-black flex items-center justify-center shadow-sm">
                     {t.unread_count}
                   </span>
                 )}
-                <span className="text-slate-400 text-[10px] font-bold tracking-wider uppercase">
+                <span className="text-text-muted text-[10px] font-bold tracking-wider uppercase">
                   {timeAgo(t.last_message_at)}
                 </span>
               </div>
@@ -260,10 +260,10 @@ function ThreadList({ threads, selectedId, onSelect }: {
             <div className="flex gap-2">
               <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-widest ${
                 t.channel_type === 'whatsapp' 
-                  ? 'bg-emerald-100 text-emerald-700' 
+                  ? 'bg-emerald-100 text-success' 
                   : t.channel_type === 'imessage' 
-                    ? 'bg-blue-100 text-blue-700' 
-                    : 'bg-amber-100 text-amber-700'
+                    ? 'bg-accent/20 text-accent-hover' 
+                    : 'bg-amber-100 text-warning'
               }`}>
                 {t.channel_type === 'whatsapp' ? 'WA' : t.channel_type === 'imessage' ? 'IM' : 'SMS'}
               </span>

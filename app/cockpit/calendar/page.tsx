@@ -134,12 +134,12 @@ export default function CalendarPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center shadow-sm">
-            <Calendar className="w-5 h-5 text-blue-600" />
+          <div className="w-10 h-10 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center shadow-sm">
+            <Calendar className="w-5 h-5 text-accent" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Calendar</h1>
-            <p className="text-xs font-bold tracking-widest text-slate-400 uppercase">
+            <h1 className="text-2xl font-bold text-text-primary tracking-tight">Calendar</h1>
+            <p className="text-xs font-bold tracking-widest text-text-muted uppercase">
               {events.length} event{events.length !== 1 ? 's' : ''} • {jewishCount} jewish
             </p>
           </div>
@@ -159,14 +159,14 @@ export default function CalendarPage() {
             onClick={() => setFilter(tab.key)}
             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
               filter === tab.key
-                ? 'bg-blue-50 text-blue-600 border border-blue-200'
-                : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50 hover:text-slate-700'
+                ? 'bg-accent/10 text-accent border border-blue-200'
+                : 'bg-surface text-text-secondary border border-border hover:bg-surface-raised hover:text-text-primary'
             }`}
           >
             {tab.label}
             <span
               className={`ml-2 px-1.5 py-0.5 rounded-md text-xs font-bold ${
-                filter === tab.key ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-400'
+                filter === tab.key ? 'bg-accent/20 text-accent-hover' : 'bg-surface-raised text-text-muted'
               }`}
             >
               {tab.count}
@@ -194,17 +194,17 @@ export default function CalendarPage() {
             <div key={dateStr}>
               {/* Date Header */}
               <div className="flex items-center gap-3 mb-3">
-                <div className={`h-px flex-1 ${dateStr === todayStr ? 'bg-blue-200' : 'bg-slate-200'}`} />
+                <div className={`h-px flex-1 ${dateStr === todayStr ? 'bg-blue-200' : 'bg-surface-hover'}`} />
                 <span
                   className={`text-xs font-bold tracking-widest uppercase px-3 py-1 rounded-full ${
                     dateStr === todayStr
-                      ? 'bg-blue-50 text-blue-600 border border-blue-200'
-                      : 'bg-slate-50 text-slate-400 border border-slate-200'
+                      ? 'bg-accent/10 text-accent border border-blue-200'
+                      : 'bg-surface-raised text-text-muted border border-border'
                   }`}
                 >
                   {formatDateLabel(dateStr)}
                 </span>
-                <div className={`h-px flex-1 ${dateStr === todayStr ? 'bg-blue-200' : 'bg-slate-200'}`} />
+                <div className={`h-px flex-1 ${dateStr === todayStr ? 'bg-blue-200' : 'bg-surface-hover'}`} />
               </div>
 
               {/* Events for this date */}
@@ -228,22 +228,22 @@ export default function CalendarPage() {
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1 flex-wrap">
-                              <h3 className="text-sm font-bold text-slate-900">{ev.summary}</h3>
+                              <h3 className="text-sm font-bold text-text-primary">{ev.summary}</h3>
                               {ev.isJewish && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 text-[10px] font-bold tracking-wider uppercase border border-amber-200">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-warning/10 text-warning text-[10px] font-bold tracking-wider uppercase border border-amber-200">
                                   <Star className="w-3 h-3" />
                                   Jewish
                                 </span>
                               )}
                               {zoomLink && (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 text-[10px] font-bold tracking-wider uppercase border border-blue-200">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/10 text-accent text-[10px] font-bold tracking-wider uppercase border border-blue-200">
                                   <Video className="w-3 h-3" />
                                   Zoom
                                 </span>
                               )}
                             </div>
 
-                            <div className="flex items-center gap-3 text-xs text-slate-400 mb-2">
+                            <div className="flex items-center gap-3 text-xs text-text-muted mb-2">
                               <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
                                 {formatTime(ev.start)}
@@ -259,14 +259,14 @@ export default function CalendarPage() {
 
                             {/* Expanded details */}
                             {isExpanded && (
-                              <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col gap-2">
+                              <div className="mt-3 pt-3 border-t border-border flex flex-col gap-2">
                                 {ev.description && (
-                                  <p className="text-sm text-slate-500 leading-relaxed whitespace-pre-wrap">
+                                  <p className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap">
                                     {ev.description}
                                   </p>
                                 )}
                                 {hasAttendees && (
-                                  <div className="flex items-start gap-2 text-xs text-slate-400">
+                                  <div className="flex items-start gap-2 text-xs text-text-muted">
                                     <Users className="w-3 h-3 mt-0.5 shrink-0" />
                                     <span>{ev.attendees!.join(', ')}</span>
                                   </div>
@@ -277,7 +277,7 @@ export default function CalendarPage() {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     onClick={(e) => e.stopPropagation()}
-                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 text-blue-600 text-sm font-semibold hover:bg-blue-100 transition-colors border border-blue-200 w-fit"
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent/10 text-accent text-sm font-semibold hover:bg-accent/20 transition-colors border border-blue-200 w-fit"
                                   >
                                     <Video className="w-4 h-4" />
                                     Join Zoom Meeting
@@ -290,7 +290,7 @@ export default function CalendarPage() {
 
                           {/* Time badge */}
                           <div className="shrink-0 text-right">
-                            <div className="text-sm font-bold text-slate-900">
+                            <div className="text-sm font-bold text-text-primary">
                               {formatTime(ev.start) === 'All day' ? '🌅' : formatTime(ev.start)}
                             </div>
                           </div>

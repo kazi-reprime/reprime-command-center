@@ -8,7 +8,7 @@ import React from 'react';
 export function DataSourceBanner({ source, warning }: { source: string; warning?: string }) {
   if (source === 'database') return null;
   return (
-    <div className="flex items-center gap-3 p-4 mb-4 rounded-xl bg-amber-50 border border-amber-100 text-amber-600">
+    <div className="flex items-center gap-3 p-4 mb-4 rounded-xl bg-warning/10 border border-warning/20 text-warning">
       <span className="text-xl">⚠️</span>
       <span className="text-sm font-semibold">
         {warning || 'Using demo data. Connect a database to enable live persistence.'}
@@ -22,9 +22,9 @@ export function DataSourceBanner({ source, warning }: { source: string; warning?
  */
 export function ConfigWarning({ message }: { message: string }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200">
+    <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-raised border border-border">
       <span className="text-sm">🔧</span>
-      <span className="text-xs font-semibold text-slate-500">{message}</span>
+      <span className="text-xs font-semibold text-text-secondary">{message}</span>
     </div>
   );
 }
@@ -35,8 +35,8 @@ export function ConfigWarning({ message }: { message: string }) {
 export function LoadingState({ message = 'Loading...' }: { message?: string }) {
   return (
     <div className="flex items-center justify-center p-12 gap-3">
-      <div className="w-5 h-5 border-2 border-blue-100 border-t-blue-500 rounded-full animate-spin" />
-      <span className="text-sm font-semibold text-slate-400">{message}</span>
+      <div className="w-5 h-5 border-2 border-accent/20 border-t-blue-500 rounded-full animate-spin" />
+      <span className="text-sm font-semibold text-text-muted">{message}</span>
     </div>
   );
 }
@@ -48,11 +48,11 @@ export function ErrorState({ message, onRetry }: { message: string; onRetry?: ()
   return (
     <div className="flex flex-col items-center justify-center p-12 gap-3">
       <span className="text-3xl">⚠️</span>
-      <span className="text-sm font-semibold text-red-500">{message}</span>
+      <span className="text-sm font-semibold text-error">{message}</span>
       {onRetry && (
         <button
           onClick={onRetry}
-          className="px-4 py-2 mt-2 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-colors"
+          className="px-4 py-2 mt-2 text-xs font-bold text-error bg-error/10 hover:bg-error/20 border border-red-200 rounded-lg transition-colors"
         >
           Retry
         </button>

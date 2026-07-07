@@ -183,9 +183,9 @@ function StatTile({
   colorClass: string
 }) {
   return (
-    <div className={`flex-1 min-w-0 bg-slate-50 border border-slate-200 rounded-xl px-2 py-3 text-center`}>
+    <div className={`flex-1 min-w-0 bg-surface-raised border border-border rounded-xl px-2 py-3 text-center`}>
       <div className={`text-2xl font-bold leading-tight ${colorClass}`}>{value}</div>
-      <div className="text-[10px] text-slate-500 uppercase tracking-widest mt-1 font-bold">
+      <div className="text-[10px] text-text-secondary uppercase tracking-widest mt-1 font-bold">
         {label}
       </div>
     </div>
@@ -251,7 +251,7 @@ export default function PipelineColumn() {
   return (
     <div
       data-component="pipeline-column"
-      className="bg-white text-slate-800 h-full overflow-y-auto"
+      className="bg-surface text-text-primary h-full overflow-y-auto"
     >
       {/* 1. Now */}
       <div data-section="now">
@@ -262,19 +262,19 @@ export default function PipelineColumn() {
       <SuggestedFocusMiniCard items={suggestedFocus} />
 
       {/* 2. Today's calendar */}
-      <section className="px-4 py-4 border-b border-slate-100" data-section="today">
-        <div className="text-blue-600 text-xs font-black uppercase tracking-widest mb-3">Today</div>
-        {calendar.isLoading && <div className="text-slate-400 text-xs font-semibold">Loading…</div>}
-        {calendar.isError && <div className="text-red-500 text-xs font-semibold">Calendar failed: {(calendar.error as Error).message}</div>}
+      <section className="px-4 py-4 border-b border-border" data-section="today">
+        <div className="text-accent text-xs font-black uppercase tracking-widest mb-3">Today</div>
+        {calendar.isLoading && <div className="text-text-muted text-xs font-semibold">Loading…</div>}
+        {calendar.isError && <div className="text-error text-xs font-semibold">Calendar failed: {(calendar.error as Error).message}</div>}
         
         {!calendar.isLoading && !calendar.isError && events.length === 0 && (
           <div>
-            <div className="text-slate-500 text-sm font-semibold mb-3">Quiet day. No meetings on the calendar.</div>
+            <div className="text-text-secondary text-sm font-semibold mb-3">Quiet day. No meetings on the calendar.</div>
             <a
               href="https://calendar.google.com/calendar/u/0/r/eventedit"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-lg px-4 py-2 text-xs font-bold transition-colors"
+              className="inline-block bg-accent/10 hover:bg-accent/20 text-accent border border-blue-200 rounded-lg px-4 py-2 text-xs font-bold transition-colors"
             >
               + Create event
             </a>
@@ -282,56 +282,56 @@ export default function PipelineColumn() {
         )}
         
         {events.map((ev) => (
-          <div key={ev.id} className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 mb-2 shadow-sm">
+          <div key={ev.id} className="bg-surface-raised border border-border rounded-xl px-4 py-3 mb-2 shadow-sm">
             <div className="flex justify-between gap-2">
-              <span className="text-slate-500 text-xs font-bold">{formatTime(ev.startTime)}</span>
+              <span className="text-text-secondary text-xs font-bold">{formatTime(ev.startTime)}</span>
               {ev.zoomLink && (
                 <a
                   href={ev.zoomLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 font-bold text-xs hover:underline"
+                  className="text-accent font-bold text-xs hover:underline"
                 >
                   Zoom↗
                 </a>
               )}
             </div>
-            <div className="font-semibold text-sm mt-1 text-slate-800">{ev.title}</div>
+            <div className="font-semibold text-sm mt-1 text-text-primary">{ev.title}</div>
           </div>
         ))}
       </section>
 
       {/* 3. Briefing summary */}
-      <section className="px-4 py-4 border-b border-slate-100" data-section="briefing">
+      <section className="px-4 py-4 border-b border-border" data-section="briefing">
         <div className="flex items-center gap-2 mb-3">
-          <div className="text-blue-600 text-xs font-black uppercase tracking-widest">Briefing</div>
+          <div className="text-accent text-xs font-black uppercase tracking-widest">Briefing</div>
           {narrative && <SpeakerButton text={narrative} />}
         </div>
 
-        {briefing.isLoading && <div className="text-slate-400 text-xs font-semibold">Loading…</div>}
-        {briefing.isError && <div className="text-red-500 text-xs font-semibold">Briefing failed: {(briefing.error as Error).message}</div>}
+        {briefing.isLoading && <div className="text-text-muted text-xs font-semibold">Loading…</div>}
+        {briefing.isError && <div className="text-error text-xs font-semibold">Briefing failed: {(briefing.error as Error).message}</div>}
         
         {briefing.data && (
           <>
-            <p className="text-sm font-medium text-slate-600 mb-4 leading-relaxed">
+            <p className="text-sm font-medium text-text-secondary mb-4 leading-relaxed">
               {narrative || 'Quiet morning.'}
             </p>
             <div className="flex gap-2">
-              <StatTile label="Meetings" value={briefing.data.meetings.count} colorClass="text-emerald-500" />
+              <StatTile label="Meetings" value={briefing.data.meetings.count} colorClass="text-success" />
               <StatTile label="Investors" value={briefing.data.unread.by_panel.investors} colorClass="text-purple-500" />
-              <StatTile label="Unread" value={briefing.data.unread.total} colorClass="text-amber-500" />
-              <StatTile label="Expiring" value={briefing.data.expiring_invitations.count} colorClass="text-red-500" />
+              <StatTile label="Unread" value={briefing.data.unread.total} colorClass="text-warning" />
+              <StatTile label="Expiring" value={briefing.data.expiring_invitations.count} colorClass="text-error" />
             </div>
           </>
         )}
       </section>
 
       {/* 4. Active deals */}
-      <section className="px-4 py-4 border-b border-slate-100" data-section="active-deals">
-        <div className="text-blue-600 text-xs font-black uppercase tracking-widest mb-3">Active Deals</div>
+      <section className="px-4 py-4 border-b border-border" data-section="active-deals">
+        <div className="text-accent text-xs font-black uppercase tracking-widest mb-3">Active Deals</div>
         
-        {briefing.isLoading && <div className="text-slate-400 text-xs font-semibold">Loading…</div>}
-        {briefing.data && deals.length === 0 && <div className="text-slate-500 text-xs font-semibold">No open deals</div>}
+        {briefing.isLoading && <div className="text-text-muted text-xs font-semibold">Loading…</div>}
+        {briefing.data && deals.length === 0 && <div className="text-text-secondary text-xs font-semibold">No open deals</div>}
         
         {deals.map((deal) => {
           const valueStr = formatCurrency(deal.value, deal.currency)
@@ -342,15 +342,15 @@ export default function PipelineColumn() {
               href={deal.pipedrive_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="block bg-slate-50 hover:bg-blue-50 border border-slate-100 hover:border-blue-200 rounded-xl px-4 py-3 mb-2 shadow-sm transition-colors group"
+              className="block bg-surface-raised hover:bg-accent/10 border border-border hover:border-blue-200 rounded-xl px-4 py-3 mb-2 shadow-sm transition-colors group"
             >
-              <div className="font-bold text-slate-800 text-sm mb-2">{deal.title}</div>
+              <div className="font-bold text-text-primary text-sm mb-2">{deal.title}</div>
               <div className="flex flex-wrap gap-2 items-center">
-                <span className="bg-blue-100 text-blue-700 border border-blue-200 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
+                <span className="bg-accent/20 text-accent-hover border border-blue-200 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider">
                   {deal.stage}
                 </span>
-                {valueStr && <span className="text-slate-500 text-xs font-semibold">{valueStr}</span>}
-                {movedStr && <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">moved {movedStr}</span>}
+                {valueStr && <span className="text-text-secondary text-xs font-semibold">{valueStr}</span>}
+                {movedStr && <span className="text-text-muted text-[10px] font-bold uppercase tracking-wider">moved {movedStr}</span>}
               </div>
             </a>
           )
@@ -358,19 +358,19 @@ export default function PipelineColumn() {
       </section>
 
       {/* 5. Tenant filings */}
-      <section className="px-4 py-4 border-b border-slate-100" data-section="tenant-filings">
-        <div className="text-blue-600 text-xs font-black uppercase tracking-widest mb-3">New Filings (today)</div>
+      <section className="px-4 py-4 border-b border-border" data-section="tenant-filings">
+        <div className="text-accent text-xs font-black uppercase tracking-widest mb-3">New Filings (today)</div>
         
-        {briefing.isLoading && <div className="text-slate-400 text-xs font-semibold">Loading…</div>}
+        {briefing.isLoading && <div className="text-text-muted text-xs font-semibold">Loading…</div>}
         {briefing.data && (
           <>
-            <div className="text-xs font-semibold text-slate-500 mb-3 leading-relaxed">
+            <div className="text-xs font-semibold text-text-secondary mb-3 leading-relaxed">
               {TENANT_WATCHLIST.map((t, i) => {
                 const n = tenantCounts[t] ?? 0
                 return (
                   <span key={t}>
                     {i > 0 ? ', ' : ''}
-                    <span className={n > 0 ? 'text-blue-600 font-bold' : 'text-slate-400'}>
+                    <span className={n > 0 ? 'text-accent font-bold' : 'text-text-muted'}>
                       {t.replace(/ Stores$/, '')} +{n}
                     </span>
                   </span>
@@ -378,9 +378,9 @@ export default function PipelineColumn() {
               })}
             </div>
             {tenantFilings.slice(0, 5).map((f) => (
-              <div key={f.case_no} className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 mb-2">
-                <div className="font-bold text-sm text-slate-800">{f.tenant}</div>
-                <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mt-1">
+              <div key={f.case_no} className="bg-surface-raised border border-border rounded-xl px-4 py-3 mb-2">
+                <div className="font-bold text-sm text-text-primary">{f.tenant}</div>
+                <div className="text-text-secondary text-[10px] font-bold uppercase tracking-wider mt-1">
                   {f.case_no}
                   {f.court ? ` · ${f.court}` : ''}
                   {f.filed_at ? ` · filed ${f.filed_at}` : ''}
@@ -388,7 +388,7 @@ export default function PipelineColumn() {
               </div>
             ))}
             {tenantFilings.length === 0 && (
-              <div className="text-slate-400 text-xs font-semibold">Nothing new today</div>
+              <div className="text-text-muted text-xs font-semibold">Nothing new today</div>
             )}
           </>
         )}
@@ -396,15 +396,15 @@ export default function PipelineColumn() {
 
       {/* 6. Expiring invitations */}
       <section className="px-4 py-4" data-section="expiring">
-        <div className="text-blue-600 text-xs font-black uppercase tracking-widest mb-3">Expiring Invitations</div>
+        <div className="text-accent text-xs font-black uppercase tracking-widest mb-3">Expiring Invitations</div>
         
-        {briefing.isLoading && <div className="text-slate-400 text-xs font-semibold">Loading…</div>}
-        {briefing.data && expiring.length === 0 && <div className="text-slate-400 text-xs font-semibold">None expiring</div>}
+        {briefing.isLoading && <div className="text-text-muted text-xs font-semibold">Loading…</div>}
+        {briefing.data && expiring.length === 0 && <div className="text-text-muted text-xs font-semibold">None expiring</div>}
         
         {expiring.map((inv) => (
-          <div key={inv.id} className="bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 mb-2 shadow-sm">
-            <div className="font-bold text-sm text-slate-800">{inv.contact_name || inv.contact_email || 'Unknown'}</div>
-            <div className="text-red-500 text-xs font-bold mt-1">
+          <div key={inv.id} className="bg-surface-raised border border-border rounded-xl px-4 py-3 mb-2 shadow-sm">
+            <div className="font-bold text-sm text-text-primary">{inv.contact_name || inv.contact_email || 'Unknown'}</div>
+            <div className="text-error text-xs font-bold mt-1">
               {formatExpiringRelative(inv.expires_at)}
             </div>
           </div>

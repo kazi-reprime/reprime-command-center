@@ -88,38 +88,38 @@ export default function NotesColumn() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white text-slate-800 font-sans">
+    <div className="flex flex-col h-full bg-surface text-text-primary font-sans">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-slate-100 flex items-baseline gap-2">
-        <div className="text-blue-600 text-xs font-black uppercase tracking-widest">
+      <div className="px-4 py-3 border-b border-border flex items-baseline gap-2">
+        <div className="text-accent text-xs font-black uppercase tracking-widest">
           📝 Notes
         </div>
-        <span className="text-slate-400 font-medium text-[10px] tracking-wider uppercase">quick capture</span>
+        <span className="text-text-muted font-medium text-[10px] tracking-wider uppercase">quick capture</span>
       </div>
 
       {/* Add Note */}
-      <div className="px-4 py-3 flex flex-col gap-2 border-b border-slate-100 bg-slate-50/50">
+      <div className="px-4 py-3 flex flex-col gap-2 border-b border-border bg-surface-raised/50">
         <input
           value={title}
           onChange={e => setTitle(e.target.value)}
           placeholder="Note title"
           onKeyDown={e => e.key === 'Enter' && handleAdd()}
-          className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-800 text-sm focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all placeholder:text-slate-400"
+          className="w-full px-3 py-2 rounded-lg bg-surface border border-border text-text-primary text-sm focus:outline-none focus:border-accent focus:ring-2 focus:ring-focus transition-all placeholder:text-text-muted"
         />
         <input
           value={body}
           onChange={e => setBody(e.target.value)}
           placeholder="Details (optional)"
           onKeyDown={e => e.key === 'Enter' && handleAdd()}
-          className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 text-xs focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all placeholder:text-slate-400"
+          className="w-full px-3 py-2 rounded-lg bg-surface border border-border text-text-primary text-xs focus:outline-none focus:border-accent focus:ring-2 focus:ring-focus transition-all placeholder:text-text-muted"
         />
         <button
           onClick={handleAdd}
           disabled={!title.trim() || createNote.isPending}
           className={`px-4 py-2 mt-1 rounded-lg border-none cursor-pointer text-xs font-bold transition-all ${
             title.trim() 
-              ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md' 
-              : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+              ? 'bg-accent hover:bg-accent-hover text-text-primary shadow-sm hover:shadow-md' 
+              : 'bg-surface-raised text-text-muted cursor-not-allowed'
           }`}
         >
           {createNote.isPending ? 'Adding...' : '+ Add note'}
@@ -132,31 +132,31 @@ export default function NotesColumn() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="🔍 Search notes..."
-          className="w-full px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 text-xs focus:outline-none focus:border-blue-300 focus:ring-2 focus:ring-blue-100 transition-all placeholder:text-slate-400"
+          className="w-full px-3 py-2 rounded-lg bg-surface-raised border border-border text-text-primary text-xs focus:outline-none focus:border-accent focus:ring-2 focus:ring-focus transition-all placeholder:text-text-muted"
         />
       </div>
 
       {/* Notes List */}
       <div className="flex-1 overflow-y-auto px-4 pb-4">
         {notesQ.isLoading && (
-          <div className="p-4 text-center text-slate-400 text-xs font-semibold">Loading notes...</div>
+          <div className="p-4 text-center text-text-muted text-xs font-semibold">Loading notes...</div>
         )}
         {!notesQ.isLoading && filtered.length === 0 && (
-          <div className="p-6 text-center text-slate-400 text-xs font-medium">
+          <div className="p-6 text-center text-text-muted text-xs font-medium">
             {search ? 'No matching notes' : 'No notes yet. Capture one above.'}
           </div>
         )}
         {filtered.map(n => (
           <div 
             key={n.id} 
-            className="mb-2 p-3 rounded-xl bg-slate-50 border border-slate-100 border-l-4 border-l-blue-400 shadow-sm"
+            className="mb-2 p-3 rounded-xl bg-surface-raised border border-border border-l-4 border-l-blue-400 shadow-sm"
           >
             <div className="flex justify-between items-center mb-1">
-              <span className="text-slate-800 text-sm font-bold">{n.title}</span>
-              <span className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">{timeAgo(n.created_at)}</span>
+              <span className="text-text-primary text-sm font-bold">{n.title}</span>
+              <span className="text-text-muted text-[10px] font-bold uppercase tracking-wider">{timeAgo(n.created_at)}</span>
             </div>
             {n.body && (
-              <div className="text-slate-500 text-xs leading-relaxed line-clamp-2">
+              <div className="text-text-secondary text-xs leading-relaxed line-clamp-2">
                 {n.body}
               </div>
             )}

@@ -2,56 +2,206 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* Warm white backgrounds */
-  --background: #fdfdfd;
-  --foreground: #0f172a;
+@layer base {
+  :root, [data-theme="light"] {
+    /* Theme 1 — RePrime Executive Light */
+    --background: #fdfdfd;
+    --background-subtle: #f8fafc;
+    
+    --surface: #ffffff;
+    --surface-raised: #ffffff;
+    --surface-glass: rgba(255, 255, 255, 0.7);
+    --surface-hover: #f1f5f9;
+    
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --text-inverse: #ffffff;
+    
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --border-glass: rgba(255, 255, 255, 0.4);
+    
+    --accent: #3b82f6; /* RePrime Blue */
+    --accent-hover: #2563eb;
+    --accent-foreground: #ffffff;
+    
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --info: #0ea5e9;
+    
+    --focus-ring: rgba(59, 130, 246, 0.5);
+    
+    --glass-blur: blur(16px);
+    --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
 
-  /* Typography */
-  --rp-font-body: var(--font-lexend), 'Lexend', system-ui, -apple-system, sans-serif;
+    --chart-1: #3b82f6;
+    --chart-2: #8b5cf6;
+    --chart-3: #10b981;
+    --chart-4: #f59e0b;
+    --chart-5: #6366f1;
+  }
 
-  /* Surfaces & Borders - Glassmorphic */
-  --surface-main: rgba(255, 255, 255, 0.7);
-  --surface-soft: rgba(249, 250, 251, 0.8);
-  --surface-elevated: rgba(255, 255, 255, 0.9);
-  --surface-solid: #ffffff;
-  --border-main: rgba(255, 255, 255, 0.3);
-  --border-soft: rgba(255, 255, 255, 0.15);
-  
-  --glass-border: 1px solid rgba(255, 255, 255, 0.4);
-  --glass-blur: blur(16px);
-  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+  [data-theme="midnight"] {
+    /* Theme 2 — RePrime Midnight */
+    --background: #0b1120;
+    --background-subtle: #1e293b;
+    
+    --surface: #0f172a;
+    --surface-raised: #1e293b;
+    --surface-glass: rgba(15, 23, 42, 0.7);
+    --surface-hover: #334155;
+    
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #64748b;
+    --text-inverse: #ffffff;
+    
+    --border: #334155;
+    --border-strong: #475569;
+    --border-glass: rgba(255, 255, 255, 0.1);
+    
+    --accent: #3b82f6;
+    --accent-hover: #60a5fa;
+    --accent-foreground: #ffffff;
+    
+    --success: #10b981;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --info: #0ea5e9;
+    
+    --focus-ring: rgba(96, 165, 250, 0.5);
+    
+    --glass-blur: blur(16px);
+    --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
 
-  /* Text & Content */
-  --text-main: #0f172a; /* deep navy text */
-  --text-muted: #64748b; /* muted slate text */
-  --text-inverse: #ffffff;
+    --chart-1: #60a5fa;
+    --chart-2: #a78bfa;
+    --chart-3: #34d399;
+    --chart-4: #fbbf24;
+    --chart-5: #818cf8;
+  }
 
-  /* Brand & Accents */
-  --reprime-blue: #3b82f6;
-  --reprime-navy: #0f172a;
-  --reprime-lavender: #f3f0ff;
-  --reprime-ice: #f0f8ff;
-  
-  --accent-blue: #3b82f6;
-  --accent-purple: #a855f7;
-  --accent-gold: #ffcc33;
-  --accent-navy: #0e3470;
+  [data-theme="aurora"] {
+    /* Theme 3 — RePrime Glass Aurora */
+    --background: #f3f0ff;
+    --background-subtle: #ede9fe;
+    
+    --surface: rgba(255, 255, 255, 0.4);
+    --surface-raised: rgba(255, 255, 255, 0.6);
+    --surface-glass: rgba(255, 255, 255, 0.3);
+    --surface-hover: rgba(255, 255, 255, 0.5);
+    
+    --text-primary: #1e1b4b;
+    --text-secondary: #4338ca;
+    --text-muted: #6366f1;
+    --text-inverse: #ffffff;
+    
+    --border: rgba(255, 255, 255, 0.5);
+    --border-strong: rgba(255, 255, 255, 0.8);
+    --border-glass: rgba(255, 255, 255, 0.4);
+    
+    --accent: #6366f1;
+    --accent-hover: #4f46e5;
+    --accent-foreground: #ffffff;
+    
+    --success: #059669;
+    --warning: #d97706;
+    --error: #dc2626;
+    --info: #2563eb;
+    
+    --focus-ring: rgba(99, 102, 241, 0.5);
+    
+    --glass-blur: blur(24px);
+    --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
 
-  /* Semantic Status */
-  --status-success: #22c55e;
-  --status-warning: #f59e0b;
-  --status-error: #ef4444;
-  --status-info: #3b82f6;
+    --chart-1: #6366f1;
+    --chart-2: #ec4899;
+    --chart-3: #8b5cf6;
+    --chart-4: #14b8a6;
+    --chart-5: #f43f5e;
+  }
 
-  /* Meaning-based palette (Legacy but kept for compatibility) */
-  --c-channel-305:    #f0b400;
-  --c-channel-718:    #22c55e;
-  --c-channel-imsg:   #3b82f6;
-  --c-channel-sms:    #f59e0b;
-  --c-investor:       #a855f7;
-  --c-live-now:       #ef4444;
-  --c-meeting:        #3b82f6;
+  [data-theme="high-contrast"] {
+    /* Theme 4 — RePrime High Contrast */
+    --background: #ffffff;
+    --background-subtle: #ffffff;
+    
+    --surface: #ffffff;
+    --surface-raised: #ffffff;
+    --surface-glass: #ffffff;
+    --surface-hover: #000000;
+    
+    --text-primary: #000000;
+    --text-secondary: #000000;
+    --text-muted: #333333;
+    --text-inverse: #ffffff;
+    
+    --border: #000000;
+    --border-strong: #000000;
+    --border-glass: #000000;
+    
+    --accent: #0000ea;
+    --accent-hover: #000000;
+    --accent-foreground: #ffffff;
+    
+    --success: #006400;
+    --warning: #8b4500;
+    --error: #8b0000;
+    --info: #00008b;
+    
+    --focus-ring: #000000;
+    
+    --glass-blur: none;
+    --glass-shadow: none;
+
+    --chart-1: #000000;
+    --chart-2: #333333;
+    --chart-3: #666666;
+    --chart-4: #999999;
+    --chart-5: #000000;
+  }
+
+  [data-theme="slate"] {
+    /* Theme 5 — RePrime Slate Professional */
+    --background: #f1f5f9;
+    --background-subtle: #e2e8f0;
+    
+    --surface: #ffffff;
+    --surface-raised: #f8fafc;
+    --surface-glass: rgba(255, 255, 255, 0.85);
+    --surface-hover: #e2e8f0;
+    
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --text-inverse: #ffffff;
+    
+    --border: #cbd5e1;
+    --border-strong: #94a3b8;
+    --border-glass: rgba(148, 163, 184, 0.2);
+    
+    --accent: #0f172a;
+    --accent-hover: #334155;
+    --accent-foreground: #ffffff;
+    
+    --success: #15803d;
+    --warning: #b45309;
+    --error: #b91c1c;
+    --info: #0369a1;
+    
+    --focus-ring: rgba(15, 23, 42, 0.3);
+    
+    --glass-blur: blur(8px);
+    --glass-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+    --chart-1: #0f172a;
+    --chart-2: #334155;
+    --chart-3: #475569;
+    --chart-4: #64748b;
+    --chart-5: #94a3b8;
+  }
 }
 
 * { 
@@ -61,39 +211,53 @@
 }
 
 body {
-  color: var(--text-main);
+  color: var(--text-primary);
   background-color: var(--background);
-  background-image: radial-gradient(circle at 15% 50%, rgba(243, 240, 255, 0.4), transparent 25%),
-                    radial-gradient(circle at 85% 30%, rgba(240, 248, 255, 0.4), transparent 25%);
-  background-attachment: fixed;
-  font-family: var(--rp-font-body);
+  font-family: var(--font-lexend), 'Lexend', system-ui, -apple-system, sans-serif;
   margin: 0;
   padding: 0;
   overflow-x: hidden; 
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+[data-theme="light"] body {
+  background-image: radial-gradient(circle at 15% 50%, rgba(243, 240, 255, 0.4), transparent 25%),
+                    radial-gradient(circle at 85% 30%, rgba(240, 248, 255, 0.4), transparent 25%);
+  background-attachment: fixed;
+}
+
+[data-theme="aurora"] body {
+  background-image: radial-gradient(circle at 10% 20%, rgba(200, 180, 255, 0.5), transparent 40%),
+                    radial-gradient(circle at 90% 80%, rgba(180, 220, 255, 0.5), transparent 40%);
+  background-attachment: fixed;
+}
+
+[data-theme="midnight"] body,
+[data-theme="high-contrast"] body,
+[data-theme="slate"] body {
+  background-image: none;
 }
 
 /* Glassmorphic Utility Classes */
 .glass-panel {
-  background: var(--surface-main);
+  background: var(--surface-glass);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  border: var(--glass-border);
+  border: 1px solid var(--border-glass);
   box-shadow: var(--glass-shadow);
 }
 
 .glass-card {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--surface-glass);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-glass);
+  box-shadow: var(--glass-shadow);
+  transition: all 0.2s ease;
 }
 
 .glass-card:hover {
-  background: rgba(255, 255, 255, 0.8);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
-  transform: translateY(-2px);
+  background: var(--surface-hover);
 }
 
 /* Scrollbar Modernization */
@@ -105,9 +269,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(15, 23, 42, 0.1);
+  background: var(--border-strong);
   border-radius: 10px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(15, 23, 42, 0.2);
+  background: var(--text-muted);
 }

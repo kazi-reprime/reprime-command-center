@@ -72,11 +72,11 @@ const PRIORITY_LABELS: Record<number, string> = {
 }
 
 const PRIORITY_COLOR: Record<number, string> = {
-  1: 'text-red-500',
-  2: 'text-amber-500',
-  3: 'text-blue-500',
-  4: 'text-slate-400',
-  5: 'text-slate-400',
+  1: 'text-error',
+  2: 'text-warning',
+  3: 'text-accent',
+  4: 'text-text-muted',
+  5: 'text-text-muted',
 }
 
 const PRIORITY_BG: Record<number, string> = {
@@ -133,18 +133,18 @@ function ActionMenu({ item, onClose, onPatch, onRemind }: ActionMenuProps) {
     onClose()
   }
 
-  const btnClass = "w-full text-left px-3 py-2 text-xs border-t border-slate-100 hover:bg-slate-50 transition-colors"
-  const activeBtnClass = "w-full text-left px-3 py-2 text-xs border-t border-slate-100 bg-blue-50 text-blue-700 font-bold transition-colors"
+  const btnClass = "w-full text-left px-3 py-2 text-xs border-t border-border hover:bg-surface-raised transition-colors"
+  const activeBtnClass = "w-full text-left px-3 py-2 text-xs border-t border-border bg-accent/10 text-accent-hover font-bold transition-colors"
 
   return (
     <div
       ref={ref}
       onClick={(e) => e.stopPropagation()}
-      className="absolute right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg min-w-[180px] z-10 text-slate-800 overflow-hidden"
+      className="absolute right-0 top-full mt-1 bg-surface border border-border rounded-xl shadow-lg min-w-[180px] z-10 text-text-primary overflow-hidden"
     >
       {showPriority ? (
         <>
-          <div className="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+          <div className="px-3 py-2 text-[10px] font-bold text-text-muted uppercase tracking-wider">
             Set priority
           </div>
           {[1, 2, 3, 4, 5].map((p) => (
@@ -179,7 +179,7 @@ function ActionMenu({ item, onClose, onPatch, onRemind }: ActionMenuProps) {
           <button type="button" onClick={() => setShowPriority(true)} className={btnClass}>
             Reprioritize…
           </button>
-          <button type="button" onClick={() => { onPatch({ status: 'dropped' }); onClose() }} className={`${btnClass} text-red-500 hover:text-red-600 hover:bg-red-50`}>
+          <button type="button" onClick={() => { onPatch({ status: 'dropped' }); onClose() }} className={`${btnClass} text-error hover:text-error hover:bg-error/10`}>
             Drop
           </button>
         </>
@@ -215,23 +215,23 @@ const BucketRow = memo(function BucketRow({
           dispatchOpenWindow(item)
         }
       }}
-      className={`relative bg-slate-50 border border-slate-100 border-l-4 rounded-xl p-3 mb-2 text-sm text-slate-800 cursor-pointer hover:bg-white hover:border-slate-200 hover:shadow-sm transition-all ${bgBorder} ${isDoneOrDropped ? 'opacity-50 grayscale' : ''}`}
+      className={`relative bg-surface-raised border border-border border-l-4 rounded-xl p-3 mb-2 text-sm text-text-primary cursor-pointer hover:bg-surface hover:border-border hover:shadow-sm transition-all ${bgBorder} ${isDoneOrDropped ? 'opacity-50 grayscale' : ''}`}
     >
       <div className="flex justify-between items-start gap-2">
         <div className="flex-1 min-w-0">
-          <div className={`font-bold truncate ${item.status === 'done' ? 'line-through text-slate-500' : 'text-slate-800'}`} title={item.title}>
+          <div className={`font-bold truncate ${item.status === 'done' ? 'line-through text-text-secondary' : 'text-text-primary'}`} title={item.title}>
             {isDoing && (
-              <span className="inline-block mr-2 text-[10px] font-black text-emerald-600 border border-emerald-200 bg-emerald-50 rounded px-1 tracking-wider uppercase align-middle">
+              <span className="inline-block mr-2 text-[10px] font-black text-success border border-emerald-200 bg-success/10 rounded px-1 tracking-wider uppercase align-middle">
                 Doing
               </span>
             )}
             {item.title}
           </div>
 
-          <div className="flex gap-2 mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <div className="flex gap-2 mt-1 text-[10px] font-bold uppercase tracking-wider text-text-muted">
             <span>added {formatRelativePast(item.created_at)}</span>
             {dueText && (
-              <span className={dueOverdue ? 'text-red-500' : 'text-slate-400'}>
+              <span className={dueOverdue ? 'text-error' : 'text-text-muted'}>
                 {dueText}
               </span>
             )}
@@ -255,7 +255,7 @@ const BucketRow = memo(function BucketRow({
               setMenuOpen((v) => !v)
             }
           }}
-          className="shrink-0 px-2 py-1 text-slate-400 hover:text-slate-800 hover:bg-slate-200 rounded cursor-pointer text-lg leading-none transition-colors relative"
+          className="shrink-0 px-2 py-1 text-text-muted hover:text-text-primary hover:bg-surface-hover rounded cursor-pointer text-lg leading-none transition-colors relative"
         >
           ⋯
           {menuOpen && (
@@ -428,10 +428,10 @@ export default function BucketColumn() {
   return (
     <div
       data-component="bucket-column"
-      className="bg-white text-slate-800 h-full overflow-y-auto"
+      className="bg-surface text-text-primary h-full overflow-y-auto"
     >
       {/* Add-to-bucket input */}
-      <section className="px-4 py-4 border-b border-slate-100" data-section="add">
+      <section className="px-4 py-4 border-b border-border" data-section="add">
         <input
           ref={inputRef}
           type="text"
@@ -445,10 +445,10 @@ export default function BucketColumn() {
             }
           }}
           disabled={adding}
-          className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all shadow-sm"
+          className="w-full bg-surface-raised border border-border rounded-lg px-4 py-3 text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:border-accent transition-all shadow-sm"
         />
         {addMutation.isError && (
-          <div className="text-red-500 text-xs font-bold mt-2">
+          <div className="text-error text-xs font-bold mt-2">
             {(addMutation.error as Error).message}
           </div>
         )}
@@ -456,26 +456,26 @@ export default function BucketColumn() {
 
       {/* Loading / error / empty */}
       {list.isLoading && (
-        <section className="px-4 py-4 border-b border-slate-100">
-          <div className="text-slate-400 text-xs font-bold">Loading…</div>
+        <section className="px-4 py-4 border-b border-border">
+          <div className="text-text-muted text-xs font-bold">Loading…</div>
         </section>
       )}
       {list.isError && (
-        <section className="px-4 py-4 border-b border-slate-100">
-          <div className="text-red-500 text-xs font-bold">
+        <section className="px-4 py-4 border-b border-border">
+          <div className="text-error text-xs font-bold">
             Failed: {(list.error as Error).message}
           </div>
         </section>
       )}
       {!list.isLoading && !list.isError && total === 0 && (
-        <section className="px-4 py-4 border-b border-slate-100">
-          <div className="text-slate-500 text-sm font-bold mb-3">
+        <section className="px-4 py-4 border-b border-border">
+          <div className="text-text-secondary text-sm font-bold mb-3">
             Nothing in the bucket. Speak or type to add.
           </div>
           <button
             type="button"
             onClick={() => inputRef.current?.focus()}
-            className="bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-lg px-4 py-2 text-xs font-bold transition-colors shadow-sm"
+            className="bg-accent/10 hover:bg-accent/20 text-accent border border-blue-200 rounded-lg px-4 py-2 text-xs font-bold transition-colors shadow-sm"
           >
             + Add
           </button>
@@ -486,14 +486,14 @@ export default function BucketColumn() {
       {grouped.map((group) => (
         <section
           key={group.priority}
-          className="px-4 py-4 border-b border-slate-100"
+          className="px-4 py-4 border-b border-border"
           data-section={`p${group.priority}`}
         >
           <div className="flex justify-between items-baseline mb-3">
             <span className={`text-xs font-black uppercase tracking-widest ${PRIORITY_COLOR[group.priority]}`}>
               {PRIORITY_LABELS[group.priority]}
             </span>
-            <span className="text-slate-400 text-xs font-bold">{group.items.length}</span>
+            <span className="text-text-muted text-xs font-bold">{group.items.length}</span>
           </div>
           {group.items.map((item) => (
             <BucketRow

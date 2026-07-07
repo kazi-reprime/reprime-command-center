@@ -22,7 +22,7 @@ export function OrbPlaceholder({ className = '' }: { className?: string }) {
   let animation = 'animate-bounce'
 
   if (state === 'listening') {
-    outerGlow = 'bg-amber-500/30'
+    outerGlow = 'bg-warning/30'
     innerGradient = 'from-white via-amber-100 to-amber-400'
     shadow = 'rgba(245,158,11,0.3)'
     animation = 'animate-pulse'
@@ -37,7 +37,7 @@ export function OrbPlaceholder({ className = '' }: { className?: string }) {
     shadow = 'rgba(99,102,241,0.3)'
     animation = 'animate-ping'
   } else if (state === 'sent') {
-    outerGlow = 'bg-emerald-500/30'
+    outerGlow = 'bg-success/30'
     innerGradient = 'from-white via-emerald-100 to-emerald-400'
     shadow = 'rgba(16,185,129,0.3)'
     animation = 'animate-bounce'
@@ -58,7 +58,7 @@ export function OrbPlaceholder({ className = '' }: { className?: string }) {
         }}
       >
         {/* Specular highlight for 3D effect */}
-        <div className="absolute top-2 left-3 w-6 h-4 bg-white/80 rounded-full blur-[2px] transform rotate-[-45deg]" />
+        <div className="absolute top-2 left-3 w-6 h-4 bg-surface/80 rounded-full blur-[2px] transform rotate-[-45deg]" />
       </div>
     </div>
   )

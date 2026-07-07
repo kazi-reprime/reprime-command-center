@@ -243,12 +243,12 @@ export default function EmailPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-red-50 border border-red-100 flex items-center justify-center shadow-sm">
-            <Mail className="w-5 h-5 text-red-500" />
+          <div className="w-10 h-10 rounded-2xl bg-error/10 border border-error/20 flex items-center justify-center shadow-sm">
+            <Mail className="w-5 h-5 text-error" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Gmail</h1>
-            <p className="text-xs font-bold tracking-widest text-slate-400 uppercase">
+            <h1 className="text-2xl font-bold text-text-primary tracking-tight">Gmail</h1>
+            <p className="text-xs font-bold tracking-widest text-text-muted uppercase">
               {emails.length} email{emails.length !== 1 ? 's' : ''} • {unreadCount} unread
             </p>
           </div>
@@ -256,13 +256,13 @@ export default function EmailPage() {
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <div className="flex-1 sm:w-64">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Search emails..."
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:border-accent transition-all"
               />
             </div>
           </div>
@@ -273,7 +273,7 @@ export default function EmailPage() {
               setComposeBody('')
               setShowCompose(true)
             }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors shadow-sm cursor-pointer"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-text-primary text-sm font-semibold transition-colors shadow-sm cursor-pointer"
           >
             <Send className="w-4 h-4" />
             <span>Compose</span>
@@ -283,11 +283,11 @@ export default function EmailPage() {
 
       {/* Gmail Unavailable Warning */}
       {apiError === 'gmail_unavailable' && (
-        <div className="flex items-center gap-3 p-4 mb-6 rounded-2xl bg-amber-50 border border-amber-100">
-          <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0" />
+        <div className="flex items-center gap-3 p-4 mb-6 rounded-2xl bg-warning/10 border border-warning/20">
+          <AlertTriangle className="w-5 h-5 text-warning shrink-0" />
           <div>
-            <div className="text-sm font-semibold text-amber-700">Gmail Unavailable</div>
-            <div className="text-xs text-amber-600 mt-0.5">
+            <div className="text-sm font-semibold text-warning">Gmail Unavailable</div>
+            <div className="text-xs text-warning mt-0.5">
               Could not connect to Gmail. Configure your Google credentials in Settings → Integrations.
             </div>
           </div>
@@ -306,15 +306,15 @@ export default function EmailPage() {
             onClick={() => setFilter(tab.key)}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer ${
               filter === tab.key
-                ? 'bg-blue-50 text-blue-600 border border-blue-200'
-                : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50 hover:text-slate-700'
+                ? 'bg-accent/10 text-accent border border-blue-200'
+                : 'bg-surface text-text-secondary border border-border hover:bg-surface-raised hover:text-text-primary'
             }`}
           >
             {tab.icon}
             {tab.label}
             <span
               className={`px-1.5 py-0.5 rounded-md text-xs font-bold ${
-                filter === tab.key ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-400'
+                filter === tab.key ? 'bg-accent/20 text-accent-hover' : 'bg-surface-raised text-text-muted'
               }`}
             >
               {tab.count}
@@ -368,8 +368,8 @@ export default function EmailPage() {
                     <div
                       className={`w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
                         isUnread
-                          ? 'bg-blue-100 text-blue-600'
-                          : 'bg-slate-100 text-slate-400'
+                          ? 'bg-accent/20 text-accent'
+                          : 'bg-surface-raised text-text-muted'
                       }`}
                     >
                       {senderName.charAt(0).toUpperCase()}
@@ -380,45 +380,45 @@ export default function EmailPage() {
                       <div className="flex items-center justify-between gap-2 mb-0.5">
                         <span
                           className={`text-sm truncate ${
-                            isUnread ? 'font-bold text-slate-900' : 'font-medium text-slate-600'
+                            isUnread ? 'font-bold text-text-primary' : 'font-medium text-text-secondary'
                           }`}
                         >
                           {senderName}
                         </span>
                         <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs text-slate-400">{formatDate(email)}</span>
+                          <span className="text-xs text-text-muted">{formatDate(email)}</span>
                           {isExpanded ? (
-                            <ChevronUp className="w-4 h-4 text-slate-300" />
+                            <ChevronUp className="w-4 h-4 text-text-muted" />
                           ) : (
-                            <ChevronDown className="w-4 h-4 text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <ChevronDown className="w-4 h-4 text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
                           )}
                         </div>
                       </div>
 
                       <div
                         className={`text-sm truncate mb-1 ${
-                          isUnread ? 'font-semibold text-slate-800' : 'text-slate-600'
+                          isUnread ? 'font-semibold text-text-primary' : 'text-text-secondary'
                         }`}
                       >
                         {email.subject || '(No subject)'}
                       </div>
 
                       {!isExpanded && (
-                        <p className="text-xs text-slate-400 truncate">{email.snippet}</p>
+                        <p className="text-xs text-text-muted truncate">{email.snippet}</p>
                       )}
 
                       {/* Expanded body */}
                       {isExpanded && (
-                        <div className="mt-3 pt-3 border-t border-slate-100">
+                        <div className="mt-3 pt-3 border-t border-border">
                           {senderEmail && (
-                            <div className="text-xs text-slate-400 mb-2">
+                            <div className="text-xs text-text-muted mb-2">
                               From: {senderName} &lt;{senderEmail}&gt;
                               {email.to && <span className="ml-2">To: {email.to}</span>}
                             </div>
                           )}
-                          <div className="text-xs text-slate-400 mb-3">{formatFullDate(email)}</div>
+                          <div className="text-xs text-text-muted mb-3">{formatFullDate(email)}</div>
 
-                          <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap mb-4 max-h-64 overflow-y-auto">
+                          <div className="text-sm text-text-secondary leading-relaxed whitespace-pre-wrap mb-4 max-h-64 overflow-y-auto">
                             {email.body || email.snippet || 'No content available.'}
                           </div>
 
@@ -426,7 +426,7 @@ export default function EmailPage() {
                           <div className="flex items-center gap-2 flex-wrap">
                             <button
                               onClick={(e) => openReply(email, e)}
-                              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-blue-50 text-blue-600 text-sm font-semibold hover:bg-blue-100 transition-colors border border-blue-200 cursor-pointer"
+                              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-accent/10 text-accent text-sm font-semibold hover:bg-accent/20 transition-colors border border-blue-200 cursor-pointer"
                             >
                               <Reply className="w-3.5 h-3.5" />
                               Reply
@@ -436,7 +436,7 @@ export default function EmailPage() {
                                 e.stopPropagation()
                                 markReadUnread(email.id, !isUnread)
                               }}
-                              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-50 text-slate-600 text-sm font-semibold hover:bg-slate-100 transition-colors border border-slate-200 cursor-pointer"
+                              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-surface-raised text-text-secondary text-sm font-semibold hover:bg-surface-raised transition-colors border border-border cursor-pointer"
                             >
                               {isUnread ? (
                                 <>
@@ -466,27 +466,27 @@ export default function EmailPage() {
       {showCompose && (
         <div
           onClick={() => setShowCompose(false)}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/20 backdrop-blur-md p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/20 backdrop-blur-md p-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xl bg-white/95 backdrop-blur-xl border border-white rounded-3xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(15,23,42,0.15)] animate-in fade-in zoom-in-95 duration-200"
+            className="w-full max-w-xl bg-surface/95 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(15,23,42,0.15)] animate-in fade-in zoom-in-95 duration-200"
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
               <div className="flex items-center gap-2">
-                <Send className="w-5 h-5 text-blue-500" />
-                <h2 className="text-base font-bold text-slate-900">Compose Email</h2>
+                <Send className="w-5 h-5 text-accent" />
+                <h2 className="text-base font-bold text-text-primary">Compose Email</h2>
               </div>
               <button
                 onClick={() => setShowCompose(false)}
-                className="text-slate-400 hover:text-slate-600 text-lg cursor-pointer"
+                className="text-text-muted hover:text-text-secondary text-lg cursor-pointer"
               >
                 ✕
               </button>
             </div>
             <div className="p-6 flex flex-col gap-4">
               <div>
-                <label className="block text-xs font-bold tracking-widest text-slate-400 uppercase mb-2">
+                <label className="block text-xs font-bold tracking-widest text-text-muted uppercase mb-2">
                   To <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -495,22 +495,22 @@ export default function EmailPage() {
                   value={composeTo}
                   onChange={(e) => setComposeTo(e.target.value)}
                   placeholder="recipient@example.com"
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-raised border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:border-accent transition-all"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold tracking-widest text-slate-400 uppercase mb-2">
+                <label className="block text-xs font-bold tracking-widest text-text-muted uppercase mb-2">
                   Subject <span className="text-red-400">*</span>
                 </label>
                 <input
                   value={composeSubject}
                   onChange={(e) => setComposeSubject(e.target.value)}
                   placeholder="Email subject"
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all"
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-raised border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:border-accent transition-all"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold tracking-widest text-slate-400 uppercase mb-2">
+                <label className="block text-xs font-bold tracking-widest text-text-muted uppercase mb-2">
                   Body <span className="text-red-400">*</span>
                 </label>
                 <textarea
@@ -518,21 +518,21 @@ export default function EmailPage() {
                   onChange={(e) => setComposeBody(e.target.value)}
                   placeholder="Write your email..."
                   rows={8}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all resize-vertical"
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-raised border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:border-accent transition-all resize-vertical"
                 />
               </div>
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={handleSend}
                   disabled={sending}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-text-primary text-sm font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
                   {sending ? 'Sending...' : 'Send Email'}
                 </button>
                 <button
                   onClick={() => setShowCompose(false)}
-                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-surface-raised hover:bg-surface-hover text-text-secondary text-sm font-semibold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -546,38 +546,38 @@ export default function EmailPage() {
       {showReply && replyToEmail && (
         <div
           onClick={() => setShowReply(false)}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/20 backdrop-blur-md p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-surface/20 backdrop-blur-md p-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xl bg-white/95 backdrop-blur-xl border border-white rounded-3xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(15,23,42,0.15)] animate-in fade-in zoom-in-95 duration-200"
+            className="w-full max-w-xl bg-surface/95 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-[0_32px_64px_-12px_rgba(15,23,42,0.15)] animate-in fade-in zoom-in-95 duration-200"
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
               <div className="flex items-center gap-2">
-                <Reply className="w-5 h-5 text-blue-500" />
-                <h2 className="text-base font-bold text-slate-900">
+                <Reply className="w-5 h-5 text-accent" />
+                <h2 className="text-base font-bold text-text-primary">
                   Reply to {getSenderName(replyToEmail.from)}
                 </h2>
               </div>
               <button
                 onClick={() => setShowReply(false)}
-                className="text-slate-400 hover:text-slate-600 text-lg cursor-pointer"
+                className="text-text-muted hover:text-text-secondary text-lg cursor-pointer"
               >
                 ✕
               </button>
             </div>
             <div className="p-6 flex flex-col gap-4">
               {/* Original message context */}
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                <div className="text-xs text-slate-400 mb-1">
+              <div className="p-3 rounded-xl bg-surface-raised border border-border">
+                <div className="text-xs text-text-muted mb-1">
                   Replying to: {getSenderEmail(replyToEmail.from)}
                 </div>
-                <div className="text-xs font-semibold text-slate-600">
+                <div className="text-xs font-semibold text-text-secondary">
                   Re: {replyToEmail.subject}
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-bold tracking-widest text-slate-400 uppercase mb-2">
+                <label className="block text-xs font-bold tracking-widest text-text-muted uppercase mb-2">
                   Your Reply
                 </label>
                 <textarea
@@ -586,21 +586,21 @@ export default function EmailPage() {
                   onChange={(e) => setReplyBody(e.target.value)}
                   placeholder="Type your reply..."
                   rows={6}
-                  className="w-full px-4 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-300 transition-all resize-vertical"
+                  className="w-full px-4 py-2.5 rounded-xl bg-surface-raised border border-border text-sm text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-focus focus:border-accent transition-all resize-vertical"
                 />
               </div>
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={handleReply}
                   disabled={sending}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-text-primary text-sm font-semibold transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
                 >
                   <Send className="w-4 h-4" />
                   {sending ? 'Sending...' : 'Send Reply'}
                 </button>
                 <button
                   onClick={() => setShowReply(false)}
-                  className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-semibold transition-colors cursor-pointer"
+                  className="px-5 py-2.5 rounded-xl bg-surface-raised hover:bg-surface-hover text-text-secondary text-sm font-semibold transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>

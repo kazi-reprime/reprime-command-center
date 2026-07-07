@@ -134,9 +134,9 @@ function initials(identifier: string): string {
 }
 
 const CHANNEL_COLOR: Record<OutboundAskChannel, string> = {
-  email: 'border-l-blue-500 text-blue-600 bg-blue-50',
-  whatsapp: 'border-l-emerald-500 text-emerald-600 bg-emerald-50',
-  imessage: 'border-l-indigo-500 text-indigo-600 bg-indigo-50',
+  email: 'border-l-blue-500 text-accent bg-accent/10',
+  whatsapp: 'border-l-emerald-500 text-success bg-success/10',
+  imessage: 'border-l-indigo-500 text-accent bg-accent/10',
   sms: 'border-l-purple-500 text-purple-600 bg-purple-50',
 }
 
@@ -163,10 +163,10 @@ function AskRow({
   const expected = formatRelativeFuture(ask.expected_reply_by)
   const replied = ask.status === 'replied'
   const expectedColor = replied
-    ? 'text-emerald-500'
+    ? 'text-success'
     : overdue
-      ? 'text-red-500'
-      : 'text-slate-400'
+      ? 'text-error'
+      : 'text-text-muted'
 
   const onClick = () => {
     if (ask.related_thread_id) {
@@ -193,7 +193,7 @@ function AskRow({
             }
           : undefined
       }
-      className={`flex items-start gap-3 p-3 mb-2 rounded-xl bg-slate-50 border border-slate-100 border-l-4 shadow-sm ${channelClasses.split(' ')[0]} ${ask.related_thread_id ? 'cursor-pointer hover:bg-slate-100 hover:border-slate-200 transition-colors' : ''}`}
+      className={`flex items-start gap-3 p-3 mb-2 rounded-xl bg-surface-raised border border-border border-l-4 shadow-sm ${channelClasses.split(' ')[0]} ${ask.related_thread_id ? 'cursor-pointer hover:bg-surface-raised hover:border-border transition-colors' : ''}`}
     >
       <div
         aria-hidden
@@ -205,7 +205,7 @@ function AskRow({
       <div className="flex-1 min-w-0">
         <div className="flex justify-between items-baseline gap-2">
           <span
-            className="font-bold text-slate-800 truncate text-sm"
+            className="font-bold text-text-primary truncate text-sm"
             title={
               resolvedName
                 ? `${resolvedName} — ${ask.recipient_identifier}`
@@ -215,7 +215,7 @@ function AskRow({
             {resolvedName ? (
               <>
                 {resolvedName}
-                <span className="text-slate-400 font-normal ml-1">
+                <span className="text-text-muted font-normal ml-1">
                   — {ask.recipient_identifier}
                 </span>
               </>
@@ -233,7 +233,7 @@ function AskRow({
 
         {ask.body && (
           <div
-            className="text-slate-500 text-xs mt-1 truncate"
+            className="text-text-secondary text-xs mt-1 truncate"
             title={ask.body}
           >
             {clipPreview(ask.body)}
@@ -241,7 +241,7 @@ function AskRow({
         )}
 
         <div className="flex justify-between gap-2 mt-2 text-[10px] font-bold uppercase tracking-wider">
-          <span className="text-slate-400">
+          <span className="text-text-muted">
             sent {sentAgo}
           </span>
           <span className={expectedColor}>
@@ -254,7 +254,7 @@ function AskRow({
 }
 
 function EmptyHint({ text }: { text: string }) {
-  return <div className="text-slate-400 text-xs font-semibold">{text}</div>
+  return <div className="text-text-muted text-xs font-semibold">{text}</div>
 }
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -294,14 +294,14 @@ export default function SecretaryTab() {
   return (
     <div
       data-component="secretary-tab"
-      className="bg-white text-slate-800 h-full overflow-y-auto"
+      className="bg-surface text-text-primary h-full overflow-y-auto"
     >
       {/* 1. Overdue */}
       {overdue.length > 0 && (
-        <section className="px-4 py-4 border-b border-slate-100" data-section="overdue">
+        <section className="px-4 py-4 border-b border-border" data-section="overdue">
           <div className="flex justify-between items-baseline gap-2 mb-3">
-            <span className="text-red-500 text-xs font-black uppercase tracking-widest">Overdue</span>
-            <span className="text-slate-400 text-xs font-bold">{overdue.length}</span>
+            <span className="text-error text-xs font-black uppercase tracking-widest">Overdue</span>
+            <span className="text-text-muted text-xs font-bold">{overdue.length}</span>
           </div>
           {overdue.map((ask) => (
             <AskRow
@@ -315,14 +315,14 @@ export default function SecretaryTab() {
       )}
 
       {/* 2. Awaiting Reply */}
-      <section className="px-4 py-4 border-b border-slate-100" data-section="awaiting">
+      <section className="px-4 py-4 border-b border-border" data-section="awaiting">
         <div className="flex justify-between items-baseline gap-2 mb-3">
-          <span className="text-blue-600 text-xs font-black uppercase tracking-widest">Awaiting Reply</span>
-          <span className="text-slate-400 text-xs font-bold">{awaiting.length}</span>
+          <span className="text-accent text-xs font-black uppercase tracking-widest">Awaiting Reply</span>
+          <span className="text-text-muted text-xs font-bold">{awaiting.length}</span>
         </div>
         {asks.isLoading && <EmptyHint text="Loading…" />}
         {asks.isError && (
-          <div className="text-red-500 text-xs font-semibold">
+          <div className="text-error text-xs font-semibold">
             Failed: {(asks.error as Error).message}
           </div>
         )}
@@ -344,8 +344,8 @@ export default function SecretaryTab() {
         data-section="replied"
       >
         <div className="flex justify-between items-baseline gap-2 mb-3">
-          <span className="text-emerald-500 text-xs font-black uppercase tracking-widest">Replied This Week</span>
-          <span className="text-slate-400 text-xs font-bold">{repliedRecent.length}</span>
+          <span className="text-success text-xs font-black uppercase tracking-widest">Replied This Week</span>
+          <span className="text-text-muted text-xs font-bold">{repliedRecent.length}</span>
         </div>
         {!asks.isLoading && repliedRecent.length === 0 && (
           <EmptyHint text="No replies yet this week." />
@@ -361,7 +361,7 @@ export default function SecretaryTab() {
           <button
             type="button"
             onClick={() => setShowRepliedAll((v) => !v)}
-            className="mt-2 text-blue-500 hover:text-blue-600 text-[10px] font-bold uppercase tracking-wider cursor-pointer"
+            className="mt-2 text-accent hover:text-accent text-[10px] font-bold uppercase tracking-wider cursor-pointer"
           >
             {showRepliedAll
               ? 'Show fewer'

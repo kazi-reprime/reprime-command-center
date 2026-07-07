@@ -27,13 +27,13 @@ export function PremiumChart({ title = "Growth Metrics" }: { title?: string }) {
   const [timeRange, setTimeRange] = useState('last7')
 
   return (
-    <div className="p-5 rounded-3xl bg-white border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+    <div className="p-5 rounded-3xl bg-surface border border-border shadow-glass-elevated">
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-sm font-bold text-slate-800">{title}</h3>
+        <h3 className="text-sm font-bold text-text-primary">{title}</h3>
         <select
           value={timeRange}
           onChange={(e) => setTimeRange(e.target.value)}
-          className="bg-slate-50 border border-slate-200 text-slate-600 text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-100"
+          className="bg-surface-raised border border-border text-text-secondary text-xs font-bold rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-focus"
         >
           <option value="last7">Last 7 Months</option>
           <option value="ytd">Year to Date</option>
@@ -48,44 +48,44 @@ export function PremiumChart({ title = "Growth Metrics" }: { title?: string }) {
           >
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                <stop offset="5%" stopColor="var(--chart-1)" stopOpacity={0.3}/>
+                <stop offset="95%" stopColor="var(--chart-1)" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
             <XAxis 
               dataKey="name" 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} 
+              tick={{ fontSize: 10, fontWeight: 700, fill: 'var(--text-muted)' }} 
               dy={10}
             />
             <YAxis 
               axisLine={false} 
               tickLine={false} 
-              tick={{ fontSize: 10, fontWeight: 700, fill: '#94a3b8' }} 
+              tick={{ fontSize: 10, fontWeight: 700, fill: 'var(--text-muted)' }} 
               tickFormatter={(value) => `$${value}`}
             />
             <Tooltip
               contentStyle={{
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                backgroundColor: 'var(--surface-raised)',
                 borderRadius: '12px',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
+                border: '1px solid var(--border)',
+                boxShadow: 'var(--glass-shadow)',
                 fontWeight: 700,
                 fontSize: '12px',
-                color: '#1e293b'
+                color: 'var(--text-primary)'
               }}
-              itemStyle={{ color: '#3b82f6', fontWeight: 900 }}
+              itemStyle={{ color: 'var(--chart-1)', fontWeight: 900 }}
             />
             <Area 
               type="monotone" 
               dataKey="value" 
-              stroke="#3b82f6" 
+              stroke="var(--chart-1)" 
               strokeWidth={3}
               fillOpacity={1} 
               fill="url(#colorValue)" 
-              activeDot={{ r: 6, strokeWidth: 0, fill: '#3b82f6' }}
+              activeDot={{ r: 6, strokeWidth: 0, fill: 'var(--chart-1)' }}
             />
           </AreaChart>
         </ResponsiveContainer>

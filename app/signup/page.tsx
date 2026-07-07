@@ -57,9 +57,9 @@ function SignupForm() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0E3470] text-white font-sans p-6">
+      <div className="min-h-screen flex items-center justify-center bg-[#0E3470] text-text-primary font-sans p-6">
         <div className="max-w-md w-full bg-[#123e80] border border-red-500 rounded-lg p-8 shadow-xl text-center">
-          <h2 className="text-2xl font-bold text-red-500 mb-4">Invalid Access Link</h2>
+          <h2 className="text-2xl font-bold text-error mb-4">Invalid Access Link</h2>
           <p className="text-gray-300">
             This signup page requires an invite token. Please click the custom registration link sent by your administrator.
           </p>
@@ -69,7 +69,7 @@ function SignupForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0E3470] font-sans p-6 text-white">
+    <div className="min-h-screen flex items-center justify-center bg-[#0E3470] font-sans p-6 text-text-primary">
       <div className="max-w-md w-full bg-[#123e80]/80 backdrop-blur-md border border-[#FFCC33]/30 rounded-xl p-8 shadow-2xl">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-extrabold tracking-tight text-[#FFCC33]">Command Center</h1>
@@ -150,7 +150,7 @@ function SignupForm() {
 export default function SignupPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-[#0E3470] text-white">
+      <div className="min-h-screen flex items-center justify-center bg-[#0E3470] text-text-primary">
         <p className="text-sm">Loading signup details...</p>
       </div>
     }>

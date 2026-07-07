@@ -36,8 +36,8 @@ export default function ApexCard() {
 
   if (loading) {
     return (
-      <div className="mx-4 mt-4 bg-[#123e80]/30 border border-[#FFCC33]/20 rounded-lg p-3 flex items-center justify-center">
-        <Loader2 className="h-4 w-4 animate-spin text-[#FFCC33]" />
+      <div className="mx-4 mt-4 bg-surface border border-border rounded-lg p-3 flex items-center justify-center">
+        <Loader2 className="h-4 w-4 animate-spin text-accent" />
       </div>
     );
   }
@@ -47,31 +47,31 @@ export default function ApexCard() {
   }
 
   return (
-    <div className="mx-4 mt-2 mb-1 bg-[#123e80]/50 border border-[#FFCC33]/40 rounded-lg p-3 flex items-center justify-between group shadow-[0_0_15px_rgba(255,204,51,0.15)] relative overflow-hidden">
+    <div className="mx-4 mt-2 mb-1 bg-surface-raised border border-accent/40 rounded-lg p-3 flex items-center justify-between group shadow-[0_0_15px_rgba(var(--accent-rgb),0.15)] relative overflow-hidden">
       {/* Dynamic Background Glow */}
-      <div className="absolute inset-0 bg-gradient-to-r from-[#FFCC33]/0 via-[#FFCC33]/5 to-[#FFCC33]/0 translate-x-[-100%] group-hover:animate-[shimmer_2s_infinite]" />
+      <div className="absolute inset-0 bg-gradient-to-r from-accent/0 via-accent/5 to-accent/0 translate-x-[-100%] group-hover:animate-[shimmer_2s_infinite]" />
       
       <div className="flex items-center space-x-3 z-10">
-        <div className="bg-[#FFCC33]/20 p-2 rounded-md">
-          <Zap className="h-5 w-5 text-[#FFCC33] animate-pulse" />
+        <div className="bg-accent/20 p-2 rounded-md">
+          <Zap className="h-5 w-5 text-accent animate-pulse" />
         </div>
         <div>
-          <h3 className="text-xs font-bold text-[#FFCC33] uppercase tracking-wider mb-0.5">APEX Priority</h3>
-          <p className="text-sm font-semibold text-white">{focus.title}</p>
+          <h3 className="text-xs font-bold text-accent uppercase tracking-wider mb-0.5">APEX Priority</h3>
+          <p className="text-sm font-semibold text-text-primary">{focus.title}</p>
         </div>
       </div>
       
       <div className="flex items-center space-x-4 z-10">
         <div className="text-right">
-          <p className="text-[10px] text-gray-400 font-medium">Scheduled Window</p>
-          <p className="text-xs text-gray-200 font-mono">
+          <p className="text-[10px] text-text-muted font-medium">Scheduled Window</p>
+          <p className="text-xs text-text-secondary font-mono">
             {new Date(focus.gap_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
             {new Date(focus.gap_end).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
         <button
           onClick={() => window.location.href = '/center'}
-          className="bg-[#FFCC33] text-[#08224d] p-2 rounded-md hover:bg-[#FFCC33]/90 transition"
+          className="bg-accent text-accent-foreground p-2 rounded-md hover:bg-accent-hover transition"
         >
           <ArrowRight className="h-4 w-4" />
         </button>

@@ -79,7 +79,7 @@ function initials(nameOrAddress: string): string {
 
 function scoreBadgeClass(score: number): string {
   if (score >= 10) return 'bg-purple-100 text-purple-700'
-  return 'bg-amber-100 text-amber-700'
+  return 'bg-amber-100 text-warning'
 }
 
 function dispatchOpenWindow(opts: { url: string; title: string }) {
@@ -192,21 +192,21 @@ export default function InboxColumn() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-white text-slate-800 font-sans relative">
+    <div className="flex flex-col h-full bg-surface text-text-primary font-sans relative">
       {/* Header */}
-      <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-100">
+      <div className="flex items-center gap-2 px-4 py-3 border-b border-border">
         <select
           value={account}
           onChange={() => {}}
           aria-label="Mailbox"
-          className="flex-1 bg-slate-50 text-slate-800 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer"
+          className="flex-1 bg-surface-raised text-text-primary border border-border rounded-lg px-3 py-1.5 text-xs font-bold focus:outline-none focus:ring-2 focus:ring-focus transition-all cursor-pointer"
         >
           <option value="g@reprime.com">g@reprime.com</option>
         </select>
         <button
           onClick={() => refetch()}
           disabled={isRefetching}
-          className="bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg px-3 py-1.5 text-xs cursor-pointer disabled:opacity-50 transition-colors shadow-sm"
+          className="bg-surface border border-border hover:bg-surface-raised text-text-secondary rounded-lg px-3 py-1.5 text-xs cursor-pointer disabled:opacity-50 transition-colors shadow-sm"
           aria-label="Refresh inbox triage"
           title="Refresh"
         >
@@ -216,23 +216,23 @@ export default function InboxColumn() {
 
       <div className="flex-1 overflow-y-auto pt-2 px-4 pb-4">
         {isLoading && (
-          <div className="text-slate-400 text-xs font-bold p-2">Loading inbox…</div>
+          <div className="text-text-muted text-xs font-bold p-2">Loading inbox…</div>
         )}
         {isError && (
-          <div className="text-red-500 text-xs font-bold p-2 bg-red-50 rounded-lg border border-red-100 shadow-sm mt-2">
+          <div className="text-error text-xs font-bold p-2 bg-error/10 rounded-lg border border-error/20 shadow-sm mt-2">
             {(error as Error).message || 'Failed to load.'}
           </div>
         )}
         {!isLoading && !isError && items.length === 0 && (
           <div className="p-2 mt-2">
-            <div className="text-slate-500 text-sm font-bold mb-4">
+            <div className="text-text-secondary text-sm font-bold mb-4">
               Inbox is clear. Nothing scoring above 5 today.
             </div>
             <button
               type="button"
               onClick={() => refetch()}
               disabled={isRefetching}
-              className="bg-blue-50 text-blue-600 border border-blue-200 rounded-lg px-4 py-2 text-xs font-black uppercase tracking-widest shadow-sm hover:bg-blue-100 transition-colors cursor-pointer disabled:opacity-50"
+              className="bg-accent/10 text-accent border border-blue-200 rounded-lg px-4 py-2 text-xs font-black uppercase tracking-widest shadow-sm hover:bg-accent/20 transition-colors cursor-pointer disabled:opacity-50"
             >
               {isRefetching ? 'Syncing…' : '↻ Sync now'}
             </button>
@@ -251,38 +251,38 @@ export default function InboxColumn() {
                   openGmailWindow(it)
                 }}
                 className={`grid grid-cols-[32px_1fr_auto] gap-3 items-center p-3 rounded-xl border transition-all cursor-pointer shadow-sm ${
-                  it.unread ? 'border-l-4 border-l-blue-500 bg-blue-50/30' : 'border-l-4 border-l-transparent bg-slate-50 hover:bg-white'
-                } border-slate-100 ${openMenuId === it.message_id ? 'bg-white shadow-md border-blue-200' : ''}`}
+                  it.unread ? 'border-l-4 border-l-blue-500 bg-accent/10/30' : 'border-l-4 border-l-transparent bg-surface-raised hover:bg-surface'
+                } border-border ${openMenuId === it.message_id ? 'bg-surface shadow-md border-blue-200' : ''}`}
               >
                 <div
                   aria-hidden
-                  className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-black tracking-wider"
+                  className="w-8 h-8 rounded-full bg-accent/20 text-accent-hover flex items-center justify-center text-xs font-black tracking-wider"
                 >
                   {initials(displayName)}
                 </div>
                 
                 <div className="min-w-0">
-                  <div className="flex items-center gap-2 text-sm font-bold text-slate-800 truncate">
+                  <div className="flex items-center gap-2 text-sm font-bold text-text-primary truncate">
                     <span className="shrink-0 truncate max-w-[60%]">
                       {displayName}
                     </span>
                     {it.has_ics && (
-                      <span title="Calendar invite" className="text-[9px] font-black uppercase tracking-widest text-emerald-600 bg-emerald-100 px-1.5 py-0.5 rounded-md">
+                      <span title="Calendar invite" className="text-[9px] font-black uppercase tracking-widest text-success bg-emerald-100 px-1.5 py-0.5 rounded-md">
                         ICS
                       </span>
                     )}
                     {it.gmail_important && (
-                      <span title="Marked important by Gmail" className="text-amber-500 text-xs">
+                      <span title="Marked important by Gmail" className="text-warning text-xs">
                         ★
                       </span>
                     )}
                     <span className="flex-1" />
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0">
+                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider shrink-0">
                       {relativeTime(it.received_at)}
                     </span>
                   </div>
                   
-                  <div className="text-xs text-slate-500 font-medium truncate mt-1" title={it.subject}>
+                  <div className="text-xs text-text-secondary font-medium truncate mt-1" title={it.subject}>
                     {it.subject || '(no subject)'}
                   </div>
                 </div>
@@ -303,7 +303,7 @@ export default function InboxColumn() {
                       e.stopPropagation()
                       setOpenMenuId(openMenuId === it.message_id ? null : it.message_id)
                     }}
-                    className="bg-transparent border-none text-slate-400 hover:text-slate-800 hover:bg-slate-200 rounded p-1 text-lg leading-none cursor-pointer transition-colors"
+                    className="bg-transparent border-none text-text-muted hover:text-text-primary hover:bg-surface-hover rounded p-1 text-lg leading-none cursor-pointer transition-colors"
                   >
                     ⋯
                   </button>
@@ -313,7 +313,7 @@ export default function InboxColumn() {
                   <div
                     data-row-action
                     onClick={(e) => e.stopPropagation()}
-                    className="col-span-full flex flex-wrap gap-2 pt-2 mt-1 border-t border-slate-100"
+                    className="col-span-full flex flex-wrap gap-2 pt-2 mt-1 border-t border-border"
                   >
                     <ActionBtn
                       onClick={async () => {
@@ -361,7 +361,7 @@ export default function InboxColumn() {
               persistHiddenSenders(new Set())
               qc.invalidateQueries({ queryKey: ['email-triage'] })
             }}
-            className="mt-4 bg-transparent text-slate-400 hover:text-slate-600 border border-slate-200 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors w-full cursor-pointer shadow-sm"
+            className="mt-4 bg-transparent text-text-muted hover:text-text-secondary border border-border rounded-lg px-3 py-1.5 text-xs font-bold transition-colors w-full cursor-pointer shadow-sm"
           >
             Reset {hiddenSenders.size} hidden sender{hiddenSenders.size === 1 ? '' : 's'}
           </button>
@@ -373,8 +373,8 @@ export default function InboxColumn() {
           role="status"
           className={`absolute right-4 bottom-4 px-3 py-2 rounded-lg border text-xs font-bold z-30 shadow-lg ${
             toast.kind === 'ok' 
-              ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-              : 'bg-red-50 text-red-700 border-red-200'
+              ? 'bg-success/10 text-success border-emerald-200' 
+              : 'bg-error/10 text-error border-red-200'
           }`}
         >
           {toast.text}
@@ -402,7 +402,7 @@ function ActionBtn({
   return (
     <button
       onClick={onClick}
-      className="bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 border border-slate-200 hover:border-blue-200 rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-widest cursor-pointer transition-colors shadow-sm"
+      className="bg-surface-raised hover:bg-accent/10 text-text-primary hover:text-accent-hover border border-border hover:border-blue-200 rounded-lg px-3 py-1.5 text-[10px] font-black uppercase tracking-widest cursor-pointer transition-colors shadow-sm"
     >
       {children}
     </button>

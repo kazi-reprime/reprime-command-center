@@ -22,7 +22,7 @@
     "@ai-sdk/anthropic": "^4.0.1",
     "@ai-sdk/google": "^4.0.2",
     "@ai-sdk/openai": "^4.0.2",
-    "@anthropic-ai/sdk": "^0.106.0",
+    "@anthropic-ai/sdk": "^0.110.0",
     "@hebcal/core": "^6.6.0",
     "@sparticuz/chromium": "^149.0.0",
     "@supabase/ssr": "^0.12.0",

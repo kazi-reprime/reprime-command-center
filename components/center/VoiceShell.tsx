@@ -2,6 +2,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useStore } from '@/lib/store/useStore'
 import { parseCommand, type ParsedIntent } from '@/lib/voice/parser'
 
 /**

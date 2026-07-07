@@ -75,9 +75,9 @@ export default function VoiceModalsHost() {
   // fields we need overlap with DashboardThread, so type the adapter loosely.
   interface ThreadStub {
     id: string
-    contact_name?: string
-    phone?: string
-    pipedrive_contact_id?: number
+    contact_name?: string | null
+    phone?: string | null
+    pipedrive_contact_id?: number | null
     panel?: string
     is_investor?: boolean
   }

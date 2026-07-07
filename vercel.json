@@ -2,11 +2,11 @@
   "crons": [
     {
       "path": "/api/cron/scheduled-messages",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/zoom-sync",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }

@@ -40,7 +40,15 @@ export async function POST(request: NextRequest) {
     .eq('id', body.actionId)
     .single()
 
-  if (fetchErr || !action) {
+  if (fetchErr) {
+    // Table might not exist yet
+    if (fetchErr.message.includes('does not exist') || fetchErr.message.includes('schema cache')) {
+      return NextResponse.json({ error: 'approval_table_not_migrated', message: 'Run the DB migration to create nora_pending_actions table.' }, { status: 503 })
+    }
+    return NextResponse.json({ error: 'action_not_found' }, { status: 404 })
+  }
+
+  if (!action) {
     return NextResponse.json({ error: 'action_not_found' }, { status: 404 })
   }
 
@@ -145,6 +153,10 @@ export async function GET() {
     .limit(20)
 
   if (error) {
+    // Table might not exist yet — return empty list
+    if (error.message.includes('does not exist') || error.message.includes('schema cache')) {
+      return NextResponse.json({ actions: [], note: 'nora_pending_actions table not yet created. Run DB migration.' })
+    }
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 

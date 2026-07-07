@@ -1,24 +1,43 @@
 import { NextResponse } from 'next/server';
-import { getGmailTriageList } from '@/lib/google';
 
 export const dynamic = 'force-dynamic'
 
 /**
  * GET /api/gmail
  *
- * Returns prioritized Gmail messages from the real Gmail API.
- * Previously fell back silently to fake data — now returns a proper error.
+ * Legacy Gmail endpoint. Tries the real Gmail triage list first,
+ * falls back to the new unified inbox if rate-limited or errored.
  */
 export async function GET() {
+  // Strategy 1: Original Gmail triage list
   try {
+    const { getGmailTriageList } = await import('@/lib/google');
     const list = await getGmailTriageList();
     return NextResponse.json(list);
   } catch (err) {
-    const msg = err instanceof Error ? err.message : 'Internal Server Error';
-    console.error('[/api/gmail] Gmail fetch failed:', msg);
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    console.warn('[/api/gmail] Primary failed:', msg);
 
-    // Return empty array with error flag so the UI can show a meaningful
-    // "Gmail unavailable" state instead of fake emails.
+    // Strategy 2: Fall back to new unified inbox
+    try {
+      const { fetchInbox } = await import('@/lib/email/unified-inbox');
+      const emails = await fetchInbox({ maxResults: 15 });
+      const formatted = emails.map((e) => ({
+        id: e.messageId,
+        from: e.from,
+        fromName: e.fromName,
+        subject: e.subject,
+        snippet: e.snippet,
+        receivedAt: e.receivedAt,
+        isUnread: e.unread,
+        isImportant: e.important,
+        labels: e.labels || [],
+      }));
+      return NextResponse.json(formatted);
+    } catch (fallbackErr) {
+      console.error('[/api/gmail] Fallback also failed:', (fallbackErr as Error).message);
+    }
+
     return NextResponse.json(
       { error: 'gmail_unavailable', message: msg, emails: [] },
       { status: 502 }

@@ -52,8 +52,11 @@ const config: Config = {
       },
       boxShadow: {
         'glass': 'var(--glass-shadow)',
-        'glass-hover': '0 8px 32px rgba(0, 0, 0, 0.15)',
-        'glass-elevated': '0 12px 40px rgba(0, 0, 0, 0.2)',
+        'glass-hover': 'var(--glass-shadow-hover)',
+        'glass-elevated': 'var(--glass-shadow-elevated)',
+        'glow-accent': '0 0 20px var(--accent-glow), 0 0 60px var(--accent-glow)',
+        'glow-success': '0 0 16px var(--success-glow), 0 0 48px var(--success-glow)',
+        'glow-error': '0 0 16px var(--error-glow), 0 0 48px var(--error-glow)',
       },
       ringColor: {
         DEFAULT: "var(--focus-ring)",

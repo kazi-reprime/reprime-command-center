@@ -1,4 +1,4 @@
-# RePrime Command Center v0.1
+# RePrime Command Center v0.2
 
 **AI Business Operating System for RePrime Group**
 
@@ -22,7 +22,14 @@ A full-stack Next.js command center that combines CRM, communications, AI agents
 
 ## What This Is
 
-The Command Center started as a communications kiosk (`/center`) for managing WhatsApp, iMessage, SMS, email, and phone calls across two business panels (305 & 718). In v0.1, it was upgraded into a full **AI Business Operating System** (`/cockpit`) with 13 modules.
+The Command Center is a **production-grade AI Business Operating System** with 4 P0 systems running end-to-end with real data:
+
+| System | Status | Providers |
+|--------|--------|-----------|
+| **WhatsApp** | ✅ Live | Timelines.ai (primary) → Meta Cloud API (fallback) |
+| **Email** | ✅ Live | Gmail API → SendGrid (fallback) |
+| **Nora AI** | ✅ Live | Orchestrator (11 agents) → Claude → Groq/OpenAI |
+| **Zoom / Meetings** | ✅ Live | Zoom S2S OAuth → Supabase → Google Calendar |
 
 ### The Vision
 > **Notion + CRM + AI Assistant + Automation Hub + Business Analytics Dashboard + Client Portal + Project Control Room + AI Agent Monitor**
@@ -34,58 +41,77 @@ The Command Center started as a communications kiosk (`/center`) for managing Wh
 ```
 /                     → Redirect to /login
 /login                → Authentication (Supabase Auth)
+/cockpit              → AI Business OS (18+ modules)
 /center               → Legacy Kiosk (WhatsApp, iMessage, SMS, Email, Phone)
-/cockpit              → AI Business OS (13 modules — see below)
-/api/*                → 105+ API routes (all server-side)
+/os                   → OS-style system view
+/api/*                → 150+ API routes (all server-side)
 ```
 
-### Cockpit Modules (v0.1)
+### Integration Gateway (`lib/gateway/`)
 
-| Route | Module | Status | Description |
-|-------|--------|--------|-------------|
-| `/cockpit` | Executive Dashboard | ✅ Seed | Business Health Score, KPI grid, calendar, AI recommendations |
-| `/cockpit/clients` | Client CRM | ✅ Seed | Client profiles, CRUD, revenue tracking, AI summaries |
-| `/cockpit/leads` | Lead Pipeline | ✅ Seed | Kanban board, drag-and-drop stages, AI next-best-action |
-| `/cockpit/tasks` | Task Center | ✅ Seed | Priority management, checklists, project tagging |
-| `/cockpit/agents` | AI Agents | ✅ Seed | 10 AI agents with run/pause/resume/retry controls |
-| `/cockpit/automations` | Automation Hub | ✅ Seed | Enable/disable/retry automations with live status |
-| `/cockpit/inbox` | Communication Inbox | ✅ Seed | Channel filtering (WhatsApp, email, SMS), AI summaries |
-| `/cockpit/analytics` | Revenue & Analytics | ✅ Seed | Revenue trends, lead funnel, agent performance charts |
-| `/cockpit/projects` | Project Tracker | ✅ Seed | Milestones, progress bars, blocker alerts |
-| `/cockpit/files` | File Center | ✅ Seed | File listing with tag filtering |
-| `/cockpit/health` | System Health | ✅ Seed | 12-service status monitor, log viewer |
-| `/cockpit/settings` | Settings | ✅ Seed | Business config, integrations, team management |
+All external services are accessed through a **capability-based gateway** with automatic failover:
 
-> **✅ Seed** = UI is built and functional with seed/demo data. Wiring to live Supabase data is the next phase.
+```typescript
+import { gateway } from '@/lib/gateway'
 
-### Legacy Kiosk (`/center`) — Fully Functional
+// Callers request WHAT they need, never WHICH vendor
+const result = await gateway.sendWhatsApp({ to: '+1...', body: 'Hello', lane: '305' })
+// → Tries Timelines.ai → Meta Cloud API automatically
+```
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| WhatsApp (305 & 718) | ✅ Live | Via Timelines.ai adapter |
-| iMessage | ✅ Live | Via BlueBubbles adapter |
-| SMS | ✅ Live | Via Quo/Twilio adapter |
-| Email (Gmail) | ✅ Live | OAuth2 via Google APIs |
-| Phone Calls | ✅ Live | Call events + recordings |
-| Daily Briefing | ✅ Live | AI-generated morning briefing |
-| Nora AI Chat | ✅ Live | Claude/GPT-powered assistant |
-| Secretary (Outbound Asks) | ✅ Live | Track follow-ups with deadlines |
-| Investor Cadence | ✅ Live | Investor communication tracker |
-| Suggested Focus | ✅ Live | 90-minute focus timer |
-| Pipedrive CRM Sidebar | ✅ Live | Contact resolution + deal cards |
-| Notes | ✅ Live | Linked notes system |
+| Component | Purpose |
+|-----------|---------|
+| `provider-registry.ts` | Capability routing with health-scored failover |
+| `circuit-breaker.ts` | Closed → Open → Half-Open → Closed (5 failures = open) |
+| `health-monitor.ts` | Latency tracking, failure streaks, auth detection |
+| `audit.ts` | Buffered audit log writes with secret redaction |
 
-### API Routes (105+)
+#### 15 Registered Providers
 
-All API routes are in `app/api/`. Key categories:
+| Category | Providers |
+|----------|-----------|
+| WhatsApp | Timelines.ai (primary), Meta Cloud API (fallback) |
+| Email | Gmail API, SendGrid |
+| AI | Anthropic Claude, OpenAI, Gemini*, Groq*, OpenRouter* |
+| STT | OpenAI Whisper, Groq Whisper*, Deepgram Nova* |
+| TTS | ElevenLabs, OpenAI TTS |
+| Meetings | Zoom S2S OAuth |
 
-- **Communication**: `/api/whatsapp/*`, `/api/gmail/*`, `/api/email/*`, `/api/nora/*`
-- **CRM**: `/api/pipedrive/*`, `/api/deals`, `/api/investors/*`
-- **AI**: `/api/ai/*`, `/api/briefing/*`, `/api/voice/*`
-- **Scheduling**: `/api/invitations/*`, `/api/calendar/*`
-- **Automation**: `/api/cron/*` (10+ scheduled jobs)
-- **Webhooks**: `/api/webhooks/*`, `/api/phone/*`
-- **System**: `/api/health`, `/api/migrate`, `/api/search`
+> \*Not yet configured — will activate when API keys are added
+
+### Nora AI — Multi-Agent System
+
+| Agent | Tools | Purpose |
+|-------|-------|---------|
+| Orchestrator | Intent routing | Classifies intent → dispatches to specialist |
+| Email Agent | 5 tools | Inbox, search, send, reply, mark |
+| WhatsApp Agent | 5 tools | Search, read, send, unread, contacts |
+| Meeting Agent | 4 tools | List, create, brief, participants |
+| Contact Agent | 2 tools | Resolve, search |
+| Security Agent | Approval flows | Sensitive action gating |
+| Session Manager | Persistence | Vector memory + Supabase history |
+
+**Fallback chain:** Orchestrator → Anthropic Claude (tool-use) → Groq/OpenAI (plain chat)
+
+### Cockpit Modules
+
+| Route | Module | Data Source |
+|-------|--------|-------------|
+| `/cockpit` | Executive Dashboard | Live APIs |
+| `/cockpit/health` | System Health | Gateway health monitor |
+| `/cockpit/comms` | Communications | Supabase Realtime |
+| `/cockpit/email` | Email Inbox | Real Gmail API |
+| `/cockpit/tasks` | Task Center | Supabase |
+| `/cockpit/clients` | Client CRM | Supabase |
+| `/cockpit/leads` | Lead Pipeline | Supabase |
+| `/cockpit/pipeline` | Deal Pipeline | Supabase + Pipedrive |
+| `/cockpit/investors` | Investor Relations | Supabase |
+| `/cockpit/agents` | AI Agent Monitor | Live agent status |
+| `/cockpit/analytics` | Revenue & Analytics | Aggregated APIs |
+| `/cockpit/calendar` | Calendar | Google Calendar API |
+| `/cockpit/notes` | Notes | Supabase |
+| `/cockpit/inbox` | Unified Inbox | Multi-channel |
+| `/cockpit/settings` | Settings | Config store |
 
 ---
 
@@ -93,23 +119,20 @@ All API routes are in `app/api/`. Key categories:
 
 | Layer | Technology |
 |-------|-----------|
-| **Framework** | Next.js 15 (App Router) |
-| **Language** | TypeScript |
+| **Framework** | Next.js 15.5 (App Router) |
+| **Language** | TypeScript (strict) |
 | **Database** | Supabase (PostgreSQL) |
-| **ORM** | Drizzle ORM |
 | **Auth** | Supabase Auth |
-| **AI** | Anthropic Claude, OpenAI, Google Gemini |
-| **Styling** | Tailwind CSS + Custom CSS-in-JS |
-| **State** | Zustand (client) + React Query (server) |
-| **Voice** | ElevenLabs (TTS) + Deepgram (STT) |
+| **AI** | Anthropic Claude, OpenAI GPT-4o, ElevenLabs, OpenAI Whisper |
+| **Styling** | Tailwind CSS + Glassmorphic Design System (5 themes) |
+| **State** | React hooks + Supabase Realtime |
+| **Gateway** | Custom capability-based router with circuit breakers |
 | **CRM** | Pipedrive API |
 | **Email** | Gmail API + SendGrid |
-| **Messaging** | Timelines.ai (WhatsApp) + BlueBubbles (iMessage) |
-| **Phone** | Quo API + Twilio |
-| **Video** | Zoom API |
+| **Messaging** | Timelines.ai (WhatsApp) + Meta Cloud API |
+| **Meetings** | Zoom S2S OAuth |
 | **Cache** | Upstash Redis |
-| **Payments** | Stripe |
-| **Hosting** | Vercel |
+| **Hosting** | Vercel (Hobby tier) |
 
 ---
 
@@ -117,7 +140,7 @@ All API routes are in `app/api/`. Key categories:
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 24+
 - npm
 - A Supabase project
 - API keys for integrations (see `.env.example`)
@@ -147,16 +170,19 @@ Open [http://localhost:3000](http://localhost:3000) to see the app.
 
 ### Environment Variables
 
-All required environment variables are documented in [`.env.example`](.env.example). Key groups:
-
 | Group | Variables | Required |
 |-------|----------|----------|
-| Database | `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | ✅ Yes |
+| Database | `DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` | ✅ Yes |
 | AI | `ANTHROPIC_API_KEY` | ✅ Yes |
-| WhatsApp | `TIMELINES_API_KEY`, `TIMELINES_CHANNEL_*` | For messaging |
+| WhatsApp | `TIMELINES_API_KEY`, `TIMELINES_CHANNEL_305`, `TIMELINES_CHANNEL_718` | For messaging |
+| WhatsApp Fallback | `META_WA_ACCESS_TOKEN`, `META_WA_PHONE_ID_305`, `META_WA_VERIFY_TOKEN` | Optional |
 | Google | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN` | For email/calendar |
-| Voice | `ELEVENLABS_API_KEY`, `DEEPGRAM_API_KEY` | For voice features |
-| CRM | Pipedrive keys (via Supabase config) | For CRM sidebar |
+| Voice | `ELEVENLABS_API_KEY`, `OPENAI_API_KEY` | For voice features |
+| Zoom | `ZOOM_ACCOUNT_ID`, `ZOOM_CLIENT_ID`, `ZOOM_CLIENT_SECRET` | For meetings |
+| CRM | `PIPEDRIVE_API_TOKEN` | For CRM |
+| Email | `SENDGRID_API_KEY` | Fallback email |
+| Cache | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | For caching |
+| Cron | `CRON_SECRET` | For scheduled jobs |
 
 ---
 
@@ -165,88 +191,73 @@ All required environment variables are documented in [`.env.example`](.env.examp
 ```
 reprime-command-center/
 ├── app/                          # Next.js App Router
-│   ├── api/                      # 105+ API routes
-│   ├── cockpit/                  # AI Business OS (13 modules)
-│   │   ├── layout.tsx            # Cockpit shell (sidebar + topbar)
-│   │   ├── page.tsx              # Executive Dashboard
-│   │   ├── agents/               # AI Agent Control Panel
-│   │   ├── analytics/            # Revenue & Analytics
-│   │   ├── automations/          # Automation Hub
-│   │   ├── clients/              # Client CRM
-│   │   ├── files/                # File Center
-│   │   ├── health/               # System Health
-│   │   ├── inbox/                # Communication Inbox
-│   │   ├── leads/                # Lead Pipeline (Kanban)
-│   │   ├── projects/             # Project Tracker
-│   │   ├── settings/             # Settings & Integrations
-│   │   └── tasks/                # Task Center
+│   ├── api/                      # 150+ API routes
+│   │   ├── cockpit/              #   Dashboard & portal APIs
+│   │   ├── email/                #   Gmail inbox, send, threads
+│   │   ├── gateway/              #   Health, synthesize, transcribe
+│   │   ├── nora/                 #   Chat, voice, approve, history
+│   │   ├── whatsapp/             #   Threads, messages, webhooks
+│   │   ├── zoom/                 #   Meetings, webhooks
+│   │   ├── cron/                 #   Scheduled jobs (zoom-sync, messages)
+│   │   └── ...                   #   pipedrive, investors, tasks, etc.
+│   ├── cockpit/                  # AI Business OS (18 modules)
+│   │   ├── layout.tsx            #   Cockpit shell (sidebar + topbar)
+│   │   └── [module]/page.tsx     #   Each module page
 │   ├── center/                   # Legacy Kiosk
 │   ├── login/                    # Auth page
 │   └── layout.tsx                # Root layout
 ├── components/
-│   ├── cockpit/                  # Cockpit UI components
-│   │   ├── CockpitShell.tsx      # Sidebar + topbar + command palette
-│   │   ├── modals/               # ContactsModal, EmailModal, etc.
-│   │   └── panels/               # CommsPanel, RightFlank, NotesPanel
-│   ├── center/                   # Legacy kiosk components
-│   ├── chat/                     # Chat thread components
-│   ├── ui/                       # Shared UI library (15+ components)
+│   ├── cockpit/                  # Cockpit-specific components
+│   │   ├── CockpitShell.tsx      #   Sidebar + topbar + command palette
+│   │   ├── panels/               #   CommsPanel, LeftFlank, RightFlank
+│   │   └── modals/               #   ContactsModal, EmailModal, etc.
+│   ├── ui/                       # Shared UI library
+│   │   ├── shared.tsx            #   StatCard, Card, Modal, ActionButton, etc.
+│   │   ├── PremiumChart.tsx      #   Analytics charts
+│   │   ├── PremiumTable.tsx      #   Data tables
+│   │   ├── LiveStatus.tsx        #   DataSourceBanner, LoadingState
+│   │   └── ThemeSwitcher.tsx     #   5-theme switcher
 │   └── Providers.tsx             # React Query + Toast providers
 ├── lib/
-│   ├── adapters/                 # Integration adapters
-│   ├── data/                     # Seed data (seed.ts)
-│   ├── contexts/                 # React contexts (Toast)
-│   ├── store/                    # Zustand store
-│   ├── supabase.ts               # Supabase server client
-│   ├── supabaseClient.ts         # Supabase browser client
-│   └── [integrations]/           # pipedrive/, google/, whatsapp/, etc.
-├── db/
-│   ├── schema.ts                 # Drizzle ORM schema (all tables)
-│   └── index.ts                  # DB connection
-├── supabase/
-│   └── migrations/               # SQL migrations
-├── scripts/
-│   ├── setup.sh                  # Bootstrap script
-│   └── test-webhooks.ts          # Webhook testing utility
+│   ├── gateway/                  # ★ Integration Gateway
+│   │   ├── index.ts              #   Public API (sendWhatsApp, etc.)
+│   │   ├── types.ts              #   All type definitions
+│   │   ├── provider-registry.ts  #   Capability routing + failover
+│   │   ├── circuit-breaker.ts    #   Circuit breaker state machine
+│   │   ├── health-monitor.ts     #   Provider health tracking
+│   │   ├── audit.ts              #   Audit logging
+│   │   └── providers/            #   16 provider adapters
+│   ├── agents/                   # ★ Nora AI Multi-Agent System
+│   │   ├── orchestrator.ts       #   Intent classification + routing
+│   │   ├── email-agent.ts        #   5 email tools
+│   │   ├── whatsapp-agent.ts     #   5 WhatsApp tools
+│   │   ├── meeting-agent.ts      #   4 meeting tools
+│   │   ├── contact-agent.ts      #   Contact resolution
+│   │   ├── security-agent.ts     #   Approval flows
+│   │   └── session-manager.ts    #   Persistence + memory
+│   ├── email/                    # Email integration
+│   │   └── unified-inbox.ts      #   Multi-account Gmail
+│   ├── whatsapp/                 # WhatsApp integration
+│   │   ├── contact-resolver.ts   #   Cross-source contact lookup
+│   │   └── scheduler.ts          #   Message scheduling
+│   ├── zoom/                     # Zoom integration
+│   │   ├── meeting-sync.ts       #   Zoom → Supabase sync
+│   │   ├── meeting-intelligence.ts # AI meeting summaries
+│   │   └── webhook-processor.ts  #   Event routing
+│   ├── google/                   # Google APIs (Gmail, Calendar)
+│   ├── pipedrive/                # Pipedrive CRM client
+│   ├── supabase/                 # Supabase client helpers
+│   └── store/                    # Client-side state
+├── hooks/                        # React hooks
+│   └── useWhatsAppRealtime.ts    #   Supabase Realtime subscription
+├── docs/                         # Architecture documentation
+│   └── MODULES.md                #   Module reference
+├── supabase/migrations/          # SQL migrations
 ├── public/                       # Static assets
-├── docs/                         # Architecture & module docs
 ├── .env.example                  # Environment variable template
-├── package.json                  # Dependencies & scripts
+├── CHANGELOG.md                  # Version history
 └── README.md                     # ← You are here
 ```
-
----
-
-## v0.1 Release Notes
-
-### What's Built
-- ✅ 13-module AI Business OS under `/cockpit`
-- ✅ Executive Dashboard with Business Health Score
-- ✅ Client CRM with full CRUD
-- ✅ Lead Pipeline with Kanban view
-- ✅ Task Center with priority management
-- ✅ AI Agent Control Panel (10 agents)
-- ✅ Automation Hub with enable/disable controls
-- ✅ Communication Inbox with channel filtering
-- ✅ Revenue & Analytics dashboard
-- ✅ Project Tracker with milestones
-- ✅ File Center with tag filtering
-- ✅ System Health monitor (12 services)
-- ✅ Settings & Integrations panel
-- ✅ Command Palette (⌘K) for quick navigation
-- ✅ Premium toast notification system (replaced all browser alerts)
-- ✅ Responsive sidebar with mobile drawer
-- ✅ Shared UI component library (15+ components)
-- ✅ All 105+ legacy API routes preserved and functional
-
-### What's Next (v0.2)
-- 🔲 Wire cockpit modules to live Supabase data (replace seed data)
-- 🔲 Real-time WebSocket updates for messages
-- 🔲 Drag-and-drop on Kanban boards
-- 🔲 File upload integration (Google Drive / S3)
-- 🔲 Role-based access control (RBAC)
-- 🔲 Mobile app wrapper (PWA)
-- 🔲 Automated testing suite
 
 ---
 
@@ -259,7 +270,21 @@ reprime-command-center/
 | `npm start` | Start production server |
 | `npm run lint` | Run ESLint |
 | `npx drizzle-kit push` | Push schema to Supabase |
-| `bash scripts/setup.sh` | Bootstrap new environment |
+
+---
+
+## Deployment
+
+The app auto-deploys from `main` branch to Vercel:
+
+```bash
+# Manual deploy
+vercel --prod
+
+# Check live health
+curl https://reprime-command-center.vercel.app/api/health
+curl https://reprime-command-center.vercel.app/api/gateway/health
+```
 
 ---
 

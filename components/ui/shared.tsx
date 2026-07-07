@@ -71,12 +71,14 @@ export function StatCard({ label, value, change, changeLabel, icon, color = 'var
   icon?: React.ReactNode; color?: string;
 }) {
   return (
-    <div className="glass-card flex flex-col gap-2 p-5 rounded-2xl min-w-0 relative overflow-hidden group">
-      <div className="absolute -right-4 -top-4 w-24 h-24 bg-gradient-to-br from-surface-raised to-transparent rounded-full blur-2xl group-hover:scale-110 transition-transform duration-500" />
+    <div className="glass-card flex flex-col gap-2.5 p-5 rounded-2xl min-w-0 relative overflow-hidden group">
+      {/* Ambient glow orb */}
+      <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full blur-3xl opacity-40 group-hover:opacity-60 group-hover:scale-125 transition-all duration-700" style={{ background: color }} />
+      <div className="absolute -left-8 -bottom-8 w-24 h-24 rounded-full blur-3xl opacity-10" style={{ background: color }} />
       <div className="flex justify-between items-center relative z-10">
-        <span className="text-text-secondary text-xs font-bold uppercase tracking-widest">{label}</span>
+        <span className="text-text-secondary text-[0.65rem] font-bold uppercase tracking-[0.15em]">{label}</span>
         {icon && (
-          <div className="w-8 h-8 rounded-xl bg-surface-raised border border-border flex items-center justify-center text-lg shadow-sm" style={{ color }}>
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-lg shadow-sm" style={{ color, background: `color-mix(in srgb, ${color} 12%, transparent)` }}>
             {icon}
           </div>
         )}
@@ -85,11 +87,11 @@ export function StatCard({ label, value, change, changeLabel, icon, color = 'var
         {typeof value === 'number' ? value.toLocaleString() : value}
       </span>
       {(change !== undefined || changeLabel) && (
-        <span className={`text-xs font-semibold relative z-10 flex items-center gap-1 mt-2 ${change && change > 0 ? 'text-success' : change && change < 0 ? 'text-error' : 'text-text-secondary'}`}>
-          <span className={`px-1.5 py-0.5 rounded-md ${change && change > 0 ? 'bg-success/10' : change && change < 0 ? 'bg-error/10' : 'bg-surface-raised'}`}>
+        <span className={`text-xs font-semibold relative z-10 flex items-center gap-1.5 mt-1 ${change && change > 0 ? 'text-success' : change && change < 0 ? 'text-error' : 'text-text-secondary'}`}>
+          <span className={`px-2 py-0.5 rounded-lg text-[0.65rem] font-bold ${change && change > 0 ? 'bg-success/10' : change && change < 0 ? 'bg-error/10' : 'bg-surface-raised'}`}>
             {change !== undefined && (change > 0 ? '↑' : change < 0 ? '↓' : '→')} {Math.abs(change || 0)}%
           </span>
-          <span className="text-text-muted font-medium ml-1">{changeLabel || 'vs last month'}</span>
+          <span className="text-text-muted font-medium">{changeLabel || 'vs last month'}</span>
         </span>
       )}
     </div>
@@ -105,8 +107,10 @@ export function Card({ children, title, action, noPad, style, className }: {
   return (
     <div className={`glass-card rounded-2xl overflow-hidden flex flex-col ${className || ''}`} style={style}>
       {title && (
-        <div className="flex justify-between items-center px-6 py-4 border-b border-border bg-surface-raised/40">
-          <h3 className="m-0 text-text-primary text-sm font-bold uppercase tracking-widest">{title}</h3>
+        <div className="relative flex justify-between items-center px-6 py-4 border-b border-border/60">
+          {/* Gradient accent line at top */}
+          <div className="absolute top-0 left-6 right-6 h-[2px] rounded-full" style={{ background: 'var(--gradient-primary)', opacity: 0.5 }} />
+          <h3 className="m-0 text-text-primary text-[0.8rem] font-bold uppercase tracking-[0.12em]">{title}</h3>
           {action}
         </div>
       )}
@@ -139,8 +143,12 @@ export function EmptyState({ icon, title, description, action }: {
 export function LoadingState({ message = 'Loading...' }: { message?: string }) {
   return (
     <div className="flex flex-col items-center justify-center p-12 min-h-[200px]">
-      <div className="w-8 h-8 border-4 border-accent/20 border-t-accent rounded-full animate-spin" />
-      <span className="text-accent/80 text-sm mt-3 font-medium">{message}</span>
+      <div className="relative w-10 h-10">
+        <div className="absolute inset-0 rounded-full border-[3px] border-accent/10" />
+        <div className="absolute inset-0 rounded-full border-[3px] border-transparent border-t-accent animate-spin" style={{ animationDuration: '0.8s' }} />
+        <div className="absolute inset-1 rounded-full border-[2px] border-transparent border-b-accent/40 animate-spin" style={{ animationDuration: '1.2s', animationDirection: 'reverse' }} />
+      </div>
+      <span className="text-text-secondary text-sm mt-4 font-medium tracking-wide">{message}</span>
     </div>
   )
 }
@@ -185,18 +193,18 @@ export function ActionButton({ label, icon, onClick, variant = 'default', size =
   variant?: 'default' | 'primary' | 'danger' | 'ghost'; size?: 'sm' | 'md'; disabled?: boolean;
 }) {
   const styles: Record<string, string> = {
-    default: 'bg-accent/10 text-accent border border-accent/20 hover:bg-accent/20',
-    primary: 'bg-accent text-accent-foreground border border-accent hover:bg-accent-hover',
-    danger: 'bg-error/10 text-error border border-error/20 hover:bg-error/20',
-    ghost: 'bg-transparent text-accent/70 border border-transparent hover:bg-surface-raised hover:text-accent',
+    default: 'btn-glass text-accent border-accent/20 hover:border-accent',
+    primary: 'btn-primary',
+    danger: 'bg-error/10 text-error border border-error/20 hover:bg-error/20 hover:shadow-[0_0_16px_var(--error-glow)]',
+    ghost: 'btn-ghost',
   }
-  const pad = size === 'md' ? 'px-4 py-2 text-sm' : 'px-3 py-1.5 text-xs'
+  const pad = size === 'md' ? 'px-5 py-2.5 text-sm' : 'px-3.5 py-2 text-xs'
 
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center gap-1.5 rounded-md font-semibold transition-all ${pad} ${styles[variant]} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+      className={`inline-flex items-center gap-2 rounded-xl font-semibold tracking-wide transition-all ${pad} ${styles[variant]} ${disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`}
     >
       {icon && <span>{icon}</span>}
       {label}
@@ -321,20 +329,21 @@ export function Modal({ isOpen, onClose, title, children, width = 560 }: {
   return (
     <div
       onClick={onClose}
-      className="fixed inset-0 z-[9999] bg-surface/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in"
+      className="fixed inset-0 z-[9999] bg-background/60 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in"
     >
       <div
         onClick={e => e.stopPropagation()}
-        className="w-full bg-surface border border-border rounded-2xl overflow-hidden flex flex-col shadow-glass-elevated max-h-[85vh] animate-in zoom-in-95"
+        className="w-full glass-card-elevated rounded-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95"
         style={{ maxWidth: width }}
       >
-        <div className="flex justify-between items-center px-5 py-4 border-b border-border bg-surface-raised">
-          <h2 className="m-0 text-text-primary text-base font-semibold">{title}</h2>
-          <button onClick={onClose} className="bg-transparent border-none text-text-secondary hover:text-text-primary text-xl cursor-pointer p-1">
+        <div className="relative flex justify-between items-center px-6 py-4 border-b border-border/60">
+          <div className="absolute top-0 left-6 right-6 h-[2px] rounded-full" style={{ background: 'var(--gradient-primary)', opacity: 0.6 }} />
+          <h2 className="m-0 text-text-primary text-base font-bold tracking-wide">{title}</h2>
+          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-surface-raised/60 border border-border/40 flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-error/10 hover:border-error/20 hover:text-error transition-all cursor-pointer text-sm">
             ✕
           </button>
         </div>
-        <div className="p-5 overflow-y-auto flex-1">{children}</div>
+        <div className="p-6 overflow-y-auto flex-1">{children}</div>
       </div>
     </div>
   )

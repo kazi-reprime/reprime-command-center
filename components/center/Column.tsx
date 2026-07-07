@@ -114,7 +114,7 @@ export default function Column({ label, children, fullBleed, count }: ColumnProp
           flex: 1,
           minHeight: 0,
           overflowY: fullBleed ? 'hidden' : 'auto',
-          overflowX: 'hidden',
+          overflowX: fullBleed ? 'hidden' : 'auto',
           padding: fullBleed ? 0 : '12px 16px 16px',
           display: fullBleed ? 'flex' : undefined,
           flexDirection: fullBleed ? 'column' : undefined,

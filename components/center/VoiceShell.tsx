@@ -195,8 +195,70 @@ async function dispatchIntent(p: ParsedIntent): Promise<DispatchOutcome> {
       return { ok: true, msg: 'Briefing' }
     }
     case 'unknown':
-    default:
-      return { ok: false, msg: "Didn't catch that — try again" }
+    default: {
+      // Send to Nora AI and get a real reply
+      const userMessage = p.raw || ''
+      try {
+        // Broadcast thinking status
+        window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'thinking' } }))
+
+        const res = await fetch('/api/nora/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: userMessage }),
+        })
+
+        if (!res.ok) return { ok: false, msg: 'Nora couldn\'t respond — try again' }
+
+        const data = await res.json() as { reply?: string; message?: string }
+        const reply = data.reply || data.message || ''
+
+        if (!reply) return { ok: false, msg: 'No response from Nora' }
+
+        // Save conversation as a note
+        fetch('/api/notes', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: 'Voice: ' + userMessage.slice(0, 50),
+            content: '**You said:** ' + userMessage + '\n\n**Nora replied:** ' + reply,
+            tags: ['nora-voice', 'auto-transcription'],
+          }),
+        }).catch(() => {}) // Fire and forget
+
+        // Speak the reply via ElevenLabs TTS
+        window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'speaking' } }))
+        try {
+          const ttsRes = await fetch('/api/voice/speak', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: reply }),
+          })
+          if (ttsRes.ok) {
+            const audioBlob = await ttsRes.blob()
+            const audioUrl = URL.createObjectURL(audioBlob)
+            const audio = new Audio(audioUrl)
+            await audio.play().catch(() => {})
+            audio.onended = () => {
+              URL.revokeObjectURL(audioUrl)
+              window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
+            }
+          } else {
+            window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
+          }
+        } catch {
+          window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
+        }
+
+        // Show Nora's reply in the footer
+        window.dispatchEvent(new CustomEvent('nora:reply', { detail: { text: reply } }))
+
+        return { ok: true, msg: reply.slice(0, 100) }
+      } catch (err) {
+        window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
+        return { ok: false, msg: 'Error: ' + (err as Error).message }
+      }
+    }
   }
 }
 

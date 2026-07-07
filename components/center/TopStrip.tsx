@@ -17,31 +17,40 @@ interface BriefingPayload {
   hebrew?: { date: string; holiday?: string; candles?: string; havdalah?: string }
 }
 
+/** Format time for a timezone */
+function tzTime(tz: string, now: Date, format: 'short' | 'full' = 'short') {
+  try {
+    if (format === 'full') {
+      return now.toLocaleString('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })
+    }
+    return now.toLocaleTimeString('en-US', { timeZone: tz, hour: 'numeric', minute: '2-digit', hour12: true })
+  } catch { return '' }
+}
+
 /**
- * TopStrip — terminal-style command bar matching the screenshot.
- *
- * Layout: [TERMINAL branding] [Active task] [Counters] [Action pills]
- * [Language] [Time] [Hebrew date] [Setup] [Health] [Identity]
+ * TopStrip — premium command bar with dual timezone, Nora status, and live counters.
  */
 export default function TopStrip() {
   const [now, setNow] = useState(new Date())
   const [lang, setLang] = useState<'EN' | 'HE'>('EN')
-  const [noraStatus, setNoraStatus] = useState<'idle' | 'thinking' | 'speaking'>('idle')
+  const [noraStatus, setNoraStatus] = useState<'idle' | 'thinking' | 'speaking' | 'listening'>('idle')
 
-  // Live clock
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
 
-  // Listen for Nora status events
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent).detail
       if (detail?.status) setNoraStatus(detail.status)
     }
     window.addEventListener('nora:status', handler)
-    return () => window.removeEventListener('nora:status', handler)
+    window.addEventListener('nora-state-change', handler)
+    return () => {
+      window.removeEventListener('nora:status', handler)
+      window.removeEventListener('nora-state-change', handler)
+    }
   }, [])
 
   const cadence = useQuery<CadencePayload>({
@@ -75,7 +84,7 @@ export default function TopStrip() {
       if (!res.ok) return null
       return res.json()
     },
-    refetchInterval: 300_000, // 5 min
+    refetchInterval: 300_000,
     staleTime: 300_000,
     retry: 1,
   })
@@ -83,8 +92,6 @@ export default function TopStrip() {
   const coldCount = (cadence.data?.items ?? []).filter(i => i.status === 'cold').length
   const meetingCount = briefing.data?.meetings?.count ?? 0
   const unreadMsg = briefing.data?.threads?.total_unread ?? 0
-
-  // Current/next meeting for apex task display
   const meetings = briefing.data?.meetings?.items ?? []
   const currentMeeting = meetings.find(m => {
     const s = new Date(m.startTime)
@@ -92,8 +99,6 @@ export default function TopStrip() {
   })
   const apexTask = currentMeeting?.title || meetings[0]?.title || ''
   const apexZoom = currentMeeting?.zoomLink || meetings[0]?.zoomLink || null
-
-  // Hebrew date
   const hebrewDate = briefing.data?.hebrew?.date || hebcal.data?.hebrewDate || ''
 
   function dispatch(target: string) {
@@ -105,192 +110,231 @@ export default function TopStrip() {
     window.dispatchEvent(new Event('open-briefing'))
   }
 
-  const pill = (label: string, onClick: () => void, extra?: React.ReactNode) => (
-    <button type="button" onClick={onClick} style={{
-      background: 'rgba(255,204,51,0.08)', color: '#FFCC33',
-      border: '1px solid rgba(255,204,51,0.3)', borderRadius: 999,
-      padding: '4px 12px', fontFamily: 'inherit', fontSize: 10,
-      fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' as const,
-      cursor: 'pointer', flexShrink: 0, display: 'inline-flex',
-      alignItems: 'center', gap: 6,
-    }}>
-      {label}{extra}
-    </button>
-  )
-
-  const counter = (icon: string, count: number, label: string) => (
-    <div title={label} style={{
-      display: 'flex', alignItems: 'center', gap: 3,
-      color: count > 0 ? '#FFCC33' : 'rgba(255,204,51,0.25)',
-      fontSize: 10, fontWeight: 600, flexShrink: 0,
-    }}>
-      <span style={{ fontSize: 11 }}>{icon}</span>
-      <span>{count}</span>
-    </div>
-  )
+  const noraColors: Record<string, { dot: string; glow: string; label: string }> = {
+    idle: { dot: 'rgba(255,204,51,0.3)', glow: 'transparent', label: 'Ready' },
+    listening: { dot: '#FFCC33', glow: 'rgba(255,204,51,0.5)', label: 'Listening...' },
+    thinking: { dot: '#A855F7', glow: 'rgba(168,85,247,0.5)', label: 'Thinking...' },
+    speaking: { dot: '#25D366', glow: 'rgba(37,211,102,0.5)', label: 'Speaking...' },
+  }
+  const ns = noraColors[noraStatus] || noraColors.idle
 
   return (
-    <div style={{
-      position: 'sticky', top: 0, zIndex: 40,
-      flexShrink: 0, display: 'flex', alignItems: 'center',
-      background: 'rgba(8, 20, 48, 0.98)',
-      borderBottom: '1px solid rgba(255,204,51,0.22)',
-      fontFamily: 'inherit', padding: '0 12px', gap: 8,
-      height: 48, overflowX: 'auto',
-    }}>
-      {/* Terminal branding */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0, marginRight: 4 }}>
-        <div style={{
-          width: 24, height: 24, borderRadius: 6,
-          background: 'linear-gradient(135deg, #FFCC33, #F0B400)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 10, fontWeight: 800, color: '#0E3470',
-        }}>RC</div>
-        <div>
-          <div style={{ color: '#FFCC33', fontSize: 9, fontWeight: 800, letterSpacing: '0.15em', textTransform: 'uppercase', lineHeight: 1 }}>
-            TERMINAL
-          </div>
-          <div style={{ color: 'rgba(255,204,51,0.3)', fontSize: 7, letterSpacing: '0.08em' }}>by RePrime</div>
-        </div>
-      </div>
-
-      {/* Divider */}
-      <div style={{ width: 1, height: 24, background: 'rgba(255,204,51,0.1)', flexShrink: 0 }} />
-
-      {/* Apex task */}
-      {apexTask && (
-        <div style={{
-          flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 6,
-          overflow: 'hidden',
-        }}>
-          <span style={{ fontSize: 10, color: 'rgba(255,204,51,0.5)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {apexTask}
-          </span>
-        </div>
-      )}
-      {!apexTask && <div style={{ flex: 1 }} />}
-
-      {/* Divider */}
-      <div style={{ width: 1, height: 24, background: 'rgba(255,204,51,0.1)', flexShrink: 0 }} />
-
-      {/* Live counters */}
-      {counter('💬', unreadMsg, 'Unread messages')}
-      {counter('📧', meetingCount, 'Meetings today')}
-      {counter('📋', 0, 'Tasks')}
-
-      {/* Divider */}
-      <div style={{ width: 1, height: 24, background: 'rgba(255,204,51,0.1)', flexShrink: 0 }} />
-
-      {/* Nora status */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0,
-        color: noraStatus === 'idle' ? 'rgba(255,204,51,0.3)' : noraStatus === 'thinking' ? '#A855F7' : '#25D366',
-        fontSize: 9, fontWeight: 600,
-      }}>
-        <div style={{
-          width: 6, height: 6, borderRadius: '50%',
-          background: noraStatus === 'idle' ? 'rgba(255,204,51,0.2)' : noraStatus === 'thinking' ? '#A855F7' : '#25D366',
-        }} />
-        Nora: {noraStatus}
-      </div>
-
-      {/* Talk to Nora */}
-      <button type="button" onClick={() => {
-        // Focus the Nora input or open voice
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('center:focus-nora'))
+    <>
+      <style>{`
+        @keyframes nora-header-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 var(--nora-glow); }
+          50% { box-shadow: 0 0 12px 4px var(--nora-glow); }
         }
-      }} style={{
-        background: 'var(--rp-gold, #FFCC33)', color: '#0E3470',
-        border: 'none', borderRadius: 999, padding: '4px 10px',
-        fontFamily: 'inherit', fontSize: 9, fontWeight: 800,
-        cursor: 'pointer', flexShrink: 0, letterSpacing: '0.05em',
+      `}</style>
+      <div style={{
+        position: 'sticky', top: 0, zIndex: 40,
+        flexShrink: 0, display: 'flex', flexDirection: 'column',
+        background: 'linear-gradient(180deg, rgba(8,20,48,0.99) 0%, rgba(10,26,60,0.97) 100%)',
+        borderBottom: '2px solid rgba(255,204,51,0.25)',
+        fontFamily: 'inherit',
       }}>
-        Talk to Nora
-      </button>
-
-      {/* Divider */}
-      <div style={{ width: 1, height: 24, background: 'rgba(255,204,51,0.1)', flexShrink: 0 }} />
-
-      {/* Action pills */}
-      {pill('🔍', () => {
-        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('center:open-search'))
-      })}
-      {pill('📝', () => {
-        if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('center:open-email'))
-      })}
-      {pill('Briefing', openBriefing)}
-      {pill('Secretary', () => dispatch('secretary'))}
-      {pill('Cadence', () => dispatch('investor-cadence'), coldCount > 0 ? (
-        <span style={{
-          background: 'var(--c-fail, #EF4444)', color: '#fff', borderRadius: 999,
-          padding: '0px 6px', fontSize: 9, fontWeight: 800, textTransform: 'none',
-        }}>{coldCount}</span>
-      ) : undefined)}
-
-      {/* Divider */}
-      <div style={{ width: 1, height: 24, background: 'rgba(255,204,51,0.1)', flexShrink: 0 }} />
-
-      {/* Language toggle */}
-      <button type="button" onClick={() => setLang(l => l === 'EN' ? 'HE' : 'EN')}
-        style={{
-          background: 'rgba(255,204,51,0.08)', color: '#FFCC33',
-          border: '1px solid rgba(255,204,51,0.2)', borderRadius: 4,
-          padding: '2px 8px', fontFamily: 'inherit', fontSize: 10,
-          fontWeight: 700, cursor: 'pointer', flexShrink: 0,
-        }}
-      >{lang}</button>
-
-      {/* Live time */}
-      <div style={{ color: 'rgba(255,204,51,0.5)', fontSize: 10, fontWeight: 600, flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
-        {now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}
-      </div>
-
-      {/* Hebrew date */}
-      {hebrewDate && (
-        <div style={{ color: 'rgba(255,204,51,0.25)', fontSize: 9, flexShrink: 0, maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-          {hebrewDate}
-        </div>
-      )}
-
-      {/* Setup warning */}
-      <button type="button" onClick={() => dispatch('settings')}
-        title="Setup required"
-        style={{
-          background: 'rgba(245,158,11,0.1)', color: '#F59E0B',
-          border: '1px solid rgba(245,158,11,0.2)', borderRadius: 4,
-          padding: '2px 8px', fontFamily: 'inherit', fontSize: 9,
-          fontWeight: 700, cursor: 'pointer', flexShrink: 0,
-        }}
-      >⚠ setup</button>
-
-      {/* Settings gear */}
-      <button type="button" onClick={() => dispatch('settings')}
-        title="Settings" aria-label="Settings"
-        style={{
-          background: 'rgba(255,204,51,0.08)', color: '#FFCC33',
-          border: '1px solid rgba(255,204,51,0.2)', borderRadius: 999,
-          width: 28, height: 28, display: 'inline-flex', alignItems: 'center',
-          justifyContent: 'center', fontFamily: 'inherit', fontSize: 14,
-          cursor: 'pointer', flexShrink: 0,
-        }}
-      >⚙</button>
-
-      {/* Health + Identity */}
-      <HealthPill />
-      <IdentityPickerSlot />
-
-      {/* Join Now (if active meeting has zoom) */}
-      {apexZoom && (
-        <a href={apexZoom} target="_blank" rel="noopener noreferrer" style={{
-          background: 'var(--rp-gold, #FFCC33)', color: '#0E3470',
-          borderRadius: 999, padding: '4px 10px', fontSize: 9,
-          fontWeight: 800, textDecoration: 'none', flexShrink: 0,
-          letterSpacing: '0.05em',
+        {/* ── ROW 1: Main Header ────────────────────────────────────────── */}
+        <div style={{
+          display: 'flex', alignItems: 'center', padding: '0 16px', gap: 12, height: 56,
         }}>
-          Join Now
-        </a>
-      )}
-    </div>
+          {/* Terminal Branding */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 10,
+              background: 'linear-gradient(135deg, #FFCC33, #F0B400)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 13, fontWeight: 900, color: '#0E3470',
+              boxShadow: '0 2px 12px rgba(255,204,51,0.3)',
+            }}>RC</div>
+            <div>
+              <div style={{ color: '#FFCC33', fontSize: 12, fontWeight: 900, letterSpacing: '0.2em', textTransform: 'uppercase', lineHeight: 1.2 }}>
+                TERMINAL
+              </div>
+              <div style={{ color: 'rgba(255,204,51,0.35)', fontSize: 8, letterSpacing: '0.08em' }}>by RePrime Group</div>
+            </div>
+          </div>
+
+          <div style={{ width: 1, height: 32, background: 'rgba(255,204,51,0.12)' }} />
+
+          {/* Apex Task */}
+          {apexTask ? (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+              <span style={{ fontSize: 8, padding: '2px 6px', borderRadius: 4, background: 'rgba(239,68,68,0.15)', color: '#EF4444', fontWeight: 800, letterSpacing: '0.1em', flexShrink: 0 }}>LIVE</span>
+              <span style={{ fontSize: 12, color: 'rgba(255,204,51,0.7)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                {apexTask}
+              </span>
+            </div>
+          ) : <div style={{ flex: 1 }} />}
+
+          <div style={{ width: 1, height: 32, background: 'rgba(255,204,51,0.12)' }} />
+
+          {/* Live Counters */}
+          <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
+            <div title="Unread messages" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 14 }}>💬</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: unreadMsg > 0 ? '#FFCC33' : 'rgba(255,204,51,0.25)' }}>{unreadMsg}</span>
+            </div>
+            <div title="Meetings today" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ fontSize: 14 }}>📧</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: meetingCount > 0 ? '#FFCC33' : 'rgba(255,204,51,0.25)' }}>{meetingCount}</span>
+            </div>
+          </div>
+
+          <div style={{ width: 1, height: 32, background: 'rgba(255,204,51,0.12)' }} />
+
+          {/* Nora Status — Bigger & Prominent */}
+          <div
+            style={{
+              display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0,
+              padding: '6px 14px', borderRadius: 99,
+              background: noraStatus !== 'idle' ? `${ns.dot}15` : 'rgba(255,204,51,0.05)',
+              border: `1px solid ${noraStatus !== 'idle' ? `${ns.dot}40` : 'rgba(255,204,51,0.1)'}`,
+              '--nora-glow': ns.glow,
+              animation: noraStatus !== 'idle' ? 'nora-header-pulse 2s ease-in-out infinite' : 'none',
+            } as React.CSSProperties}
+          >
+            <div style={{
+              width: 10, height: 10, borderRadius: '50%', background: ns.dot,
+              boxShadow: noraStatus !== 'idle' ? `0 0 8px ${ns.glow}` : 'none',
+            }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: noraStatus !== 'idle' ? ns.dot : 'rgba(255,204,51,0.4)' }}>
+              Nora: {ns.label}
+            </span>
+          </div>
+
+          {/* Talk to Nora */}
+          <button type="button" onClick={() => {
+            if (typeof window !== 'undefined') window.dispatchEvent(new Event('center:focus-nora'))
+          }} style={{
+            background: 'linear-gradient(135deg, #A855F7, #7C3AED)',
+            color: '#fff', border: 'none', borderRadius: 99,
+            padding: '8px 16px', fontFamily: 'inherit', fontSize: 11,
+            fontWeight: 800, cursor: 'pointer', flexShrink: 0,
+            letterSpacing: '0.05em', boxShadow: '0 2px 12px rgba(168,85,247,0.3)',
+          }}>
+            🎙 Talk to Nora
+          </button>
+
+          <div style={{ width: 1, height: 32, background: 'rgba(255,204,51,0.12)' }} />
+
+          {/* Action Pills */}
+          <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+            {[
+              { label: '🔍', action: () => window.dispatchEvent(new CustomEvent('center:open-search')) },
+              { label: '📝', action: () => window.dispatchEvent(new CustomEvent('center:open-email')) },
+              { label: 'Briefing', action: openBriefing },
+              { label: 'Secretary', action: () => dispatch('secretary') },
+            ].map((p, i) => (
+              <button key={i} type="button" onClick={p.action} style={{
+                background: 'rgba(255,204,51,0.06)', color: '#FFCC33',
+                border: '1px solid rgba(255,204,51,0.2)', borderRadius: 99,
+                padding: '5px 12px', fontFamily: 'inherit', fontSize: 10,
+                fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+                cursor: 'pointer', flexShrink: 0,
+              }}>{p.label}</button>
+            ))}
+            {coldCount > 0 && (
+              <button type="button" onClick={() => dispatch('investor-cadence')} style={{
+                background: 'rgba(255,204,51,0.06)', color: '#FFCC33',
+                border: '1px solid rgba(255,204,51,0.2)', borderRadius: 99,
+                padding: '5px 12px', fontFamily: 'inherit', fontSize: 10,
+                fontWeight: 700, cursor: 'pointer', flexShrink: 0,
+                display: 'flex', alignItems: 'center', gap: 4,
+              }}>
+                Cadence
+                <span style={{ background: '#EF4444', color: '#fff', borderRadius: 99, padding: '0 6px', fontSize: 9, fontWeight: 800 }}>{coldCount}</span>
+              </button>
+            )}
+          </div>
+
+          <div style={{ width: 1, height: 32, background: 'rgba(255,204,51,0.12)' }} />
+
+          {/* Language + Settings */}
+          <button type="button" onClick={() => setLang(l => l === 'EN' ? 'HE' : 'EN')} style={{
+            background: 'rgba(255,204,51,0.08)', color: '#FFCC33',
+            border: '1px solid rgba(255,204,51,0.2)', borderRadius: 6,
+            padding: '4px 10px', fontFamily: 'inherit', fontSize: 11,
+            fontWeight: 700, cursor: 'pointer', flexShrink: 0,
+          }}>{lang === 'EN' ? 'EN → עב' : 'עב → EN'}</button>
+
+          <button type="button" onClick={() => dispatch('settings')} title="Settings" style={{
+            background: 'rgba(255,204,51,0.08)', color: '#FFCC33',
+            border: '1px solid rgba(255,204,51,0.2)', borderRadius: 99,
+            width: 32, height: 32, display: 'flex', alignItems: 'center',
+            justifyContent: 'center', fontSize: 16, cursor: 'pointer', flexShrink: 0,
+          }}>⚙</button>
+
+          <HealthPill />
+          <IdentityPickerSlot />
+
+          {apexZoom && (
+            <a href={apexZoom} target="_blank" rel="noopener noreferrer" style={{
+              background: 'linear-gradient(135deg, #FFCC33, #F0B400)', color: '#0E3470',
+              borderRadius: 99, padding: '6px 14px', fontSize: 10,
+              fontWeight: 900, textDecoration: 'none', flexShrink: 0,
+              letterSpacing: '0.05em', boxShadow: '0 2px 8px rgba(255,204,51,0.3)',
+            }}>
+              🎥 Join Now
+            </a>
+          )}
+        </div>
+
+        {/* ── ROW 2: Time Strip ─────────────────────────────────────────── */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: 20, padding: '4px 16px', height: 28,
+          background: 'rgba(0,0,0,0.15)',
+          borderTop: '1px solid rgba(255,204,51,0.08)',
+        }}>
+          {/* Miami */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 11 }}>🌴</span>
+            <span style={{ fontSize: 10, color: 'rgba(255,204,51,0.4)', fontWeight: 600 }}>Miami</span>
+            <span style={{ fontSize: 11, color: '#FFCC33', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+              {tzTime('America/New_York', now)}
+            </span>
+          </div>
+
+          <div style={{ width: 1, height: 16, background: 'rgba(255,204,51,0.1)' }} />
+
+          {/* Israel */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 11 }}>🇮🇱</span>
+            <span style={{ fontSize: 10, color: 'rgba(255,204,51,0.4)', fontWeight: 600 }}>Israel</span>
+            <span style={{ fontSize: 11, color: '#FFCC33', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+              {tzTime('Asia/Jerusalem', now)}
+            </span>
+          </div>
+
+          <div style={{ width: 1, height: 16, background: 'rgba(255,204,51,0.1)' }} />
+
+          {/* Local Full Time */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 11 }}>🕐</span>
+            <span style={{ fontSize: 10, color: 'rgba(255,204,51,0.4)', fontWeight: 600 }}>Local</span>
+            <span style={{ fontSize: 11, color: '#FFCC33', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+              {tzTime(Intl.DateTimeFormat().resolvedOptions().timeZone, now, 'full')}
+            </span>
+          </div>
+
+          <div style={{ width: 1, height: 16, background: 'rgba(255,204,51,0.1)' }} />
+
+          {/* Date */}
+          <span style={{ fontSize: 10, color: 'rgba(255,204,51,0.5)', fontWeight: 600 }}>
+            {now.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+          </span>
+
+          {/* Hebrew Date */}
+          {hebrewDate && (
+            <>
+              <div style={{ width: 1, height: 16, background: 'rgba(255,204,51,0.1)' }} />
+              <span style={{ fontSize: 10, color: 'rgba(255,204,51,0.4)', fontWeight: 600 }}>
+                📜 {hebrewDate}
+              </span>
+            </>
+          )}
+        </div>
+      </div>
+    </>
   )
 }

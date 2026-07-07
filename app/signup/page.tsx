@@ -57,8 +57,8 @@ function SignupForm() {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0E3470] text-text-primary font-sans p-6">
-        <div className="max-w-md w-full bg-[#123e80] border border-red-500 rounded-lg p-8 shadow-xl text-center">
+      <div className="min-h-screen flex items-center justify-center bg-background text-text-primary font-sans p-6">
+        <div className="max-w-md w-full bg-surface-raised border border-red-500 rounded-lg p-8 shadow-xl text-center">
           <h2 className="text-2xl font-bold text-error mb-4">Invalid Access Link</h2>
           <p className="text-gray-300">
             This signup page requires an invite token. Please click the custom registration link sent by your administrator.
@@ -69,10 +69,10 @@ function SignupForm() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0E3470] font-sans p-6 text-text-primary">
-      <div className="max-w-md w-full bg-[#123e80]/80 backdrop-blur-md border border-[#FFCC33]/30 rounded-xl p-8 shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-background font-sans p-6 text-text-primary">
+      <div className="max-w-md w-full bg-surface-raised/80 backdrop-blur-md border border-accent/30 rounded-xl p-8 shadow-2xl">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold tracking-tight text-[#FFCC33]">Command Center</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-accent">Command Center</h1>
           <p className="text-sm text-gray-300 mt-2">Activate your operator crew account</p>
         </div>
 
@@ -92,7 +92,7 @@ function SignupForm() {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-xs uppercase tracking-wider text-[#FFCC33] font-semibold mb-1">
+              <label className="block text-xs uppercase tracking-wider text-accent font-semibold mb-1">
                 Email Address
               </label>
               <input
@@ -100,13 +100,13 @@ function SignupForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-[#08224d] border border-[#FFCC33]/20 focus:border-[#FFCC33] rounded-lg px-4 py-2.5 text-sm outline-none transition"
+                className="w-full bg-background border border-accent/20 focus:border-accent rounded-lg px-4 py-2.5 text-sm outline-none transition"
                 placeholder="you@reprime.com"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-[#FFCC33] font-semibold mb-1">
+              <label className="block text-xs uppercase tracking-wider text-accent font-semibold mb-1">
                 Password
               </label>
               <input
@@ -114,13 +114,13 @@ function SignupForm() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-[#08224d] border border-[#FFCC33]/20 focus:border-[#FFCC33] rounded-lg px-4 py-2.5 text-sm outline-none transition"
+                className="w-full bg-background border border-accent/20 focus:border-accent rounded-lg px-4 py-2.5 text-sm outline-none transition"
                 placeholder="••••••••"
               />
             </div>
 
             <div>
-              <label className="block text-xs uppercase tracking-wider text-[#FFCC33] font-semibold mb-1">
+              <label className="block text-xs uppercase tracking-wider text-accent font-semibold mb-1">
                 Confirm Password
               </label>
               <input
@@ -128,7 +128,7 @@ function SignupForm() {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-[#08224d] border border-[#FFCC33]/20 focus:border-[#FFCC33] rounded-lg px-4 py-2.5 text-sm outline-none transition"
+                className="w-full bg-background border border-accent/20 focus:border-accent rounded-lg px-4 py-2.5 text-sm outline-none transition"
                 placeholder="••••••••"
               />
             </div>
@@ -136,7 +136,7 @@ function SignupForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#FFCC33] hover:bg-[#ffe066] text-[#0E3470] font-bold rounded-lg py-3 text-sm transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-accent hover:bg-accent-hover text-accent-foreground font-bold rounded-lg py-3 text-sm transition shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? 'Activating Account...' : 'Complete Activation'}
             </button>
@@ -150,7 +150,7 @@ function SignupForm() {
 export default function SignupPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-[#0E3470] text-text-primary">
+      <div className="min-h-screen flex items-center justify-center bg-background text-text-primary">
         <p className="text-sm">Loading signup details...</p>
       </div>
     }>

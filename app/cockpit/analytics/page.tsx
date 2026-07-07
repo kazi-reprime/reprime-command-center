@@ -52,7 +52,7 @@ export default function AnalyticsPage() {
               <span className="text-text-secondary text-xs">Emails Sent</span>
               <span className="text-text-primary text-sm font-semibold">{(stats?.emailsSent ?? 0).toLocaleString()}</span>
             </div>
-            <div className="h-2 bg-black/20 rounded overflow-hidden">
+            <div className="h-2 bg-surface/20 rounded overflow-hidden">
               <div
                 className={`h-full rounded ${(stats?.replyRate ?? 0) > 30 ? 'bg-status-success' : 'bg-status-warning'}`}
                 style={{ width: `${Math.min((stats?.replyRate ?? 0), 100)}%` }}

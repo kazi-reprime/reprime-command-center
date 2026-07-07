@@ -66,13 +66,13 @@ export default function EventModal({ eventId, onClose }: EventModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface/60 backdrop-blur-sm" onClick={onClose}>
       <div 
-        className="bg-[#0c2957] border border-[#FFCC33]/30 w-full max-w-lg rounded-xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden" 
+        className="bg-surface border border-accent/30 w-full max-w-lg rounded-xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 border-b border-[#FFCC33]/20 bg-[#08224d]">
+        <div className="flex items-center justify-between p-4 border-b border-accent/20 bg-background">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-[#FFCC33]/10 rounded-lg">
-              <Calendar className="h-5 w-5 text-[#FFCC33]" />
+            <div className="p-2 bg-accent/10 rounded-lg">
+              <Calendar className="h-5 w-5 text-accent" />
             </div>
             <h2 className="text-text-primary font-bold text-base line-clamp-1">{event.summary}</h2>
           </div>
@@ -81,10 +81,10 @@ export default function EventModal({ eventId, onClose }: EventModalProps) {
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-5 space-y-5 bg-[#09224d]/30">
+        <div className="flex-1 overflow-y-auto p-5 space-y-5 bg-surface-hover/30">
           <div className="flex items-center space-x-6">
             <div className="flex items-center space-x-2 text-gray-300">
-              <Clock className="h-4 w-4 text-[#FFCC33]" />
+              <Clock className="h-4 w-4 text-accent" />
               <div className="text-sm">
                 <span className="font-semibold text-text-primary">{dateStr}</span> <span className="mx-1">•</span> <span>{timeStr}</span>
               </div>
@@ -109,7 +109,7 @@ export default function EventModal({ eventId, onClose }: EventModalProps) {
                 <Users className="h-3 w-3" />
                 <span>Attendees ({event.attendees.length})</span>
               </div>
-              <div className="bg-[#08224d] rounded-lg border border-border/5 p-3 space-y-2">
+              <div className="bg-background rounded-lg border border-border/5 p-3 space-y-2">
                 {event.attendees.map((attendee, idx) => (
                   <div key={idx} className="flex items-center justify-between">
                     <span className="text-sm text-gray-200">{attendee.displayName || attendee.email}</span>
@@ -132,14 +132,14 @@ export default function EventModal({ eventId, onClose }: EventModalProps) {
                 <FileText className="h-3 w-3" />
                 <span>Description</span>
               </div>
-              <div className="text-sm text-gray-300 bg-[#08224d] p-3 rounded-lg border border-border/5 whitespace-pre-wrap leading-relaxed">
+              <div className="text-sm text-gray-300 bg-background p-3 rounded-lg border border-border/5 whitespace-pre-wrap leading-relaxed">
                 {event.description}
               </div>
             </div>
           )}
         </div>
 
-        <div className="p-4 border-t border-[#FFCC33]/20 bg-[#08224d] flex items-center justify-between">
+        <div className="p-4 border-t border-accent/20 bg-background flex items-center justify-between">
           <button 
             onClick={handleCreateNote}
             disabled={loadingAction !== null}
@@ -152,7 +152,7 @@ export default function EventModal({ eventId, onClose }: EventModalProps) {
           <button 
             onClick={handleCreateFollowup}
             disabled={loadingAction !== null}
-            className="flex items-center space-x-2 px-4 py-2 bg-[#FFCC33] hover:bg-[#ffe066] text-[#0E3470] text-sm font-bold rounded-lg transition disabled:opacity-50"
+            className="flex items-center space-x-2 px-4 py-2 bg-accent hover:bg-accent-hover text-accent-foreground text-sm font-bold rounded-lg transition disabled:opacity-50"
           >
             {loadingAction === 'followup' ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
             <span>Create Follow-up</span>

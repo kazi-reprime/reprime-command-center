@@ -194,7 +194,7 @@ export default function InboxPage() {
             onChange={e => setReplyText(e.target.value)}
             placeholder="Type your reply..."
             rows={6}
-            className="w-full p-3 bg-black/20 border border-border rounded-lg text-text-primary text-sm outline-none font-[inherit] resize-y box-border"
+            className="w-full p-3 bg-surface/20 border border-border rounded-lg text-text-primary text-sm outline-none font-[inherit] resize-y box-border"
           />
           <div className="flex gap-2">
             <ActionButton label="Send Reply" variant="primary" size="md" onClick={handleReply} />

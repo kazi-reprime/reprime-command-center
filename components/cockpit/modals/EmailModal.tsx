@@ -64,18 +64,18 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface/50 backdrop-blur-sm">
-      <div className="bg-[#0c2957] border border-[#FFCC33]/30 w-full max-w-3xl rounded-xl shadow-2xl flex flex-col max-h-[85vh]">
+      <div className="bg-surface border border-accent/30 w-full max-w-3xl rounded-xl shadow-2xl flex flex-col max-h-[85vh]">
         
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-[#FFCC33]/20 bg-[#08224d] rounded-t-xl">
+        <div className="flex items-center justify-between p-4 border-b border-accent/20 bg-background rounded-t-xl">
           <div className="flex items-center space-x-3">
-            <Mail className="h-5 w-5 text-[#FFCC33]" />
+            <Mail className="h-5 w-5 text-accent" />
             <h2 className="text-text-primary font-bold text-lg">Email Details</h2>
           </div>
           <div className="flex items-center space-x-2">
             <button 
               onClick={() => window.open(`https://mail.google.com/mail/u/0/#inbox/${emailId}`, '_blank')}
-              className="px-3 py-1.5 bg-[#FFCC33]/10 text-[#FFCC33] hover:bg-[#FFCC33]/20 rounded transition text-xs font-bold uppercase tracking-wide border border-[#FFCC33]/20 flex items-center space-x-1"
+              className="px-3 py-1.5 bg-accent/10 text-accent hover:bg-accent/20 rounded transition text-xs font-bold uppercase tracking-wide border border-accent/20 flex items-center space-x-1"
             >
               <span>Open in Gmail</span>
               <ExternalLink className="h-3 w-3" />
@@ -87,10 +87,10 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-[#09224d]">
+        <div className="flex-1 overflow-y-auto p-6 bg-surface-hover">
           {loading ? (
             <div className="flex flex-col items-center justify-center h-48 space-y-3">
-              <Loader2 className="h-8 w-8 animate-spin text-[#FFCC33]" />
+              <Loader2 className="h-8 w-8 animate-spin text-accent" />
               <p className="text-gray-400 text-sm">Fetching email contents...</p>
             </div>
           ) : error ? (
@@ -114,7 +114,7 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
               
               <div className="border-t border-border/10 pt-6">
                 <div 
-                  className="prose prose-invert prose-sm max-w-none prose-a:text-[#FFCC33] prose-a:no-underline hover:prose-a:underline"
+                  className="prose prose-invert prose-sm max-w-none prose-a:text-accent prose-a:no-underline hover:prose-a:underline"
                   dangerouslySetInnerHTML={{ __html: emailData.body }} 
                 />
               </div>
@@ -123,7 +123,7 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
         </div>
         
         {emailData && (
-          <div className="p-4 border-t border-[#FFCC33]/20 bg-[#08224d] flex items-center justify-between rounded-b-xl">
+          <div className="p-4 border-t border-accent/20 bg-background flex items-center justify-between rounded-b-xl">
             <button 
               onClick={handleCreateFollowup}
               disabled={loadingAction}
@@ -135,7 +135,7 @@ export default function EmailModal({ emailId, onClose }: EmailModalProps) {
             
             <button 
               onClick={() => setShowCompose(true)}
-              className="flex items-center space-x-2 px-5 py-2 bg-[#FFCC33] hover:bg-[#ffe066] text-[#0E3470] text-sm font-bold rounded-lg transition"
+              className="flex items-center space-x-2 px-5 py-2 bg-accent hover:bg-accent-hover text-accent-foreground text-sm font-bold rounded-lg transition"
             >
               <Reply className="h-4 w-4" />
               <span>Reply</span>

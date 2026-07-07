@@ -137,7 +137,7 @@ export default function SettingsPage() {
                 <input
                   value={field.value}
                   onChange={e => updateSetting(field.key, e.target.value)}
-                  className="w-full px-3 py-2 bg-black/20 border border-border rounded-lg text-text-primary text-sm outline-none font-[inherit] box-border"
+                  className="w-full px-3 py-2 bg-surface/20 border border-border rounded-lg text-text-primary text-sm outline-none font-[inherit] box-border"
                 />
               </div>
             ))}
@@ -152,7 +152,7 @@ export default function SettingsPage() {
               { label: 'AI Auto-Summarize', key: 'aiAutoSummarize' as const, desc: 'Generate AI summaries for new messages' },
               { label: 'Auto Follow-Up Reminders', key: 'autoFollowUp' as const, desc: 'Automatic follow-up scheduling' },
             ].map(toggle => (
-              <div key={toggle.key} className="flex items-center justify-between px-3 py-2.5 bg-black/10 rounded-lg">
+              <div key={toggle.key} className="flex items-center justify-between px-3 py-2.5 bg-surface/10 rounded-lg">
                 <div>
                   <div className="text-text-primary text-xs font-medium">{toggle.label}</div>
                   <div className="text-text-muted text-[0.65rem]">{toggle.desc}</div>
@@ -166,7 +166,7 @@ export default function SettingsPage() {
                   }}
                 >
                   <div
-                    className="absolute top-[3px] w-[18px] h-[18px] rounded-full bg-white transition-[left] duration-200"
+                    className="absolute top-[3px] w-[18px] h-[18px] rounded-full bg-surface transition-[left] duration-200"
                     style={{ left: settings[toggle.key] ? 23 : 3 }}
                   />
                 </button>
@@ -181,7 +181,7 @@ export default function SettingsPage() {
             {integrations.map(svc => {
               const testKey = Object.entries(integrationTestMap).find(([name]) => svc.name.includes(name.split(' ')[0]))?.[1]
               return (
-                <div key={svc.name} className="flex items-center gap-2.5 px-3 py-2.5 bg-black/10 rounded-lg">
+                <div key={svc.name} className="flex items-center gap-2.5 px-3 py-2.5 bg-surface/10 rounded-lg">
                   <span
                     className="w-2 h-2 rounded-full flex-shrink-0"
                     style={{

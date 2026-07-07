@@ -8,14 +8,14 @@ const THEMES = [
     id: 'light',
     name: 'Executive Light',
     description: 'Premium warm white',
-    swatch: 'bg-white border-blue-200',
+    swatch: 'bg-surface border-blue-200',
     preview: ['#fdfdfd', '#3b82f6', '#0f172a'],
   },
   {
     id: 'midnight',
     name: 'Midnight',
     description: 'Premium dark mode',
-    swatch: 'bg-slate-900 border-blue-500',
+    swatch: 'bg-surface border-blue-500',
     preview: ['#0b1120', '#3b82f6', '#f8fafc'],
   },
   {
@@ -29,14 +29,14 @@ const THEMES = [
     id: 'high-contrast',
     name: 'High Contrast',
     description: 'Maximum clarity',
-    swatch: 'bg-white border-black border-2',
+    swatch: 'bg-surface border-black border-2',
     preview: ['#ffffff', '#0000ea', '#000000'],
   },
   {
     id: 'slate',
     name: 'Slate Professional',
     description: 'Enterprise neutral',
-    swatch: 'bg-slate-200 border-slate-500',
+    swatch: 'bg-surface-hover border-slate-500',
     preview: ['#f1f5f9', '#0f172a', '#0f172a'],
   },
 ] as const

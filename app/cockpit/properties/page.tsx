@@ -77,19 +77,19 @@ export default function PropertiesPage() {
           onChange={e => setSearch(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && (setPage(1), fetchData())}
           placeholder="Search listings…"
-          className="flex-1 min-w-[200px] px-3 py-2 bg-black/20 border border-border-strong rounded-lg text-text-primary text-sm outline-none font-[inherit]"
+          className="flex-1 min-w-[200px] px-3 py-2 bg-surface/20 border border-border-strong rounded-lg text-text-primary text-sm outline-none font-[inherit]"
         />
         <select
           value={typeFilter}
           onChange={e => { setTypeFilter(e.target.value); setPage(1) }}
-          className="py-2 px-2 bg-black/30 border border-border-strong rounded-lg text-accent text-xs cursor-pointer font-[inherit]"
+          className="py-2 px-2 bg-surface/30 border border-border-strong rounded-lg text-accent text-xs cursor-pointer font-[inherit]"
         >
           {PROPERTY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
         <select
           value={listingTypeFilter}
           onChange={e => { setListingTypeFilter(e.target.value); setPage(1) }}
-          className="py-2 px-2 bg-black/30 border border-border-strong rounded-lg text-accent text-xs cursor-pointer font-[inherit]"
+          className="py-2 px-2 bg-surface/30 border border-border-strong rounded-lg text-accent text-xs cursor-pointer font-[inherit]"
         >
           {LISTING_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
         </select>

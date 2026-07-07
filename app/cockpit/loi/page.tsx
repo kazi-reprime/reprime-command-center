@@ -66,7 +66,7 @@ export default function LOIPage() {
   ]
   const failCount = checks.filter(c => !c.pass).length
 
-  const inputClassName = 'w-full px-2.5 py-1.5 bg-black/20 border border-border-strong rounded-lg text-text-primary text-sm outline-none font-[inherit] box-border'
+  const inputClassName = 'w-full px-2.5 py-1.5 bg-surface/20 border border-border-strong rounded-lg text-text-primary text-sm outline-none font-[inherit] box-border'
   const labelClassName = 'block text-text-secondary text-[0.65rem] mb-0.5 font-semibold'
 
   return (
@@ -140,7 +140,7 @@ export default function LOIPage() {
                 { label: 'NOI/SF', value: noiPerSF > 0 ? `$${noiPerSF}` : '—' },
                 { label: 'Earnest', value: fmt(parseInt(earnest) || 0) },
               ].map(m => (
-                <div key={m.label} className="p-1.5 bg-black/10 rounded-md text-center">
+                <div key={m.label} className="p-1.5 bg-surface/10 rounded-md text-center">
                   <div className="text-accent text-base font-bold">{m.value}</div>
                   <div className="text-text-muted text-[0.5rem] uppercase">{m.label}</div>
                 </div>
@@ -163,7 +163,7 @@ export default function LOIPage() {
 
           {/* Letter Preview */}
           <Card title="Letter Preview">
-            <div className="p-4 bg-white/[0.03] rounded-lg text-[0.72rem] leading-relaxed text-text-primary max-h-[500px] overflow-y-auto">
+            <div className="p-4 bg-surface/[0.03] rounded-lg text-[0.72rem] leading-relaxed text-text-primary max-h-[500px] overflow-y-auto">
               <p className="font-bold mt-0">Letter of Intent to Purchase Real Estate</p>
               <p>Date: {today}</p>
               <p>Property: {propertyName || '________'}{propertyAddress ? `, ${propertyAddress}` : ''}</p>

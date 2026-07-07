@@ -64,7 +64,7 @@ export default function BrokersPage() {
           onChange={e => setSearch(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && (setPage(1), fetchData())}
           placeholder="Search brokers..."
-          className="flex-1 px-3 py-2 bg-black/20 border border-border-strong rounded-lg text-text-primary text-sm outline-none font-[inherit]"
+          className="flex-1 px-3 py-2 bg-surface/20 border border-border-strong rounded-lg text-text-primary text-sm outline-none font-[inherit]"
         />
         <ActionButton label="Search" variant="primary" onClick={() => { setPage(1); fetchData() }} />
       </div>

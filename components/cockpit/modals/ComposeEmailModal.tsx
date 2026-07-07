@@ -72,10 +72,10 @@ export default function ComposeEmailModal({ open, onClose, replyToId, replyToSub
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-surface/60 backdrop-blur-sm" onClick={onClose}>
       <div 
-        className="bg-[#0c2957] border border-[#FFCC33]/30 w-full max-w-2xl rounded-xl shadow-2xl flex flex-col" 
+        className="bg-surface border border-accent/30 w-full max-w-2xl rounded-xl shadow-2xl flex flex-col" 
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between p-4 border-b border-[#FFCC33]/20 bg-[#08224d] rounded-t-xl">
+        <div className="flex items-center justify-between p-4 border-b border-accent/20 bg-background rounded-t-xl">
           <div className="flex items-center space-x-3">
             <h2 className="text-text-primary font-bold text-base">{replyToId ? 'Reply to Email' : 'New Email'}</h2>
           </div>
@@ -84,8 +84,8 @@ export default function ComposeEmailModal({ open, onClose, replyToId, replyToSub
           </button>
         </div>
 
-        <div className="p-4 space-y-3 bg-[#09224d]/30">
-          <div className="flex items-center border border-border/10 rounded-lg bg-[#08224d] px-3 py-2">
+        <div className="p-4 space-y-3 bg-surface-hover/30">
+          <div className="flex items-center border border-border/10 rounded-lg bg-background px-3 py-2">
             <span className="text-gray-400 text-xs font-semibold w-12">To:</span>
             <input 
               type="text" 
@@ -96,7 +96,7 @@ export default function ComposeEmailModal({ open, onClose, replyToId, replyToSub
               className="bg-transparent text-sm text-text-primary outline-none flex-1 placeholder-gray-600 disabled:opacity-60"
             />
           </div>
-          <div className="flex items-center border border-border/10 rounded-lg bg-[#08224d] px-3 py-2">
+          <div className="flex items-center border border-border/10 rounded-lg bg-background px-3 py-2">
             <span className="text-gray-400 text-xs font-semibold w-12">Subj:</span>
             <input 
               type="text" 
@@ -107,7 +107,7 @@ export default function ComposeEmailModal({ open, onClose, replyToId, replyToSub
               className="bg-transparent text-sm text-text-primary outline-none flex-1 placeholder-gray-600 disabled:opacity-60"
             />
           </div>
-          <div className="border border-border/10 rounded-lg bg-[#08224d] overflow-hidden flex flex-col">
+          <div className="border border-border/10 rounded-lg bg-background overflow-hidden flex flex-col">
             <textarea
               value={body}
               onChange={e => setBody(e.target.value)}
@@ -115,11 +115,11 @@ export default function ComposeEmailModal({ open, onClose, replyToId, replyToSub
               rows={8}
               className="bg-transparent text-sm text-text-primary outline-none p-3 resize-none placeholder-gray-600 flex-1"
             />
-            <div className="bg-[#0c2957] px-3 py-2 border-t border-border/5 flex items-center justify-between">
+            <div className="bg-surface px-3 py-2 border-t border-border/5 flex items-center justify-between">
               <button 
                 onClick={draftWithNora}
                 disabled={noraLoading}
-                className="flex items-center space-x-1.5 text-xs text-[#FFCC33] hover:text-[#ffe066] transition disabled:opacity-50 font-semibold"
+                className="flex items-center space-x-1.5 text-xs text-accent hover:text-accent-hover transition disabled:opacity-50 font-semibold"
               >
                 {noraLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
                 <span>Draft with Nora</span>
@@ -128,7 +128,7 @@ export default function ComposeEmailModal({ open, onClose, replyToId, replyToSub
           </div>
         </div>
 
-        <div className="p-4 border-t border-[#FFCC33]/20 bg-[#08224d] flex items-center justify-end space-x-3 rounded-b-xl">
+        <div className="p-4 border-t border-accent/20 bg-background flex items-center justify-end space-x-3 rounded-b-xl">
           <button 
             onClick={onClose}
             className="px-4 py-2 text-gray-300 hover:text-text-primary transition text-sm font-semibold"
@@ -138,7 +138,7 @@ export default function ComposeEmailModal({ open, onClose, replyToId, replyToSub
           <button 
             onClick={handleSend}
             disabled={loading || !to || !subject || !body}
-            className="flex items-center space-x-2 px-5 py-2 bg-[#FFCC33] hover:bg-[#ffe066] text-[#0E3470] text-sm font-bold rounded-lg transition disabled:opacity-50"
+            className="flex items-center space-x-2 px-5 py-2 bg-accent hover:bg-accent-hover text-accent-foreground text-sm font-bold rounded-lg transition disabled:opacity-50"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             <span>Send Email</span>

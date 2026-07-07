@@ -88,7 +88,7 @@ export default function CampaignsPage() {
                   { label: 'Sent', value: c.sent_count || 0, colorClass: 'text-status-info' },
                   { label: 'Replied', value: c.reply_count || 0, colorClass: 'text-status-success' },
                 ].map(m => (
-                  <div key={m.label} className="p-1.5 bg-black/10 rounded-md text-center">
+                  <div key={m.label} className="p-1.5 bg-surface/10 rounded-md text-center">
                     <div className={`${m.colorClass} text-base font-bold`}>{m.value}</div>
                     <div className="text-text-muted text-[0.55rem] uppercase">{m.label}</div>
                   </div>
@@ -96,7 +96,7 @@ export default function CampaignsPage() {
               </div>
 
               {/* Reply rate bar */}
-              <div className="h-1.5 bg-black/20 rounded-sm overflow-hidden mb-2">
+              <div className="h-1.5 bg-surface/20 rounded-sm overflow-hidden mb-2">
                 <div className={`h-full rounded-sm transition-[width] duration-300 ${rate > 30 ? 'bg-status-success' : 'bg-status-warning'}`} style={{ width: `${Math.min(rate, 100)}%` }} />
               </div>
 

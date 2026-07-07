@@ -211,7 +211,7 @@ export default function CommsPanel() {
   const getChannelColor = (channel: string) => {
     switch (channel) {
       case 'whatsapp':
-        return 'border-[#FFCC33] text-[#FFCC33]';
+        return 'border-accent text-accent';
       case 'imessage':
         return 'border-green-500 text-green-400';
       case 'sms':
@@ -317,12 +317,12 @@ export default function CommsPanel() {
   };
 
   return (
-    <div className="flex-1 flex bg-[#0c2957] border border-[#FFCC33]/20 rounded-xl overflow-hidden h-[calc(100vh-6rem)]">
+    <div className="flex-1 flex bg-surface border border-accent/20 rounded-xl overflow-hidden h-[calc(100vh-6rem)]">
       {/* 1. Left side: Thread directory */}
-      <div className="w-80 border-r border-[#FFCC33]/20 flex flex-col">
+      <div className="w-80 border-r border-accent/20 flex flex-col">
         {/* Search & Tabs */}
-        <div className="p-4 border-b border-[#FFCC33]/15 space-y-3">
-          <div className="flex items-center bg-[#08224d] border border-[#FFCC33]/20 rounded-lg px-3 py-2">
+        <div className="p-4 border-b border-accent/15 space-y-3">
+          <div className="flex items-center bg-background border border-accent/20 rounded-lg px-3 py-2">
             <Search className="h-4 w-4 text-gray-400 mr-2" />
             <input
               type="text"
@@ -333,14 +333,14 @@ export default function CommsPanel() {
             />
           </div>
 
-          <div className="flex space-x-1 bg-[#09224d] p-0.5 rounded-lg border border-border/5 text-[10px] font-semibold overflow-x-auto hide-scrollbar">
+          <div className="flex space-x-1 bg-surface-hover p-0.5 rounded-lg border border-border/5 text-[10px] font-semibold overflow-x-auto hide-scrollbar">
             {(['all', 'whatsapp', 'imessage', 'sms', 'investor', 'family', 'staff'] as const).map((lane) => (
               <button
                 key={lane}
                 onClick={() => setActiveLane(lane)}
                 className={`flex-1 py-1 rounded text-center capitalize transition ${
                   activeLane === lane
-                    ? 'bg-[#FFCC33] text-[#0E3470]'
+                    ? 'bg-accent text-accent-foreground'
                     : 'text-gray-400 hover:text-text-primary'
                 }`}
               >
@@ -370,14 +370,14 @@ export default function CommsPanel() {
               </div>
               <button 
                 onClick={() => window.open('/settings/integrations', '_blank')}
-                className="px-4 py-1.5 bg-[#FFCC33]/10 text-[#FFCC33] text-[10px] font-bold uppercase rounded border border-[#FFCC33]/20 hover:bg-[#FFCC33]/20 transition"
+                className="px-4 py-1.5 bg-accent/10 text-accent text-[10px] font-bold uppercase rounded border border-accent/20 hover:bg-accent/20 transition"
               >
                 Configure Adapter
               </button>
             </div>
           ) : loadingThreads && threads.length === 0 ? (
             <div className="p-8 flex flex-col items-center justify-center text-center space-y-3 h-full">
-              <Loader2 className="h-6 w-6 animate-spin text-[#FFCC33]" />
+              <Loader2 className="h-6 w-6 animate-spin text-accent" />
               <p className="text-xs text-gray-400">Loading conversations...</p>
               <p className="text-[10px] text-gray-500">This may take 10-20 seconds on first load</p>
             </div>
@@ -393,7 +393,7 @@ export default function CommsPanel() {
               {fetchError.toLowerCase().includes('unauthorized') ? (
                 <button
                   onClick={() => window.location.href = '/login'}
-                  className="flex items-center space-x-2 px-4 py-1.5 bg-[#FFCC33] text-[#0E3470] text-[10px] font-bold uppercase rounded border border-[#FFCC33]/20 hover:bg-[#ffe066] transition"
+                  className="flex items-center space-x-2 px-4 py-1.5 bg-accent text-accent-foreground text-[10px] font-bold uppercase rounded border border-accent/20 hover:bg-accent-hover transition"
                 >
                   <Shield className="h-3 w-3" />
                   <span>Login to Command Center</span>
@@ -401,7 +401,7 @@ export default function CommsPanel() {
               ) : (
                 <button
                   onClick={() => fetchThreads()}
-                  className="flex items-center space-x-2 px-4 py-1.5 bg-[#FFCC33]/10 text-[#FFCC33] text-[10px] font-bold uppercase rounded border border-[#FFCC33]/20 hover:bg-[#FFCC33]/20 transition"
+                  className="flex items-center space-x-2 px-4 py-1.5 bg-accent/10 text-accent text-[10px] font-bold uppercase rounded border border-accent/20 hover:bg-accent/20 transition"
                 >
                   <RefreshCw className="h-3 w-3" />
                   <span>Retry</span>
@@ -417,18 +417,18 @@ export default function CommsPanel() {
               <div
                 key={thread.id}
                 onClick={() => setSelectedThreadId(thread.id)}
-                className={`p-4 cursor-pointer transition flex items-start space-x-3 hover:bg-[#123e80]/30 ${
-                  selectedThreadId === thread.id ? 'bg-[#123e80]/50 border-l-2 border-[#FFCC33]' : ''
+                className={`p-4 cursor-pointer transition flex items-start space-x-3 hover:bg-surface-raised/30 ${
+                  selectedThreadId === thread.id ? 'bg-surface-raised/50 border-l-2 border-accent' : ''
                 }`}
               >
-                <div className="p-2 bg-[#09224d] border border-border/10 rounded-full">
+                <div className="p-2 bg-surface-hover border border-border/10 rounded-full">
                   <User className="h-4 w-4 text-gray-300" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-text-primary truncate flex items-center space-x-1">
                       <span>{thread.contactName || thread.contactPhone}</span>
-                      {thread.laneOverride === 'investor' && <span className="text-[#FFCC33]">★</span>}
+                      {thread.laneOverride === 'investor' && <span className="text-accent">★</span>}
                     </span>
                     <span className="text-[10px] text-gray-400">{thread.lastMessageAt}</span>
                   </div>
@@ -441,11 +441,11 @@ export default function CommsPanel() {
                     >
                       {thread.channel}
                     </span>
-                    <span className="text-[8px] font-bold px-1.5 py-0.5 bg-[#09224d] rounded text-gray-400 uppercase">
+                    <span className="text-[8px] font-bold px-1.5 py-0.5 bg-surface-hover rounded text-gray-400 uppercase">
                       {thread.laneOverride}
                     </span>
                     {thread.unreadCount && thread.unreadCount > 0 ? (
-                      <span className="bg-[#FFCC33] text-[#0E3470] text-[9px] font-bold px-1.5 rounded-full ml-auto">
+                      <span className="bg-accent text-accent-foreground text-[9px] font-bold px-1.5 rounded-full ml-auto">
                         {thread.unreadCount}
                       </span>
                     ) : null}
@@ -458,11 +458,11 @@ export default function CommsPanel() {
       </div>
 
       {/* 2. Right side: Message list & Chat compose */}
-      <div className="flex-1 flex flex-col bg-[#09224d]/30">
+      <div className="flex-1 flex flex-col bg-surface-hover/30">
         {selectedThreadId && activeThread ? (
           <>
             {/* Header info */}
-            <div className="h-14 border-b border-[#FFCC33]/15 px-6 flex items-center justify-between">
+            <div className="h-14 border-b border-accent/15 px-6 flex items-center justify-between">
               <div className="flex items-center space-x-3">
                 <span className="text-sm font-bold text-text-primary">
                   {activeThread.contactName || activeThread.contactPhone}
@@ -495,7 +495,7 @@ export default function CommsPanel() {
             </div>
 
             {/* Action Bar */}
-            <div className="bg-[#08224d] border-b border-[#FFCC33]/15 px-6 py-2 flex items-center space-x-2">
+            <div className="bg-background border-b border-accent/15 px-6 py-2 flex items-center space-x-2">
               <button onClick={() => handleNoraAction('Translate the last 5 messages to English')} className="flex items-center space-x-1 text-[10px] px-2 py-1 bg-surface/5 border border-border/10 rounded hover:bg-surface/10 text-gray-300 transition">
                 <Languages className="h-3 w-3" />
                 <span>Translate</span>
@@ -518,7 +518,7 @@ export default function CommsPanel() {
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {loadingMessages && messages.length === 0 ? (
                 <div className="h-full flex items-center justify-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-[#FFCC33]" />
+                  <Loader2 className="h-6 w-6 animate-spin text-accent" />
                 </div>
               ) : messages.length === 0 ? (
                 <div className="h-full flex items-center justify-center text-xs text-gray-400">
@@ -535,8 +535,8 @@ export default function CommsPanel() {
                       <div
                         className={`max-w-[70%] rounded-xl px-4 py-2.5 text-xs shadow-md border ${
                           msg.direction === 'outbound'
-                            ? 'bg-[#123e80] border-[#FFCC33]/30 text-text-primary rounded-br-none'
-                            : 'bg-[#08224d] border-border/5 text-gray-100 rounded-bl-none'
+                            ? 'bg-surface-raised border-accent/30 text-text-primary rounded-br-none'
+                            : 'bg-background border-border/5 text-gray-100 rounded-bl-none'
                         }`}
                         dir={rtl ? 'rtl' : 'ltr'}
                       >
@@ -557,8 +557,8 @@ export default function CommsPanel() {
             </div>
 
             {/* Compose reply box */}
-            <div className="p-4 border-t border-[#FFCC33]/15 bg-[#09224d]/50">
-              <div className="flex items-center space-x-3 bg-[#08224d] border border-[#FFCC33]/20 rounded-xl px-4 py-2.5">
+            <div className="p-4 border-t border-accent/15 bg-surface-hover/50">
+              <div className="flex items-center space-x-3 bg-background border border-accent/20 rounded-xl px-4 py-2.5">
                 <button 
                   onClick={() => {
                     if (isListening) return;
@@ -578,7 +578,7 @@ export default function CommsPanel() {
                       setIsListening(false);
                     }
                   }}
-                  className={`p-1.5 transition rounded-lg ${isListening ? 'text-red-400 bg-red-500/10' : 'text-gray-400 hover:text-[#FFCC33] hover:bg-surface/5'}`}
+                  className={`p-1.5 transition rounded-lg ${isListening ? 'text-red-400 bg-red-500/10' : 'text-gray-400 hover:text-accent hover:bg-surface/5'}`}
                   title="Dictate message"
                 >
                   <Mic className="h-4 w-4" />
@@ -593,7 +593,7 @@ export default function CommsPanel() {
                 />
                 <button
                   onClick={handleSend}
-                  className="p-2 bg-[#FFCC33] hover:bg-[#ffe066] text-[#0E3470] rounded-lg transition"
+                  className="p-2 bg-accent hover:bg-accent-hover text-accent-foreground rounded-lg transition"
                 >
                   <Send className="h-4 w-4" />
                 </button>
@@ -602,7 +602,7 @@ export default function CommsPanel() {
           </>
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-400 flex-col space-y-2">
-            <Sparkles className="h-8 w-8 text-[#FFCC33]/40" />
+            <Sparkles className="h-8 w-8 text-accent/40" />
             <span className="text-xs">Select a conversation thread to start messaging</span>
           </div>
         )}

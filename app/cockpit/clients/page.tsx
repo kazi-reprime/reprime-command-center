@@ -181,7 +181,7 @@ export default function ClientsPage() {
                 value={field.value}
                 onChange={e => field.set(e.target.value)}
                 placeholder={field.placeholder}
-                className="w-full px-3 py-2.5 bg-black/20 border border-border rounded-lg text-text-primary text-sm outline-none font-[inherit] box-border"
+                className="w-full px-3 py-2.5 bg-surface/20 border border-border rounded-lg text-text-primary text-sm outline-none font-[inherit] box-border"
               />
             </div>
           ))}

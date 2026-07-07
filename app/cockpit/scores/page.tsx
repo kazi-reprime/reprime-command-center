@@ -76,7 +76,7 @@ export default function ScoresPage() {
             className={`px-3 py-1.5 rounded-lg border-none cursor-pointer text-xs font-semibold font-[inherit] ${
               tierFilter === t
                 ? 'bg-accent/15 text-text-primary'
-                : 'bg-black/15 text-text-secondary'
+                : 'bg-surface/15 text-text-secondary'
             }`}
           >{t}</button>
         ))}
@@ -153,7 +153,7 @@ export default function ScoresPage() {
 
             {/* Expanded Insights */}
             {expanded === s.id && (
-              <div className="px-4 py-3 bg-black/15 border-b border-border">
+              <div className="px-4 py-3 bg-surface/15 border-b border-border">
                 {s.insights ? (
                   <p className="text-text-primary text-xs leading-relaxed m-0">{s.insights}</p>
                 ) : (

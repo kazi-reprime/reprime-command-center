@@ -246,3 +246,98 @@ Centralized demo data for all cockpit modules. Contains sample clients, leads, t
 
 ### Toast System (`lib/contexts/ToastContext.tsx`)
 App-wide notification system with 4 types (success, error, warning, info). Used via `useToast()` hook. Provides glassmorphic floating toasts with auto-dismiss and dismiss button.
+
+---
+
+## P0 SYSTEMS — Live Production
+
+### Integration Gateway (`lib/gateway/`)
+
+Capability-based routing with automatic failover. Callers request *what* they need, never *which vendor*.
+
+```ts
+import { gateway } from '@/lib/gateway'
+const result = await gateway.sendWhatsApp({ to: '+1...', body: 'Hello', lane: '305' })
+// Tries Timelines → Meta Cloud API automatically
+```
+
+| File | Purpose |
+|------|---------|
+| `index.ts` | Public API (sendWhatsApp, sendEmail, generateText, etc.) |
+| `types.ts` | All type definitions (capabilities, payloads, responses) |
+| `provider-registry.ts` | Capability routing, health-scored failover |
+| `circuit-breaker.ts` | Closed → Open → Half-Open → Closed |
+| `health-monitor.ts` | Latency, failures, auth state, rate limits |
+| `audit.ts` | Buffered audit log writes with secret redaction |
+
+#### Registered Providers (16)
+
+| Category | Providers |
+|----------|-----------|
+| WhatsApp | Timelines.ai (primary), Meta Cloud API (fallback) |
+| Email | Gmail API, SendGrid |
+| AI | Anthropic Claude, OpenAI, Gemini, Groq, OpenRouter |
+| STT | OpenAI Whisper, Groq Whisper, Deepgram Nova |
+| TTS | ElevenLabs, OpenAI TTS |
+| Meetings | Zoom S2S OAuth |
+
+---
+
+### WhatsApp System
+
+| Component | File | Data Source |
+|-----------|------|-------------|
+| Outbound messages | `app/api/whatsapp/messages/route.ts` | Timelines + Meta fallback |
+| Cockpit send | `app/api/cockpit/whatsapp/send/route.ts` | Timelines + Meta fallback |
+| Meta webhook | `app/api/whatsapp/meta-webhook/route.ts` | Meta Cloud API |
+| Contact resolver | `lib/whatsapp/contact-resolver.ts` | WhatsApp + Pipedrive + Gmail |
+| Scheduler | `lib/whatsapp/scheduler.ts` | Supabase `scheduled_messages` |
+| Realtime hook | `hooks/useWhatsAppRealtime.ts` | Supabase Realtime |
+| CommsPanel | `components/cockpit/panels/CommsPanel.tsx` | Live Supabase Realtime |
+
+---
+
+### Email System
+
+| Component | File | Data Source |
+|-----------|------|-------------|
+| Inbox | `app/api/email/inbox/route.ts` | Real Gmail API |
+| Thread view | `app/api/email/thread/[threadId]/route.ts` | Real Gmail API |
+| Send | `app/api/email/send/route.ts` | Gmail + SendGrid |
+| Unified inbox | `lib/email/unified-inbox.ts` | Multi-account Gmail |
+| LeftFlank | `components/cockpit/panels/LeftFlank.tsx` | /api/email/inbox |
+
+---
+
+### Nora AI System
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| Chat (Anthropic) | `app/api/nora/chat/route.ts` | 11 tools + triple-fallback |
+| Orchestrator | `lib/agents/orchestrator.ts` | Intent classification + routing |
+| Email agent | `lib/agents/email-agent.ts` | 5 tools (inbox, search, send, reply, mark) |
+| WhatsApp agent | `lib/agents/whatsapp-agent.ts` | 5 tools (search, read, send, unread, contacts) |
+| Meeting agent | `lib/agents/meeting-agent.ts` | 4 tools (list, create, brief, participants) |
+| Contact agent | `lib/agents/contact-agent.ts` | 2 tools (resolve, search) |
+| Security agent | `lib/agents/security-agent.ts` | Approval flows |
+| Session manager | `lib/agents/session-manager.ts` | Persistence + vector memory |
+| Voice | `app/api/nora/voice/route.ts` | STT → Chat → TTS |
+| Approve | `app/api/nora/approve/route.ts` | Approve/reject actions |
+| History | `app/api/nora/history/route.ts` | Chat transcript |
+| RightFlank | `components/cockpit/panels/RightFlank.tsx` | Agent trace + approval cards |
+
+**Fallback chain:** Orchestrator (multi-agent) → Anthropic Claude (tool-use loop) → Groq/OpenAI (plain chat)
+
+---
+
+### Zoom / Meeting Intelligence
+
+| Component | File | Data Source |
+|-----------|------|-------------|
+| Meetings API | `app/api/zoom/meetings/route.ts` | Real Zoom S2S OAuth |
+| Webhook | `app/api/zoom/webhook/route.ts` | Zoom webhook events |
+| Meeting sync | `lib/zoom/meeting-sync.ts` | Zoom → Supabase |
+| Intelligence | `lib/zoom/meeting-intelligence.ts` | AI summaries + action items |
+| Webhook processor | `lib/zoom/webhook-processor.ts` | Event routing |
+| MeetingCockpit | `components/os/MeetingCockpit.tsx` | /api/zoom/meetings |
+| Cron sync | `app/api/cron/zoom-sync/route.ts` | Daily sync |

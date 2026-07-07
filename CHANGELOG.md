@@ -4,6 +4,31 @@ All notable changes to the RePrime Command Center.
 
 ---
 
+## [0.3.0] — 2026-07-08
+
+### 🤖 Nora-First Dashboard Overhaul (NEW)
+
+- **Two-Pillar Layout** — 50/50 split dashboard with Nora as the primary left pillar
+- **Nora's Insights** — Proactive intelligence layer with real-time status cards (Lead Velocity, Network Pulse)
+- **Integrated Voice Shell** — Premium bottom-pinned Command Bar with live waveform visualizer
+- **Spacebar Global Shortcut** — Instant Nora activation from any view (Dashboard, Cockpit, Comms)
+- **Smart Interruption** — Nora immediately stops speaking when Gideon hits spacebar or speaks over her
+- **Manual Stop Control** — Dedicated UI button to pause/stop Nora's audio synthesis
+
+### 📱 Communication Enhancements
+
+- **WhatsApp + Google Split** — Dedicated 50/50 view for messaging and email in the Comms column
+- **Investor Profile Fix** — Resolved "Install Investor Profile" bug for non-investor contacts
+- **Smart Windowing** — Context-aware window opening for chat vs. investor intelligence profiles
+
+### 🎨 Visual & Experience Polish
+
+- **Glassmorphic Footer** — Redesigned bottom chrome for seamless Voice Shell integration
+- **Premium Waveform** — CSS-based live audio feedback for voice interactions
+- **Context-Aware Nora** — Nora now understands the active viewport context (Comms, Analytics, etc.)
+
+---
+
 ## [0.2.0] — 2026-07-07
 
 ### 🏗️ Integration Gateway (NEW)

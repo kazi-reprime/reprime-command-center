@@ -1,4 +1,4 @@
-# RePrime Command Center v0.2
+# RePrime Command Center v0.3
 
 **AI Business Operating System for RePrime Group**
 
@@ -26,10 +26,10 @@ The Command Center is a **production-grade AI Business Operating System** with 4
 
 | System | Status | Providers |
 |--------|--------|-----------|
+| **Nora AI** | ✅ Live | Integrated 2-Pillar Dashboard + Multi-Agent Orchestrator (11 agents) |
+| **Voice Shell** | ✅ Live | Spacebar Shortcut + Live Waveform + ElevenLabs TTS |
 | **WhatsApp** | ✅ Live | Timelines.ai (primary) → Meta Cloud API (fallback) |
 | **Email** | ✅ Live | Gmail API → SendGrid (fallback) |
-| **Nora AI** | ✅ Live | Orchestrator (11 agents) → Claude → Groq/OpenAI |
-| **Zoom / Meetings** | ✅ Live | Zoom S2S OAuth → Supabase → Google Calendar |
 
 ### The Vision
 > **Notion + CRM + AI Assistant + Automation Hub + Business Analytics Dashboard + Client Portal + Project Control Room + AI Agent Monitor**

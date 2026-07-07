@@ -266,29 +266,56 @@ export default function WhatsAppClient() {
       }}
         className={selectedThread ? 'hidden md:flex md:flex-col' : ''}
       >
-        {/* Panel Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          {(['305', '718'] as Panel[]).map(p => (
-            <button key={p} onClick={() => { setActivePanel(p); setSelectedThread(null) }}
-              style={{
-                flex: 1, padding: '14px 0', border: 'none',
-                background: activePanel === p ? PANEL_INFO[p].gradient : 'transparent',
-                color: activePanel === p ? '#fff' : 'rgba(255,255,255,0.4)',
-                fontWeight: 700, fontSize: 12, cursor: 'pointer',
-                letterSpacing: '0.05em',
-                borderBottom: activePanel === p ? `2px solid ${PANEL_INFO[p].color}` : '2px solid transparent',
-                transition: 'all 0.2s',
-              }}>
-              <span style={{ fontSize: 14, marginRight: 6 }}>📱</span>
-              {PANEL_INFO[p].label}
-              {threads.length > 0 && activePanel === p && (
-                <span style={{
-                  marginLeft: 6, background: 'rgba(255,255,255,0.2)',
-                  borderRadius: 99, padding: '1px 7px', fontSize: 10,
-                }}>{threads.filter(t => t.unread_count > 0).length}</span>
-              )}
-            </button>
-          ))}
+        <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.02)' }}>
+          <div style={{ display: 'flex', flex: 1 }}>
+            {(['305', '718'] as Panel[]).map(p => (
+              <button key={p} onClick={() => { setActivePanel(p); setSelectedThread(null) }}
+                style={{
+                  flex: 1, padding: '14px 0', border: 'none',
+                  background: activePanel === p ? PANEL_INFO[p].gradient : 'transparent',
+                  color: activePanel === p ? '#fff' : 'rgba(255,255,255,0.4)',
+                  fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                  letterSpacing: '0.05em',
+                  borderBottom: activePanel === p ? `2px solid ${PANEL_INFO[p].color}` : '2px solid transparent',
+                  transition: 'all 0.2s',
+                }}>
+                <span style={{ fontSize: 14, marginRight: 6 }}>📱</span>
+                {PANEL_INFO[p].label}
+                {threads.length > 0 && activePanel === p && (
+                  <span style={{
+                    marginLeft: 6, background: 'rgba(255,255,255,0.2)',
+                    borderRadius: 99, padding: '1px 7px', fontSize: 10,
+                  }}>{threads.filter(t => t.unread_count > 0).length}</span>
+                )}
+              </button>
+            ))}
+          </div>
+          <button 
+            onClick={() => threadsQ.refetch()}
+            disabled={threadsQ.isFetching}
+            title="Force refresh from Timelines.ai"
+            style={{
+              background: 'rgba(37,211,102,0.1)',
+              border: '1px solid rgba(37,211,102,0.2)',
+              borderRadius: 6,
+              padding: '4px 8px',
+              margin: '0 12px',
+              color: '#25D366',
+              fontSize: 9,
+              fontWeight: 800,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              transition: 'all 0.2s',
+            }}
+          >
+            <span style={{ 
+              display: 'inline-block',
+              animation: threadsQ.isFetching ? 'spin 1s linear infinite' : 'none' 
+            }}>↻</span>
+            {threadsQ.isFetching ? 'SYNCING' : 'SYNC'}
+          </button>
         </div>
 
         {/* Search */}
@@ -324,10 +351,39 @@ export default function WhatsAppClient() {
               Loading chats...
             </div>
           ) : filtered.length === 0 ? (
-            <div style={{ padding: 20, textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 13 }}>
-              No chats found
+            <div style={{ 
+              padding: 40, 
+              textAlign: 'center', 
+              color: 'rgba(255,255,255,0.3)', 
+              fontSize: 13,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 16
+            }}>
+              <div style={{ fontSize: 48, opacity: 0.2 }}>📭</div>
+              <div>
+                <div style={{ fontWeight: 700, color: '#fff', marginBottom: 4 }}>No chats found</div>
+                <div style={{ fontSize: 11, opacity: 0.6 }}>Synchronize with Timelines.ai to see your messages.</div>
+              </div>
+              <button 
+                onClick={() => threadsQ.refetch()}
+                style={{
+                  background: PANEL_INFO[activePanel].gradient,
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '8px 20px',
+                  color: '#fff',
+                  fontWeight: 700,
+                  fontSize: 12,
+                  cursor: 'pointer'
+                }}
+              >
+                Sync Now
+              </button>
             </div>
           ) : filtered.map(thread => (
+
             <div key={thread.id}
               onClick={() => setSelectedThread(thread)}
               style={{

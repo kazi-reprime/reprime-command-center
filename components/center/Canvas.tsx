@@ -24,10 +24,10 @@ export default function Canvas({ children }: CanvasProps) {
       style={{
         flex: 1,
         minHeight: 0,
-        minWidth: 'max(5120px, calc(320px * 8))',
+        width: '100%',
         display: 'grid',
-        gridTemplateColumns: 'repeat(8, minmax(320px, 1fr))',
-        columnGap: 1,
+        gridTemplateColumns: '1fr 1fr',
+        columnGap: 2,
         background: 'rgba(255, 204, 51, 0.06)',
         fontFamily: 'inherit',
       }}
@@ -36,3 +36,4 @@ export default function Canvas({ children }: CanvasProps) {
     </div>
   )
 }
+

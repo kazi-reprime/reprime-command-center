@@ -39,21 +39,27 @@ function getRedis(): Redis | null {
 }
 
 function chatToThreadRow(chat: TimelinesChat) {
-  const normalizedPhone = normalizePhone(chat.phone) || chat.phone
+  const isGroup = chat.is_group === true
+  let phone = chat.phone
+  if (!phone && isGroup && chat.jid) {
+    phone = chat.jid // Use JID as unique identifier for groups if phone is missing
+  }
+  
+  const normalizedPhone = isGroup ? (phone || 'group') : (normalizePhone(phone) || phone)
   const derivedPanel = panelFromAccountId(chat.whatsapp_account_id || '')
-  // BUG 4: fall back to created_timestamp when last_message_timestamp is absent
   const tsSource = chat.last_message_timestamp || chat.created_timestamp || null
   const lastAt = tsSource ? parseTimelinesTimestamp(tsSource).toISOString() : null
-  // BUG 2: treat any digit-only / zero / empty name as useless → fall to phone display
+  
   const rawName = (chat.name || '').trim()
   const isUseless = !rawName || rawName === '0' || /^\d+$/.test(rawName)
-  const contactName = isUseless ? formatPhoneDisplay(normalizedPhone) : rawName
+  const contactName = isUseless ? (isGroup ? 'Unnamed Group' : formatPhoneDisplay(normalizedPhone)) : rawName
+  
   return {
     panel: derivedPanel,
     channel_type: 'whatsapp' as const,
     phone: normalizedPhone,
     contact_name: contactName,
-    is_group: false,
+    is_group: isGroup,
     jid: chat.jid || null,
     last_message_at: lastAt,
     last_message_preview: null,
@@ -64,6 +70,7 @@ function chatToThreadRow(chat: TimelinesChat) {
     is_staff: false,
   }
 }
+
 
 export async function GET(request: NextRequest) {
   try {
@@ -113,22 +120,24 @@ export async function GET(request: NextRequest) {
       const raw = c.phone
       const isInvalidRaw = raw == null || raw === '' || raw === '+0' || raw === '0'
       const normalized = isInvalidRaw ? null : normalizePhone(raw)
-      const isGroupJid =
-        typeof c.whatsapp_account_id === 'string' && c.whatsapp_account_id.endsWith('@g.us')
-      // Skip if the contact phone matches the account phone (self-chat — sends would 403)
+      
+      // Skip if the contact phone matches the account phone (self-chat)
       const isSelfPhone = normalized === '+17185505500' || normalized === '+13057784861'
-      if (isInvalidRaw || !normalized || c.is_group === true || isGroupJid || isSelfPhone) {
+      
+      // Allow groups now, but still skip invalid non-group chats
+      if (!c.is_group && (isInvalidRaw || !normalized || isSelfPhone)) {
         discardedCount++
         continue
       }
       kept.push(c)
     }
-    console.log('[/api/whatsapp/threads] filtered', {
+    console.log('[/api/whatsapp/threads] filtered (groups allowed)', {
       panel,
       total: chatsForThisPanel.length,
       kept: kept.length,
       discarded: discardedCount,
     })
+
 
     if (kept.length > 0) {
       console.log(

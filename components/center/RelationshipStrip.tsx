@@ -4,6 +4,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { formatPhoneDisplay } from '@/lib/timelines/parse'
 import type { DashboardThread } from '@/lib/timelines/types'
+import { dispatchOpenWindow } from '@/lib/windows/store'
 
 const REFETCH_MS = 60_000
 
@@ -70,10 +71,22 @@ export default function RelationshipStrip() {
         empty={investorItems.length === 0 ? 'No investor activity yet' : undefined}
       >
         {recentInvestors.map((inv: any) => (
-          <Chip key={inv.id || inv.name} label={inv.name} color="var(--c-investor, #A855F7)" />
+          <Chip 
+            key={inv.id || inv.name} 
+            label={inv.name} 
+            color="var(--c-investor, #A855F7)" 
+            onClick={() => dispatchOpenWindow('investor-profile', {
+              title: inv.name,
+              componentProps: { pipedriveContactId: inv.pipedrive_contact_id, name: inv.name }
+            })}
+          />
         ))}
         {coldInvestors > 0 && (
-          <Chip label={`${coldInvestors} cold`} color="#EF4444" />
+          <Chip 
+            label={`${coldInvestors} cold`} 
+            color="#EF4444" 
+            onClick={() => dispatchOpenWindow('investor-cadence')}
+          />
         )}
       </Lane>
 
@@ -86,7 +99,15 @@ export default function RelationshipStrip() {
         empty={familyThreads.length === 0 ? 'Quiet at home' : undefined}
       >
         {familyThreads.map(t => (
-          <Chip key={t.id} label={t.contact_name || formatPhoneDisplay(t.phone)} color="var(--c-channel-718, #00A980)" />
+          <Chip 
+            key={t.id} 
+            label={t.contact_name || formatPhoneDisplay(t.phone)} 
+            color="var(--c-channel-718, #00A980)" 
+            onClick={() => dispatchOpenWindow('chat', {
+              title: t.contact_name || formatPhoneDisplay(t.phone),
+              componentProps: { threadId: t.id, name: t.contact_name, panel: t.panel }
+            })}
+          />
         ))}
       </Lane>
 
@@ -100,6 +121,10 @@ export default function RelationshipStrip() {
             label={t.contact_name || formatPhoneDisplay(t.phone)}
             color="rgba(255,204,51,0.4)"
             badge={t.channel_type === 'whatsapp' ? 'WA' : t.channel_type === 'imessage' ? 'IM' : t.channel_type === 'sms' ? 'SMS' : undefined}
+            onClick={() => dispatchOpenWindow('chat', {
+              title: t.contact_name || formatPhoneDisplay(t.phone),
+              componentProps: { threadId: t.id, name: t.contact_name, panel: t.panel }
+            })}
           />
         ))}
       </Lane>
@@ -125,15 +150,19 @@ function Lane({ label, color, empty, children }: {
   )
 }
 
-function Chip({ label, color, badge }: { label: string; color: string; badge?: string }) {
+function Chip({ label, color, badge, onClick }: { label: string; color: string; badge?: string; onClick?: () => void }) {
   return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 3,
-      padding: '1px 8px', borderRadius: 10,
-      background: `${color}15`, border: `1px solid ${color}30`,
-      color, fontSize: 9, fontWeight: 500, whiteSpace: 'nowrap',
-      maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis',
-    }}>
+    <span 
+      onClick={onClick}
+      style={{
+        display: 'inline-flex', alignItems: 'center', gap: 3,
+        padding: '1px 8px', borderRadius: 10,
+        background: `${color}15`, border: `1px solid ${color}30`,
+        color, fontSize: 9, fontWeight: 500, whiteSpace: 'nowrap',
+        maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis',
+        cursor: onClick ? 'pointer' : 'default',
+      }}
+    >
       {label}
       {badge && (
         <span style={{

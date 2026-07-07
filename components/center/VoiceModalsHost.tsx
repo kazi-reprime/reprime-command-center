@@ -73,15 +73,23 @@ export default function VoiceModalsHost() {
   // modal is independent of opening the window.
   // BriefingModal uses its own BriefingThread shape — only the id/name/phone
   // fields we need overlap with DashboardThread, so type the adapter loosely.
-  const openThreadWindow = (t: { id: string; contact_name?: string | null; phone?: string | null }) => {
-    dispatchOpenWindow('investor-profile', {
+  const openThreadWindow = (t: any) => {
+    // ONLY open investor-profile if explicitly tagged as is_investor.
+    // Brokers/staff/family etc. should always open in standard chat.
+    const shouldShowProfile = !!t.is_investor
+    
+    dispatchOpenWindow(shouldShowProfile ? 'investor-profile' : 'chat', {
       title: t.contact_name ?? 'Thread',
       componentProps: {
         id: t.id,
+        threadId: t.id,
         name: t.contact_name ?? t.phone ?? '—',
+        pipedriveContactId: t.pipedrive_contact_id,
+        panel: t.panel ?? '305'
       },
     })
   }
+
 
   return (
     <>

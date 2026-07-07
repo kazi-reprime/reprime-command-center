@@ -153,7 +153,14 @@ const TARGETS: Record<string, TargetResolver> = {
     defaultWidth: 880,
     defaultHeight: 700,
   }),
+  chat: (o) => ({
+    title: o.title ?? 'Chat',
+    kind: { type: 'component', key: 'chat', props: o.componentProps },
+    defaultWidth: 520,
+    defaultHeight: 720,
+  }),
 }
+
 
 const INITIAL: StoreSnapshot = {
   windows: [],

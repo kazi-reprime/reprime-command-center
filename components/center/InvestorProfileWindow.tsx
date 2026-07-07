@@ -136,23 +136,66 @@ export default function InvestorProfileWindow({
       >
         <div
           style={{
-            fontSize: 11,
-            letterSpacing: '0.30em',
-            color: gold[55],
-            textTransform: 'uppercase',
-            fontWeight: 600,
+            padding: 40,
+            textAlign: 'center',
+            color: 'var(--rp-gold-lite)',
+            fontSize: 14,
           }}
         >
-          Loading investor profile
-        </div>
-        <div style={{ fontSize: 14, fontWeight: 600 }}>
-          {name ?? 'Investor'}
+          Loading investor profile...
         </div>
       </div>
     )
   }
 
   if (!data) {
+    if (!pipedriveContactId) {
+      return (
+        <div
+          style={{
+            height: '100%',
+            width: '100%',
+            background: NAVY,
+            color: GOLD,
+            fontFamily: 'var(--rp-font-body)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 16,
+            padding: 40,
+            textAlign: 'center',
+          }}
+        >
+          <div style={{ fontSize: 32 }}>⛓️</div>
+          <div style={{ color: 'var(--rp-gold)', fontWeight: 700, fontSize: 16 }}>
+            Contact Not Linked to Pipedrive
+          </div>
+          <div style={{ color: 'var(--rp-gold-lite)', fontSize: 13, maxWidth: 300, lineHeight: 1.5 }}>
+            This contact exists in WhatsApp but is not yet matched with a Pipedrive Person profile. 
+            Link them in the CRM to see full investor intelligence here.
+          </div>
+          <a
+            href="https://reprimegroup.pipedrive.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              marginTop: 8,
+              padding: '8px 20px',
+              background: 'var(--rp-gold)',
+              color: 'var(--rp-navy)',
+              borderRadius: 8,
+              fontWeight: 700,
+              fontSize: 13,
+              textDecoration: 'none',
+            }}
+          >
+            Open Pipedrive
+          </a>
+        </div>
+      )
+    }
+
     return (
       <div
         style={{
@@ -164,6 +207,10 @@ export default function InvestorProfileWindow({
           padding: 24,
           fontSize: 13,
           lineHeight: 1.55,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
       >
         <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 8 }}>

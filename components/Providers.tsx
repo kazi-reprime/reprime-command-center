@@ -16,6 +16,9 @@ function SharedRealtimeMount({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+import GlobalNoraManager from './nora/GlobalNoraManager'
+import NoraOverlay from './nora/NoraOverlay'
+
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [client] = useState(
     () =>
@@ -38,6 +41,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       disableTransitionOnChange={false}
     >
       <QueryClientProvider client={client}>
+        <GlobalNoraManager />
+        <NoraOverlay />
         <ToastProvider>
           <SharedRealtimeMount>
             {children}
@@ -47,3 +52,4 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     </ThemeProvider>
   )
 }
+

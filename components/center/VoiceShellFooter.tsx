@@ -20,10 +20,13 @@ export default function VoiceShellFooter() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'rgba(14, 52, 112, 0.96)',
-        borderTop: '1px solid rgba(255, 204, 51, 0.22)',
+        background: 'rgba(14, 52, 112, 0.8)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(255, 204, 51, 0.15)',
+        boxShadow: '0 -10px 40px rgba(0,0,0,0.4)',
         fontFamily: 'inherit',
-        padding: '0 24px',
+        padding: '0 40px',
       }}
     >
       <div

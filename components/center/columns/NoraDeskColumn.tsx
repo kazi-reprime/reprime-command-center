@@ -12,6 +12,28 @@ export function useColumnCount(): number {
   return 0 // Nora doesn't have a "count"
 }
 
+function InsightCard({ icon, label, value, desc, color, textColor }: any) {
+  return (
+    <div style={{
+      minWidth: 160, padding: '12px 14px', borderRadius: 16,
+      background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,204,51,0.08)',
+      display: 'flex', flexDirection: 'column', gap: 6, flexShrink: 0
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: 14 }}>{icon}</span>
+        <span style={{ 
+          fontSize: 10, fontWeight: 900, padding: '2px 6px', borderRadius: 6,
+          background: color, color: textColor, textTransform: 'uppercase'
+        }}>{value}</span>
+      </div>
+      <div>
+        <div style={{ fontSize: 11, fontWeight: 800, color: 'rgba(255,204,51,0.8)' }}>{label}</div>
+        <div style={{ fontSize: 9, color: 'rgba(255,204,51,0.4)', fontWeight: 600, lineHeight: 1.3, marginTop: 2 }}>{desc}</div>
+      </div>
+    </div>
+  )
+}
+
 export default function NoraDeskColumn() {
   const [input, setInput] = useState('')
   const [filter, setFilter] = useState<'all' | 'overdue' | 'today' | 'upcoming'>('all')
@@ -65,7 +87,12 @@ export default function NoraDeskColumn() {
     retry: 1,
   })
 
-  const asks = asksQ.data?.asks ?? []
+  const asks = useMemo(() => {
+    const data = asksQ.data
+    if (!data) return []
+    // Merge awaiting and overdue into the primary list
+    return [...(data.overdue || []), ...(data.awaiting || [])]
+  }, [asksQ.data])
 
   const handleSend = useCallback(async () => {
     if (!input.trim()) return
@@ -134,8 +161,36 @@ export default function NoraDeskColumn() {
         </div>
       )}
 
+      {/* ── Nora's Insights (Proactive Layer) ── */}
+      <div className="px-6 py-4 flex gap-3 overflow-x-auto custom-scrollbar no-scrollbar" style={{ background: 'rgba(255,204,51,0.02)', borderBottom: '1px solid rgba(255,204,51,0.05)' }}>
+        <InsightCard 
+          icon="🌍" 
+          label="Israel Pulse" 
+          value="Active" 
+          desc="7 hours ahead. 3 follow-ups pending."
+          color="rgba(59, 130, 246, 0.1)"
+          textColor="#60A5FA"
+        />
+        <InsightCard 
+          icon="💎" 
+          label="Hot Leads" 
+          value="4" 
+          desc="Tier-A investors cooling off."
+          color="rgba(168, 85, 247, 0.1)"
+          textColor="#A855F7"
+        />
+        <InsightCard 
+          icon="⚡" 
+          label="Velocity" 
+          value="+12%" 
+          desc="Response time improving."
+          color="rgba(34, 197, 94, 0.1)"
+          textColor="#4ADE80"
+        />
+      </div>
+
       {/* Chat Messages — reads from shared store via useNora() */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-4">
         {noraMessages.length === 0 && (
           <div className="p-5 text-center text-text-muted text-xs font-bold whitespace-pre-wrap">
             Ask Nora anything...

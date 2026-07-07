@@ -91,14 +91,30 @@ export default function CommsColumn() {
   const handleSelect = (thread: DashboardThread) => {
     setSelectedThread(thread.id)
     if (typeof window !== 'undefined') {
+      // ONLY open investor-profile if explicitly tagged as is_investor.
+      // If it's just a Pipedrive contact (e.g. a broker or vendor), open chat.
+      const shouldShowProfile = !!thread.is_investor
+      
       window.dispatchEvent(new CustomEvent('center:open-window', {
         detail: {
-          target: 'investor-profile',
-          opts: { pipedriveContactId: thread.pipedrive_contact_id, name: thread.contact_name },
+          target: shouldShowProfile ? 'investor-profile' : 'chat',
+          opts: { 
+            pipedriveContactId: thread.pipedrive_contact_id, 
+            name: thread.contact_name,
+            threadId: thread.id,
+            title: thread.contact_name ?? thread.phone,
+            componentProps: {
+              pipedriveContactId: thread.pipedrive_contact_id,
+              name: thread.contact_name,
+              threadId: thread.id,
+              panel: thread.panel
+            }
+          },
         },
       }))
     }
   }
+
 
   const TABS: { key: CommsTab; label: string; count: number; activeClass: string; idleClass: string; underlineClass: string }[] = [
     { key: '305', label: '305', count: count305, activeClass: 'text-warning bg-warning/10', idleClass: 'text-text-muted hover:bg-surface-raised', underlineClass: 'border-b-amber-500' },

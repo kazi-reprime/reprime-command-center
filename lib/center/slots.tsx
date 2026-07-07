@@ -27,12 +27,15 @@ import CrewColumn, {
 import NoraDeskColumn, {
   useColumnCount as useNoraCount,
 } from '@/components/center/columns/NoraDeskColumn'
+import GmailClient from '@/components/cockpit/GmailClient'
 
 import BucketItemDetail from '@/components/center/BucketItemDetail'
 import InvestorCadenceWindow from '@/components/center/InvestorCadenceWindow'
 import InvestorProfileWindow from '@/components/center/InvestorProfileWindow'
 import SecretaryWindow from '@/components/center/windows/SecretaryWindow'
 import SettingsWindow from '@/components/center/SettingsWindow'
+import ChatWindow from '@/components/center/windows/ChatWindow'
+
 
 import ReminderToast from '@/components/center/ReminderToast'
 import VoiceModalsHost from '@/components/center/VoiceModalsHost'
@@ -60,15 +63,39 @@ export type ColumnSlot = {
 }
 
 export const COLUMN_SLOTS: ColumnSlot[] = [
-  { label: 'Calendar', component: CalendarColumn, fullBleed: true, useCount: useCalendarCount },
-  { label: 'Pipeline', component: PipelineColumn, fullBleed: true, useCount: usePipelineCount },
-  { label: 'Inbox', component: InboxColumn, fullBleed: true, useCount: useInboxCount },
-  { label: 'Notes', component: NotesColumn, fullBleed: true, useCount: useNotesCount },
-  { label: 'Comms', component: CommsColumn, fullBleed: true, useCount: useCommsCount },
-  { label: 'Bucket', component: BucketColumn, fullBleed: true, useCount: useBucketCount },
-  { label: 'Crew', component: CrewColumn, useCount: useCrewCount },
-  { label: "Nora's Desk", component: NoraDeskColumn, fullBleed: true, useCount: useNoraCount },
+  { 
+    label: "Nora's Command Desk", 
+    component: NoraDeskColumn, 
+    fullBleed: true, 
+    useCount: useNoraCount 
+  },
+  { 
+    label: 'Intelligence & Comms', 
+    component: () => (
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 1 }}>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ flex: 1, minHeight: 0 }}>
+            <CommsColumn />
+          </div>
+          <div style={{ flex: 1, minHeight: 0, borderTop: '2px solid rgba(255,204,51,0.2)' }}>
+            <GmailClient />
+          </div>
+        </div>
+        <div style={{ flex: 0.6, minHeight: 0, borderTop: '2px solid rgba(255,204,51,0.2)', display: 'flex' }}>
+          <div style={{ flex: 1, borderRight: '1px solid rgba(255,204,51,0.1)' }}>
+            <InboxColumn />
+          </div>
+          <div style={{ flex: 1 }}>
+            <PipelineColumn />
+          </div>
+        </div>
+      </div>
+    ), 
+    fullBleed: true, 
+    useCount: () => (useCommsCount() || 0) + (useInboxCount() || 0) + (usePipelineCount() || 0)
+  },
 ]
+
 
 /**
  * Per-column error boundary so one column crash doesn't nuke the page.
@@ -151,7 +178,17 @@ export const WINDOW_REGISTRY: ComponentRegistry = {
   secretary: () => <SecretaryWindow />,
   'investor-cadence': () => <InvestorCadenceWindow />,
   settings: () => <SettingsWindow />,
+  chat: (props) => (
+    <ChatWindow
+      {...(props as {
+        threadId: string
+        panel?: any
+        name?: string
+      })}
+    />
+  ),
 }
+
 
 export const FOOTER_OVERLAYS: ComponentType[] = [
   ReminderToast,

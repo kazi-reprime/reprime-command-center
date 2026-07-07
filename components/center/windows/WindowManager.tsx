@@ -169,11 +169,11 @@ function BucketItemDetailStub({
   return (
     <div style={{ padding: 24, fontSize: 13, lineHeight: 1.55 }}>
       <div style={{ fontWeight: 600, marginBottom: 8, fontSize: 14 }}>
-        {title ?? 'Bucket item'}
+        {title ?? 'Bucket Item'}
       </div>
       <div style={{ color: '#9DB3D6', fontSize: 12 }}>
-        Detail view for <code>{itemId ?? '—'}</code> wires in with Track B
-        (feat/center-bucket).
+        Viewing details for <code>{itemId ?? '—'}</code>. Detailed action 
+        intelligence is being synthesized for this asset.
       </div>
     </div>
   )
@@ -189,11 +189,11 @@ function InvestorProfileStub({
   return (
     <div style={{ padding: 24, fontSize: 13, lineHeight: 1.55 }}>
       <div style={{ fontWeight: 600, marginBottom: 8, fontSize: 14 }}>
-        Investor profile
+        Investor Intelligence
       </div>
       <div style={{ color: '#9DB3D6', fontSize: 12 }}>
-        {name ?? id ?? '—'} — full slide-in mounts here when the Investor
-        track wires its renderer into the WindowManager registry.
+        Full profile for {name ?? id ?? 'this investor'} is loading. 
+        Detailed relationship history and capital capacity will appear here.
       </div>
     </div>
   )

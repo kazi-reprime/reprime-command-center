@@ -246,37 +246,25 @@ async function dispatchIntent(p: ParsedIntent): Promise<DispatchOutcome> {
           } else {
             window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
           }
-        } catch {
-          window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
-        }
-
-        // Show Nora's reply in the footer
-        window.dispatchEvent(new CustomEvent('nora:reply', { detail: { text: reply } }))
-
-        return { ok: true, msg: reply.slice(0, 100) }
-      } catch (err) {
-        window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
-        return { ok: false, msg: 'Error: ' + (err as Error).message }
-      }
-    }
-  }
-}
-
 // ── Component ──────────────────────────────────────────────────────────────────
 export default function VoiceShell() {
   const [state, setState] = useState<ShellState>('idle')
   const [liveTranscript, setLiveTranscript] = useState('')
   const [lastCommand, setLastCommand] = useState('')
   const [statusMsg, setStatusMsg] = useState('')
+  const setNoraStatus = useStore(s => s.setNoraStatus)
+  const isSpeaking = useStore(s => s.noraStatus === 'speaking')
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('nora-state-change', { detail: { state } }))
+      // Sync state to global store if needed
+      if (state === 'recording') setNoraStatus('listening')
+      else if (state === 'parsing') setNoraStatus('thinking')
+      else if (state === 'idle' || state === 'sent') setNoraStatus('idle')
     }
-  }, [state])
+  }, [state, setNoraStatus])
 
-  // Refs survive re-renders — keyboard listener captures startRecording
-  // synchronously, and the SR/MediaRecorder callbacks fire outside React.
   const recogRef = useRef<SRLike | null>(null)
   const accFinalRef = useRef('')
   const interimRef = useRef('')
@@ -286,22 +274,174 @@ export default function VoiceShell() {
   const streamRef = useRef<MediaStream | null>(null)
   const recordingRef = useRef(false)
   const sentTimerRef = useRef<number | null>(null)
+  const currentAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  useEffect(() => {
+    const handleStop = () => {
+      if (currentAudioRef.current) {
+        currentAudioRef.current.pause()
+        currentAudioRef.current.src = ''
+        currentAudioRef.current = null
+        setNoraStatus('idle')
+        window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
+      }
+    }
+    window.addEventListener('nora:stop-speaking', handleStop)
+    return () => window.removeEventListener('nora:stop-speaking', handleStop)
+  }, [setNoraStatus])
+
+  const handleDispatchIntent = useCallback(async (p: ParsedIntent): Promise<DispatchOutcome> => {
+    switch (p.intent) {
+      case 'add_to_bucket': {
+        const r = await fetch('/api/bucket', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: p.params.text }),
+        }).catch(() => null)
+        if (!r || !r.ok) return { ok: false, msg: "Bucket isn't wired yet" }
+        return { ok: true, msg: 'Added to bucket' }
+      }
+      case 'remind': {
+        const r = await fetch('/api/bucket', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: p.params.text }),
+        }).catch(() => null)
+        if (!r || !r.ok) return { ok: false, msg: "Reminders aren't wired yet" }
+        try {
+          const j = (await r.json()) as { id?: string }
+          if (j.id) {
+            await fetch(`/api/bucket/${j.id}/remind`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ minutes: p.params.minutes }),
+            }).catch(() => null)
+          }
+        } catch {}
+        return { ok: true, msg: `Reminder set for ${p.params.minutes}m` }
+      }
+      case 'delegate': {
+        const r = await fetch('/api/crew/delegate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: p.params.name, text: p.params.text }),
+        }).catch(() => null)
+        if (!r || !r.ok) return { ok: false, msg: "Crew isn't wired yet" }
+        return { ok: true, msg: `Sent to ${p.params.name}` }
+      }
+      case 'open_window': {
+        window.dispatchEvent(
+          new CustomEvent('center:open-window', {
+            detail: { target: p.params.target, opts: p.params.opts },
+          }),
+        )
+        return { ok: true, msg: `Opening ${p.params.target}` }
+      }
+      case 'search': {
+        window.dispatchEvent(
+          new CustomEvent('center:open-search', {
+            detail: { query: p.params.text },
+          }),
+        )
+        return { ok: true, msg: `Search: ${p.params.text}` }
+      }
+      case 'call': {
+        window.dispatchEvent(
+          new CustomEvent('center:open-call', {
+            detail: { name: p.params.name },
+          }),
+        )
+        return { ok: true, msg: `Calling ${p.params.name}` }
+      }
+      case 'email': {
+        window.dispatchEvent(
+          new CustomEvent('center:open-email', {
+            detail: {
+              name: p.params.name,
+              subject: p.params.subject,
+              body: p.params.body,
+            },
+          }),
+        )
+        return { ok: true, msg: `Email to ${p.params.name}` }
+      }
+      case 'briefing': {
+        window.dispatchEvent(new CustomEvent('center:open-briefing'))
+        return { ok: true, msg: 'Briefing' }
+      }
+      case 'unknown':
+      default: {
+        const userMessage = p.raw || ''
+        try {
+          window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'thinking' } }))
+          const res = await fetch('/api/nora/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: userMessage }),
+          })
+          if (!res.ok) return { ok: false, msg: 'Nora couldn\'t respond' }
+          const data = await res.json() as { reply?: string; message?: string }
+          const reply = data.reply || data.message || ''
+          if (!reply) return { ok: false, msg: 'No response from Nora' }
+
+          fetch('/api/notes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              title: 'Voice: ' + userMessage.slice(0, 50),
+              content: '**You said:** ' + userMessage + '\n\n**Nora replied:** ' + reply,
+              tags: ['nora-voice', 'auto-transcription'],
+            }),
+          }).catch(() => {})
+
+          window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'speaking' } }))
+          setNoraStatus('speaking')
+          try {
+            const ttsRes = await fetch('/api/voice/speak', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: reply }),
+            })
+            if (ttsRes.ok) {
+              const audioBlob = await ttsRes.blob()
+              const audioUrl = URL.createObjectURL(audioBlob)
+              const audio = new Audio(audioUrl)
+              currentAudioRef.current = audio
+              await audio.play().catch(() => {})
+              audio.onended = () => {
+                URL.revokeObjectURL(audioUrl)
+                currentAudioRef.current = null
+                setNoraStatus('idle')
+                window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
+              }
+            } else {
+              setNoraStatus('idle')
+              window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
+            }
+          } catch {
+            setNoraStatus('idle')
+            window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
+          }
+          window.dispatchEvent(new CustomEvent('nora:reply', { detail: { text: reply } }))
+          return { ok: true, msg: reply.slice(0, 100) }
+        } catch (err) {
+          setNoraStatus('idle')
+          window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
+          return { ok: false, msg: 'Error: ' + (err as Error).message }
+        }
+      }
+    }
+  }, [])
 
   const cleanup = useCallback(() => {
     try {
       recogRef.current?.abort()
-    } catch {
-      /* ignore */
-    }
+    } catch {}
     recogRef.current = null
     const mr = mediaRecRef.current
     mediaRecRef.current = null
     if (mr && mr.state !== 'inactive') {
-      try {
-        mr.stop()
-      } catch {
-        /* ignore */
-      }
+      try { mr.stop() } catch {}
     }
     streamRef.current?.getTracks().forEach((t) => t.stop())
     streamRef.current = null
@@ -310,21 +450,17 @@ export default function VoiceShell() {
   useEffect(() => {
     return () => {
       cleanup()
-      if (sentTimerRef.current !== null) {
-        window.clearTimeout(sentTimerRef.current)
-      }
+      if (sentTimerRef.current !== null) window.clearTimeout(sentTimerRef.current)
     }
   }, [cleanup])
 
   const startRecording = useCallback(async () => {
     if (recordingRef.current) return
     recordingRef.current = true
-
     if (sentTimerRef.current !== null) {
       window.clearTimeout(sentTimerRef.current)
       sentTimerRef.current = null
     }
-
     setStatusMsg('')
     setLiveTranscript('')
     accFinalRef.current = ''
@@ -332,8 +468,6 @@ export default function VoiceShell() {
     minConfRef.current = 1
     audioChunksRef.current = []
     setState('listening')
-
-    // Mic stream + recorder for transcribe-he / transcribe-en fallback.
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       streamRef.current = stream
@@ -343,12 +477,7 @@ export default function VoiceShell() {
         if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data)
       }
       rec.start()
-    } catch {
-      // Mic blocked or unavailable — SpeechRecognition may still work; if it
-      // doesn't either, stopRecording will surface the empty-transcript path.
-    }
-
-    // Browser-native SpeechRecognition for live English transcript.
+    } catch {}
     const SR = getSpeechRecognition()
     if (SR) {
       const r = new SR()
@@ -393,29 +522,17 @@ export default function VoiceShell() {
       try {
         r.start()
         recogRef.current = r
-      } catch {
-        // Already running or denied — MediaRecorder fallback covers it.
-      }
+      } catch {}
     }
-
-    // Promote to "recording" once setup is done.
     setState('recording')
   }, [])
 
   const stopRecording = useCallback(async () => {
     if (!recordingRef.current) return
     recordingRef.current = false
-
     setState('parsing')
-
-    try {
-      recogRef.current?.stop()
-    } catch {
-      /* ignore */
-    }
+    try { recogRef.current?.stop() } catch {}
     recogRef.current = null
-
-    // Drain MediaRecorder into a single blob.
     const recorder = mediaRecRef.current
     mediaRecRef.current = null
     let blob: Blob | null = null
@@ -423,62 +540,43 @@ export default function VoiceShell() {
       blob = await new Promise<Blob>((resolve) => {
         const chunks = audioChunksRef.current
         const finalize = () => {
-          resolve(
-            new Blob(chunks, { type: recorder.mimeType || 'audio/webm' }),
-          )
+          resolve(new Blob(chunks, { type: recorder.mimeType || 'audio/webm' }))
         }
         recorder.onstop = finalize
-        try {
-          recorder.stop()
-        } catch {
-          finalize()
-        }
+        try { recorder.stop() } catch { finalize() }
       })
     } else if (audioChunksRef.current.length > 0) {
       blob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
     }
     streamRef.current?.getTracks().forEach((t) => t.stop())
     streamRef.current = null
-
     const srTranscript = (accFinalRef.current || interimRef.current).trim()
     const hasHebrew = HEBREW_RE.test(srTranscript)
     const lowConf = srTranscript.length > 0 && minConfRef.current < 0.5
     const noSR = srTranscript.length === 0
-
     let finalText = srTranscript
     if (blob && blob.size > 0 && (hasHebrew || lowConf || noSR)) {
-      const endpoint = noSR
-        ? '/api/voice/transcribe-en'
-        : '/api/voice/transcribe-he'
+      const endpoint = noSR ? '/api/voice/transcribe-en' : '/api/voice/transcribe-he'
       try {
         const fd = new FormData()
-        fd.append(
-          'audio',
-          new File([blob], 'voice.webm', { type: blob.type }),
-        )
+        fd.append('audio', new File([blob], 'voice.webm', { type: blob.type }))
         const res = await fetch(endpoint, { method: 'POST', body: fd })
         if (res.ok) {
           const data = (await res.json()) as { text?: string }
           if (data.text) finalText = data.text.trim()
         }
-      } catch {
-        // Fall back to whatever SR captured (which may be empty).
-      }
+      } catch {}
     }
-
     setLiveTranscript('')
-
     if (!finalText) {
       setState('idle')
       setStatusMsg("Didn't catch that — try again")
       setLastCommand('')
       return
     }
-
     setLastCommand(finalText)
-
     const parsed = parseCommand(finalText)
-    const outcome = await dispatchIntent(parsed)
+    const outcome = await handleDispatchIntent(parsed)
     setStatusMsg(outcome.msg)
     if (outcome.ok) {
       setState('sent')
@@ -489,32 +587,17 @@ export default function VoiceShell() {
     } else {
       setState('idle')
     }
-  }, [])
+  }, [handleDispatchIntent])
 
-  // ── Hotkeys ───────────────────────────────────────────────────────────────
   useEffect(() => {
     const onDown = (e: KeyboardEvent) => {
-      // Ctrl+Shift+V / Cmd+Shift+V — toggles, always works.
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        e.shiftKey &&
-        (e.key === 'V' || e.key === 'v')
-      ) {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'V' || e.key === 'v')) {
         e.preventDefault()
         if (recordingRef.current) void stopRecording()
         else void startRecording()
         return
       }
-
-      // Hold spacebar — only when no field focused, no modifiers, no auto-repeat.
-      if (
-        e.code === 'Space' &&
-        !e.repeat &&
-        !e.ctrlKey &&
-        !e.metaKey &&
-        !e.altKey &&
-        !e.shiftKey
-      ) {
+      if (e.code === 'Space' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
         if (isFieldFocused()) return
         e.preventDefault()
         void startRecording()
@@ -534,112 +617,123 @@ export default function VoiceShell() {
     }
   }, [startRecording, stopRecording])
 
-  // ── Render ────────────────────────────────────────────────────────────────
-  const pulsing =
-    state === 'listening' || state === 'recording' || state === 'parsing'
-
+  const pulsing = state === 'listening' || state === 'recording' || state === 'parsing'
   const leftLine = (() => {
-    if (state === 'idle') {
-      return statusMsg || 'Hold space to talk'
-    }
-    if (state === 'listening') return 'Listening…'
-    if (state === 'recording') return liveTranscript || 'Recording…'
-    if (state === 'parsing') return 'Parsing…'
-    return statusMsg || 'Sent'
+    if (state === 'idle') return statusMsg || 'READY FOR COMMANDS'
+    if (state === 'listening') return 'PREPARING AUDIO CAPTURE...'
+    if (state === 'recording') return liveTranscript || 'LISTENING...'
+    if (state === 'parsing') return 'SYNTHESIZING INTENT...'
+    return statusMsg || 'COMMAND EXECUTED'
   })()
 
   return (
     <div style={{
-      position: 'fixed',
-      bottom: '2rem',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      zIndex: 2000,
+      width: '100%',
+      height: '100%',
       display: 'flex',
       alignItems: 'center',
-      gap: '1rem',
-      padding: '0.75rem 1.5rem',
-      background: 'rgba(255, 255, 255, 0.8)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
-      border: '1px solid rgba(0, 0, 0, 0.05)',
-      borderRadius: '999px',
-      boxShadow: '0 10px 40px rgba(0, 0, 0, 0.08)',
-      minWidth: '320px',
-      maxWidth: '90vw',
-      fontFamily: 'inherit'
+      gap: 24,
+      fontFamily: 'inherit',
+      position: 'relative',
     }}>
       <style>{`
-        @keyframes voice-pulse {
-          0%, 100% { transform: scale(1); opacity: 1; }
-          50%      { transform: scale(1.3); opacity: 0.6; }
+        @keyframes waveform-bounce {
+          0%, 100% { height: 4px; }
+          50% { height: 20px; }
         }
-        @keyframes voice-flash {
-          0%   { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-          100% { box-shadow: 0 0 0 20px rgba(34, 197, 94, 0); }
+        .waveform-bar {
+          width: 3px;
+          background: #FFCC33;
+          border-radius: 99px;
+          transition: height 0.2s ease-in-out;
+        }
+        @keyframes voice-pulse-glow {
+          0%, 100% { transform: scale(1); opacity: 1; }
+          50%      { transform: scale(1.4); opacity: 0.6; }
         }
       `}</style>
-      <div
-        aria-hidden
-        style={{
-          width: 12,
-          height: 12,
-          borderRadius: '50%',
-          background: state === 'idle' ? 'var(--accent-blue)' : 
-                      state === 'recording' ? 'var(--status-error)' :
-                      state === 'parsing' ? 'var(--accent-purple)' :
-                      state === 'sent' ? 'var(--status-success)' : 'var(--accent-blue)',
-          boxShadow: `0 0 15px ${state === 'idle' ? 'rgba(59, 130, 246, 0.3)' : 
-                                  state === 'recording' ? 'rgba(239, 68, 68, 0.3)' :
-                                  state === 'parsing' ? 'rgba(168, 85, 247, 0.3)' :
-                                  state === 'sent' ? 'rgba(34, 197, 94, 0.3)' : 'transparent'}`,
-          flexShrink: 0,
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          animation: pulsing
-            ? 'voice-pulse 1.2s ease-in-out infinite'
-            : state === 'sent'
-              ? 'voice-flash 1s ease-out'
-              : undefined,
-        }}
-      />
-      <div
-        aria-live="polite"
-        style={{
-          color: 'var(--text-main)',
-          fontSize: '0.95rem',
-          fontWeight: 800,
-          letterSpacing: '-0.02em',
-          flex: 1,
-          minWidth: 0,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        {leftLine}
+
+      {/* ── Status Indicator (Orb) ── */}
+      <div style={{ position: 'relative', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: 24, height: 24 }}>
+        <div style={{
+          width: 12, height: 12, borderRadius: '50%',
+          background: DOT_COLOR[state],
+          boxShadow: `0 0 20px ${DOT_GLOW[state]}`,
+          transition: 'all 0.3s ease',
+          animation: pulsing ? 'voice-pulse-glow 1.2s ease-in-out infinite' : undefined,
+        }} />
       </div>
-      {lastCommand && state !== 'recording' && (
-        <div
-          aria-hidden
-          style={{
-            color: 'var(--text-muted)',
-            fontSize: '0.8rem',
-            fontWeight: 600,
-            letterSpacing: '0.01em',
-            padding: '4px 10px',
-            background: 'rgba(0,0,0,0.03)',
-            borderRadius: '99px',
-            flexShrink: 0,
-            maxWidth: '150px',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-          }}
-          title={lastCommand}
-        >
-          {lastCommand}
+
+      {/* ── Waveform (Visualizer) ── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 3, width: 44, height: 20, flexShrink: 0,
+        opacity: pulsing ? 1 : 0.1, transition: 'opacity 0.3s ease'
+      }}>
+        {[1,2,3,4,5,6,7,8].map(i => (
+          <div key={i} className="waveform-bar" style={{
+            animation: pulsing ? `waveform-bounce 0.8s ease-in-out infinite ${i * 0.1}s` : 'none',
+            background: state === 'recording' ? '#ef4444' : state === 'parsing' ? '#A855F7' : '#FFCC33',
+            height: pulsing ? undefined : 4
+          }} />
+        ))}
+      </div>
+
+      {/* ── Live Transcript / Status Text ── */}
+      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+        <div style={{
+          fontSize: 9, fontWeight: 900, letterSpacing: '0.2em', textTransform: 'uppercase',
+          color: pulsing ? DOT_COLOR[state] : 'rgba(255,204,51,0.4)',
+          marginBottom: 1, transition: 'color 0.3s'
+        }}>
+          {state === 'idle' ? 'Nora System' : `Mode: ${state}`}
+        </div>
+        <div style={{
+          fontSize: 14, fontWeight: 700, color: '#fff',
+          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          letterSpacing: '-0.01em', textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+        }}>
+          {leftLine}
+        </div>
+      </div>
+
+      {/* ── Last Command Shadow ── */}
+      {lastCommand && state === 'idle' && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 8, padding: '6px 14px',
+          background: 'rgba(255,204,51,0.04)', borderRadius: 12, border: '1px solid rgba(255,204,51,0.08)',
+          maxWidth: 300, flexShrink: 1, overflow: 'hidden'
+        }}>
+          <span style={{ fontSize: 9, fontWeight: 900, color: 'rgba(255,204,51,0.3)', textTransform: 'uppercase' }}>Last</span>
+          <span style={{ fontSize: 11, color: 'rgba(255,204,51,0.6)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis' }}>{lastCommand}</span>
         </div>
       )}
+
+      {/* ── Controls ── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {isSpeaking && (
+          <button
+            onClick={() => window.dispatchEvent(new Event('nora:stop-speaking'))}
+            style={{
+              background: 'rgba(239, 68, 68, 0.1)',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              borderRadius: 99, padding: '8px 16px',
+              color: '#ef4444', fontSize: 10, fontWeight: 900,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
+              textTransform: 'uppercase', letterSpacing: '0.1em'
+            }}
+          >
+            <span style={{ fontSize: 14 }}>■</span> Stop Nora
+          </button>
+        )}
+        
+        <div style={{
+          fontSize: 10, fontWeight: 800, color: 'rgba(255,204,51,0.25)',
+          background: 'rgba(0,0,0,0.2)', padding: '6px 12px', borderRadius: 8,
+          border: '1px solid rgba(255,204,51,0.05)', whiteSpace: 'nowrap'
+        }}>
+          HOLD <span style={{ color: '#FFCC33' }}>SPACE</span> TO TALK
+        </div>
+      </div>
     </div>
   )
 }

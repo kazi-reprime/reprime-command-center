@@ -150,28 +150,55 @@ export default function GmailClient() {
         background: 'rgba(11,20,38,0.98)',
       }}>
         {/* Account Tabs */}
-        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          {(['reprime', 'fst'] as GmailAccount[]).map(acc => (
-            <button key={acc} onClick={() => { setAccount(acc); setSelectedEmail(null) }}
+        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingRight: 12 }}>
+            <div style={{ flex: 1 }}>
+              {(['reprime', 'fst'] as GmailAccount[]).map(acc => (
+                <button key={acc} onClick={() => { setAccount(acc); setSelectedEmail(null) }}
+                  style={{
+                    width: '100%', padding: '12px 16px', border: 'none', textAlign: 'left',
+                    background: account === acc ? `${ACCOUNTS[acc].color}15` : 'transparent',
+                    borderLeft: account === acc ? `3px solid ${ACCOUNTS[acc].color}` : '3px solid transparent',
+                    color: account === acc ? '#fff' : 'rgba(255,255,255,0.4)',
+                    fontWeight: account === acc ? 700 : 500, fontSize: 12, cursor: 'pointer',
+                    transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 8,
+                  }}>
+                  <span style={{
+                    width: 28, height: 28, borderRadius: '50%',
+                    background: account === acc ? ACCOUNTS[acc].gradient : 'rgba(255,255,255,0.05)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 12, color: '#fff', fontWeight: 800,
+                  }}>G</span>
+                  <div>
+                    <div style={{ fontSize: 11 }}>{ACCOUNTS[acc].email}</div>
+                  </div>
+                </button>
+              ))}
+            </div>
+            <button 
+              onClick={() => emailsQ.refetch()}
+              disabled={emailsQ.isFetching}
+              title="Force refresh from Google"
               style={{
-                width: '100%', padding: '12px 16px', border: 'none', textAlign: 'left',
-                background: account === acc ? `${ACCOUNTS[acc].color}15` : 'transparent',
-                borderLeft: account === acc ? `3px solid ${ACCOUNTS[acc].color}` : '3px solid transparent',
-                color: account === acc ? '#fff' : 'rgba(255,255,255,0.4)',
-                fontWeight: account === acc ? 700 : 500, fontSize: 12, cursor: 'pointer',
-                transition: 'all 0.2s', display: 'flex', alignItems: 'center', gap: 8,
-              }}>
-              <span style={{
-                width: 28, height: 28, borderRadius: '50%',
-                background: account === acc ? ACCOUNTS[acc].gradient : 'rgba(255,255,255,0.05)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 12, color: '#fff', fontWeight: 800,
-              }}>G</span>
-              <div>
-                <div style={{ fontSize: 12 }}>{ACCOUNTS[acc].email}</div>
-              </div>
+                background: 'rgba(234,67,53,0.1)',
+                border: '1px solid rgba(234,67,53,0.2)',
+                borderRadius: 6,
+                padding: '6px',
+                color: '#EA4335',
+                fontSize: 12,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.2s',
+              }}
+            >
+              <span style={{ 
+                display: 'inline-block',
+                animation: emailsQ.isFetching ? 'spin 1s linear infinite' : 'none' 
+              }}>↻</span>
             </button>
-          ))}
+          </div>
         </div>
 
         {/* Compose Button */}
@@ -242,23 +269,60 @@ export default function GmailClient() {
         {/* Email List */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {error ? (
-            <div style={{ padding: 20, textAlign: 'center' }}>
-              <div style={{ color: '#EF4444', fontSize: 13, marginBottom: 8 }}>⚠️ {error}</div>
-              <button onClick={() => emailsQ.refetch()} style={{
-                background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: 8, padding: '6px 16px', color: 'rgba(255,255,255,0.5)',
-                fontSize: 12, cursor: 'pointer',
-              }}>Retry</button>
+            <div style={{ padding: 32, textAlign: 'center' }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>🔑</div>
+              <div style={{ color: '#fff', fontWeight: 700, fontSize: 14, marginBottom: 8 }}>Authentication Required</div>
+              <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12, marginBottom: 20 }}>{error}</div>
+              <a href="/api/auth/google-oauth" style={{
+                background: ACCOUNTS[account].gradient,
+                color: '#fff',
+                textDecoration: 'none',
+                padding: '10px 20px',
+                borderRadius: 8,
+                fontSize: 13,
+                fontWeight: 700,
+                display: 'inline-block'
+              }}>Connect Google Account</a>
             </div>
           ) : loading ? (
             <div style={{ padding: 40, textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>
+              <div style={{ fontSize: 24, marginBottom: 8, animation: 'spin 1s linear infinite' }}>⏳</div>
               Loading emails...
             </div>
           ) : emails.length === 0 ? (
-            <div style={{ padding: 40, textAlign: 'center', color: 'rgba(255,255,255,0.2)', fontSize: 13 }}>
-              No emails in {folder.toLowerCase()}
+            <div style={{ 
+              padding: 40, 
+              textAlign: 'center', 
+              color: 'rgba(255,255,255,0.3)', 
+              fontSize: 13,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 16
+            }}>
+              <div style={{ fontSize: 48, opacity: 0.2 }}>📩</div>
+              <div>
+                <div style={{ fontWeight: 700, color: '#fff', marginBottom: 4 }}>Inbox is empty</div>
+                <div style={{ fontSize: 11, opacity: 0.6 }}>No emails found in {folder.toLowerCase()}.</div>
+              </div>
+              <button 
+                onClick={() => emailsQ.refetch()}
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: 8,
+                  padding: '8px 20px',
+                  color: 'rgba(255,255,255,0.5)',
+                  fontWeight: 600,
+                  fontSize: 12,
+                  cursor: 'pointer'
+                }}
+              >
+                Refresh
+              </button>
             </div>
           ) : emails.map(email => (
+
             <div key={email.id}
               onClick={() => openEmail(email)}
               style={{

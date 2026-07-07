@@ -12,6 +12,8 @@ import {
 } from 'lucide-react'
 import { ThreeDLogo } from '@/components/ui/ThreeDLogo'
 import { ThemeSwitcher } from '@/components/cockpit/ThemeSwitcher'
+import NoraFloating from '@/components/nora/NoraFloating'
+import NotificationCenter from '@/components/cockpit/NotificationCenter'
 
 type NavItem = { href: string; label: string; icon: React.ReactNode }
 type NavSection = { title: string; items: NavItem[] }
@@ -224,14 +226,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
 
             <ThemeSwitcher />
 
-            <button
-              onClick={() => router.push('/cockpit/inbox')}
-              className="w-10 h-10 rounded-full bg-surface-raised hover:bg-surface-hover flex items-center justify-center text-text-secondary transition-colors relative cursor-pointer"
-              title="Notifications"
-            >
-              <Bell className="w-4 h-4" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-accent rounded-full border-2 border-surface" />
-            </button>
+            <NotificationCenter />
 
             <button
               onClick={() => { setCommandOpen(true); setCommandQuery(''); }}
@@ -287,6 +282,7 @@ export default function CockpitShell({ children }: { children: React.ReactNode }
             {children}
           </div>
         </main>
+        <NoraFloating />
       </div>
 
       {/* Command Palette Modal */}

@@ -396,6 +396,38 @@ export async function POST(request: NextRequest) {
   const history = sanitizeHistory(body.history)
   const contextJson = serializeContext(body.context)
 
+  // ── Multi-Agent Path (primary) ────────────────────────────────────────
+  // Route through the Nora orchestrator which classifies intent, applies
+  // guardrails, and delegates to specialist agents.
+  try {
+    const { processMessage, persistConversation } = await import('@/lib/agents/orchestrator')
+
+    const liveContext = contextJson ? JSON.parse(contextJson) : undefined
+
+    const agentResult = await processMessage({
+      message,
+      history: history.map(h => ({ role: h.role, content: h.content })),
+      liveContext,
+      sessionId: `chat-${Date.now()}`,
+    })
+
+    // Persist the conversation (best-effort, non-blocking)
+    persistConversation(`chat-${Date.now()}`, message, agentResult).catch(() => {})
+
+    return NextResponse.json({
+      reply: agentResult.reply,
+      language: agentResult.language,
+      agentId: agentResult.agentId,
+      toolTrace: agentResult.toolTrace.length > 0 ? agentResult.toolTrace : undefined,
+      pendingApprovals: agentResult.pendingApprovals,
+    })
+  } catch (orchestratorErr) {
+    console.error('[nora/chat] orchestrator failed, falling back to direct Claude:', (orchestratorErr as Error).message)
+  }
+
+  // ── Legacy Monolithic Path (fallback) ─────────────────────────────────
+  // If the orchestrator fails (e.g., agent module error), fall back to
+  // the original single-prompt Claude flow with tool-use loop.
   const system = contextJson
     ? `${NORA_SYSTEM}\n\nLIVE CONTEXT (Gideon's cockpit data right now — JSON). Ground every answer in this; do not invent anything beyond it:\n${contextJson}`
     : `${NORA_SYSTEM}\n\n(No live context was provided for this turn — answer from the conversation only, and say so if asked about specific data you don't have.)`
@@ -410,7 +442,6 @@ export async function POST(request: NextRequest) {
   const client = new Anthropic({ apiKey })
 
   try {
-    // ── Tool-use loop: call Claude, execute tools, feed results back ───
     let response = await client.messages.create({
       model,
       max_tokens: 1024,
@@ -423,14 +454,12 @@ export async function POST(request: NextRequest) {
     while (response.stop_reason === 'tool_use' && rounds < MAX_TOOL_ROUNDS) {
       rounds++
 
-      // Collect all tool_use blocks from the response
       const toolUseBlocks = response.content.filter(
         (b): b is Anthropic.Messages.ToolUseBlock => b.type === 'tool_use',
       )
 
       if (!toolUseBlocks.length) break
 
-      // Execute each tool and build tool_result content blocks
       const toolResults: Anthropic.Messages.ToolResultBlockParam[] = await Promise.all(
         toolUseBlocks.map(async (block) => {
           console.log(`[nora/chat] tool call: ${block.name}`, JSON.stringify(block.input).slice(0, 200))
@@ -443,8 +472,6 @@ export async function POST(request: NextRequest) {
         }),
       )
 
-      // Append the assistant's response (with tool_use blocks) and user's
-      // tool_result messages, then call Claude again.
       messages.push({ role: 'assistant', content: response.content })
       messages.push({ role: 'user', content: toolResults })
 
@@ -457,7 +484,6 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // ── Extract final text reply ────────────────────────────────────────
     const reply = extractTextReply(response)
 
     const language: 'en' | 'he' = HEBREW_RE.test(reply) ? 'he' : 'en'
@@ -468,7 +494,6 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ reply, language })
   } catch (err) {
-    // Never leak the API key or raw SDK internals.
     return NextResponse.json(
       { error: 'anthropic_failed', message: (err as Error).message },
       { status: 500 }

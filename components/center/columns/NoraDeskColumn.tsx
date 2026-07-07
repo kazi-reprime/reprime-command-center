@@ -73,7 +73,11 @@ export default function NoraDeskColumn() {
       return res.json()
     },
     onSuccess: (data) => {
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response || data.message || 'Done.' }])
+      const reply = data.reply || data.response || data.message || 'Done.'
+      const agentTag = data.agentId && data.agentId !== 'orchestrator' 
+        ? `[${data.agentId}] ` 
+        : ''
+      setMessages(prev => [...prev, { role: 'assistant', content: `${agentTag}${reply}` }])
     },
     onError: (err) => {
       setMessages(prev => [...prev, { role: 'assistant', content: `⚠️ ${(err as Error).message}` }])

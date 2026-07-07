@@ -6,7 +6,11 @@ import React from 'react';
  * Banner shown when data comes from seed/demo fallback instead of the live database.
  */
 export function DataSourceBanner({ source, warning }: { source: string; warning?: string }) {
-  if (source === 'database') return null;
+  // Hide banner if data comes from any real database source
+  const liveSourcePrefixes = ['database', 'portal_db', 'supabase', 'live', 'zoom_api', 'gmail', 'calendar'];
+  if (liveSourcePrefixes.some(p => source.startsWith(p))) return null;
+  // Also hide if source is just empty data from a live DB (no warning)
+  if (!warning && source !== 'unavailable' && source !== 'fallback') return null;
   return (
     <div className="flex items-center gap-3 p-4 mb-4 rounded-xl bg-warning/10 border border-warning/20 text-warning">
       <span className="text-xl">⚠️</span>

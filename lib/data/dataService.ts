@@ -9,6 +9,7 @@ import { db } from '@/db';
 import { contacts, deals, bucketItems, notes, messages, whatsappMessages } from '@/db/schema';
 import { desc, eq } from 'drizzle-orm';
 import { logInfo, logWarning, logError } from '@/lib/logging/systemLog';
+import { createServiceClient } from '@/lib/supabase/server';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -53,7 +54,7 @@ export interface CockpitMessage {
   priority: 'high' | 'normal' | 'low'; aiSuggestion: string | null;
 }
 
-export type DataSource = 'database' | 'unavailable';
+export type DataSource = 'database' | 'supabase' | 'unavailable';
 
 export interface DataResult<T> {
   data: T;
@@ -61,9 +62,10 @@ export interface DataResult<T> {
   warning?: string;
 }
 
-async function isDatabaseAvailable(): Promise<boolean> {
+// Check if Drizzle ORM (DATABASE_URL) is available
+async function isDrizzleAvailable(): Promise<boolean> {
   const dbUrl = process.env.DATABASE_URL;
-  if (!dbUrl || dbUrl === '') return false;
+  if (!dbUrl || dbUrl === '' || dbUrl.includes('mock')) return false;
   try {
     await db.select().from(contacts).limit(0);
     return true;
@@ -72,13 +74,21 @@ async function isDatabaseAvailable(): Promise<boolean> {
   }
 }
 
-const NO_DB_WARNING = 'Database not connected. Configure DATABASE_URL to see live data.';
+// Check if Supabase service client is available
+function isSupabaseAvailable(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  return !!(url && key && !url.includes('mock') && !key.includes('mock'));
+}
+
+const NO_DB_WARNING = 'Database not connected. Configure DATABASE_URL or SUPABASE keys to see live data.';
 
 // ── Clients ──────────────────────────────────────────────────────────────────
 
 export async function getClients(): Promise<DataResult<CockpitClient[]>> {
+  // Path 1: Drizzle ORM
   try {
-    if (await isDatabaseAvailable()) {
+    if (await isDrizzleAvailable()) {
       const rows = await db.select().from(contacts).orderBy(desc(contacts.createdAt));
       const mapped: CockpitClient[] = rows.map(r => ({
         id: r.id, name: r.name, business: r.company || '',
@@ -86,11 +96,29 @@ export async function getClients(): Promise<DataResult<CockpitClient[]>> {
         status: 'active' as const, source: '', notes: '', revenue: 0,
         nextFollowUp: null, createdAt: r.createdAt.toISOString().split('T')[0],
       }));
-      logInfo('database', `Fetched ${mapped.length} clients from database`);
+      logInfo('database', `Fetched ${mapped.length} clients from Drizzle`);
       return { data: mapped, source: 'database' };
     }
   } catch (err) {
-    logWarning('database', `Database query failed for clients: ${err instanceof Error ? err.message : String(err)}`);
+    logWarning('database', `Drizzle query failed for clients: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  // Path 2: Supabase service client
+  try {
+    if (isSupabaseAvailable()) {
+      const svc = createServiceClient();
+      const { data, error } = await svc.from('contacts').select('*').order('created_at', { ascending: false }).limit(100);
+      if (error) throw error;
+      const mapped: CockpitClient[] = (data ?? []).map((r: any) => ({
+        id: r.id, name: r.name || '', business: r.company || '',
+        email: r.email || '', phone: r.phone || '',
+        status: 'active' as const, source: '', notes: '', revenue: 0,
+        nextFollowUp: null, createdAt: r.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+      }));
+      logInfo('database', `Fetched ${mapped.length} clients from Supabase`);
+      return { data: mapped, source: 'supabase' };
+    }
+  } catch (err) {
+    logWarning('database', `Supabase query failed for clients: ${err instanceof Error ? err.message : String(err)}`);
   }
   return { data: [], source: 'unavailable', warning: NO_DB_WARNING };
 }
@@ -104,18 +132,35 @@ export async function createClient(input: { name: string; business?: string; ema
     nextFollowUp: null, createdAt: new Date().toISOString().split('T')[0],
   };
 
+  // Path 1: Drizzle
   try {
-    if (await isDatabaseAvailable()) {
+    if (await isDrizzleAvailable()) {
       await db.insert(contacts).values({
         orgId: '00000000-0000-0000-0000-000000000001',
         name: input.name, email: input.email || null,
         phone: input.phone || null, company: input.business || null,
       });
-      logInfo('database', `Created client "${input.name}" in database`);
+      logInfo('database', `Created client "${input.name}" in Drizzle`);
       return { data: newClient, source: 'database' };
     }
   } catch (err) {
-    logWarning('database', `Failed to create client in DB: ${err instanceof Error ? err.message : String(err)}`);
+    logWarning('database', `Drizzle insert failed for client: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  // Path 2: Supabase
+  try {
+    if (isSupabaseAvailable()) {
+      const svc = createServiceClient();
+      const { error } = await svc.from('contacts').insert({
+        org_id: '00000000-0000-0000-0000-000000000001',
+        name: input.name, email: input.email || null,
+        phone: input.phone || null, company: input.business || null,
+      });
+      if (error) throw error;
+      logInfo('database', `Created client "${input.name}" in Supabase`);
+      return { data: newClient, source: 'supabase' };
+    }
+  } catch (err) {
+    logWarning('database', `Supabase insert failed for client: ${err instanceof Error ? err.message : String(err)}`);
   }
   return { data: newClient, source: 'unavailable', warning: NO_DB_WARNING };
 }
@@ -123,8 +168,9 @@ export async function createClient(input: { name: string; business?: string; ema
 // ── Leads ────────────────────────────────────────────────────────────────────
 
 export async function getLeads(): Promise<DataResult<CockpitLead[]>> {
+  // Path 1: Drizzle
   try {
-    if (await isDatabaseAvailable()) {
+    if (await isDrizzleAvailable()) {
       const rows = await db.select().from(deals).orderBy(desc(deals.createdAt));
       const mapped: CockpitLead[] = rows.map(r => ({
         id: r.id, name: r.name, business: r.address || '',
@@ -134,11 +180,31 @@ export async function getLeads(): Promise<DataResult<CockpitLead[]>> {
         probability: 50, nextAction: 'Review deal details',
         createdAt: r.createdAt.toISOString().split('T')[0],
       }));
-      logInfo('database', `Fetched ${mapped.length} leads from database`);
+      logInfo('database', `Fetched ${mapped.length} leads from Drizzle`);
       return { data: mapped, source: 'database' };
     }
   } catch (err) {
-    logWarning('database', `Database query failed for leads: ${err instanceof Error ? err.message : String(err)}`);
+    logWarning('database', `Drizzle query failed for leads: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  // Path 2: Supabase
+  try {
+    if (isSupabaseAvailable()) {
+      const svc = createServiceClient();
+      const { data, error } = await svc.from('deals').select('*').order('created_at', { ascending: false }).limit(100);
+      if (error) throw error;
+      const mapped: CockpitLead[] = (data ?? []).map((r: any) => ({
+        id: r.id, name: r.name || '', business: r.address || '',
+        email: '', phone: '',
+        stage: (r.status as CockpitLead['stage']) || 'new',
+        score: r.risk_score || 50, source: '', value: r.purchase_price || 0,
+        probability: 50, nextAction: 'Review deal details',
+        createdAt: r.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+      }));
+      logInfo('database', `Fetched ${mapped.length} leads from Supabase`);
+      return { data: mapped, source: 'supabase' };
+    }
+  } catch (err) {
+    logWarning('database', `Supabase query failed for leads: ${err instanceof Error ? err.message : String(err)}`);
   }
   return { data: [], source: 'unavailable', warning: NO_DB_WARNING };
 }
@@ -152,18 +218,44 @@ export async function createLead(input: { name: string; business?: string; email
     probability: 20, nextAction: input.nextAction || '',
     createdAt: new Date().toISOString().split('T')[0],
   };
+  // Try Supabase for persistence
+  try {
+    if (isSupabaseAvailable()) {
+      const svc = createServiceClient();
+      const { error } = await svc.from('deals').insert({
+        org_id: '00000000-0000-0000-0000-000000000001',
+        name: input.name, address: input.business || null,
+        status: input.stage || 'new', purchase_price: input.value || 0,
+      });
+      if (error) throw error;
+      return { data: newLead, source: 'supabase' };
+    }
+  } catch (err) {
+    logWarning('database', `Supabase insert failed for lead: ${err instanceof Error ? err.message : String(err)}`);
+  }
   return { data: newLead, source: 'unavailable', warning: 'Lead created in session only. Connect database to persist.' };
 }
 
 export async function updateLeadStage(id: string, stage: CockpitLead['stage']): Promise<DataResult<CockpitLead | null>> {
+  try {
+    if (isSupabaseAvailable()) {
+      const svc = createServiceClient();
+      const { error } = await svc.from('deals').update({ status: stage }).eq('id', id);
+      if (error) throw error;
+      return { data: null, source: 'supabase' };
+    }
+  } catch (err) {
+    logWarning('database', `Lead stage update failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
   return { data: null, source: 'unavailable', warning: 'Connect database to update lead stages.' };
 }
 
 // ── Tasks ────────────────────────────────────────────────────────────────────
 
 export async function getTasks(): Promise<DataResult<CockpitTask[]>> {
+  // Path 1: Drizzle
   try {
-    if (await isDatabaseAvailable()) {
+    if (await isDrizzleAvailable()) {
       const rows = await db.select().from(bucketItems).orderBy(desc(bucketItems.priority));
       const mapped: CockpitTask[] = rows.map(r => ({
         id: r.id, title: r.title,
@@ -174,18 +266,39 @@ export async function getTasks(): Promise<DataResult<CockpitTask[]>> {
         projectTag: r.projectTag || 'General', checklist: [],
         aiNextStep: null, createdAt: new Date().toISOString().split('T')[0],
       }));
-      logInfo('database', `Fetched ${mapped.length} tasks from database`);
+      logInfo('database', `Fetched ${mapped.length} tasks from Drizzle`);
       return { data: mapped, source: 'database' };
     }
   } catch (err) {
-    logWarning('database', `Database query failed for tasks: ${err instanceof Error ? err.message : String(err)}`);
+    logWarning('database', `Drizzle query failed for tasks: ${err instanceof Error ? err.message : String(err)}`);
+  }
+  // Path 2: Supabase
+  try {
+    if (isSupabaseAvailable()) {
+      const svc = createServiceClient();
+      const { data, error } = await svc.from('bucket_items').select('*').order('priority', { ascending: true }).limit(100);
+      if (error) throw error;
+      const mapped: CockpitTask[] = (data ?? []).map((r: any) => ({
+        id: r.id, title: r.title || '',
+        priority: (r.priority || 3) as CockpitTask['priority'],
+        status: r.completed_at ? 'done' as const : 'todo' as const,
+        dueDate: r.due_at_soft?.split('T')[0] || null,
+        owner: 'Team', relatedTo: r.project_tag || null,
+        projectTag: r.project_tag || 'General', checklist: [],
+        aiNextStep: null, createdAt: r.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+      }));
+      logInfo('database', `Fetched ${mapped.length} tasks from Supabase`);
+      return { data: mapped, source: 'supabase' };
+    }
+  } catch (err) {
+    logWarning('database', `Supabase query failed for tasks: ${err instanceof Error ? err.message : String(err)}`);
   }
   return { data: [], source: 'unavailable', warning: NO_DB_WARNING };
 }
 
 export async function createTask(input: { title: string; priority: number; projectTag: string; dueDate: string | null }): Promise<DataResult<CockpitTask>> {
   try {
-    if (await isDatabaseAvailable()) {
+    if (await isDrizzleAvailable()) {
       const DEFAULT_ORG_ID = '00000000-0000-0000-0000-000000000001';
       const [inserted] = await db.insert(bucketItems).values({
         orgId: DEFAULT_ORG_ID,
@@ -213,7 +326,7 @@ export async function createTask(input: { title: string; priority: number; proje
 
 export async function toggleTaskStatus(id: string): Promise<DataResult<CockpitTask | null>> {
   try {
-    if (await isDatabaseAvailable()) {
+    if (await isDrizzleAvailable()) {
       // Logic: if completedAt is null, set to now, else null
       const [existing] = await db.select().from(bucketItems).where(eq(bucketItems.id, id));
       if (!existing) return { data: null, source: 'unavailable', warning: 'Task not found' };
@@ -245,7 +358,7 @@ import { aiAgents, automations, files as filesTable } from '@/db/schema';
 
 export async function getAgents(): Promise<DataResult<CockpitAgent[]>> {
   try {
-    if (await isDatabaseAvailable()) {
+    if (await isDrizzleAvailable()) {
       const rows = await db.select().from(aiAgents).orderBy(desc(aiAgents.lastActive));
       const mapped: CockpitAgent[] = rows.map(r => ({
         id: r.id,
@@ -268,7 +381,7 @@ export async function getAgents(): Promise<DataResult<CockpitAgent[]>> {
 
 export async function toggleAgent(id: string, action: 'pause' | 'resume' | 'retry'): Promise<DataResult<CockpitAgent | null>> {
   try {
-    if (await isDatabaseAvailable()) {
+    if (await isDrizzleAvailable()) {
       const status = action === 'pause' ? 'paused' : 'running';
       const [updated] = await db.update(aiAgents)
         .set({ status, lastActive: new Date() })
@@ -298,7 +411,7 @@ export async function toggleAgent(id: string, action: 'pause' | 'resume' | 'retr
 
 export async function getAutomations(): Promise<DataResult<CockpitAutomation[]>> {
   try {
-    if (await isDatabaseAvailable()) {
+    if (await isDrizzleAvailable()) {
       const rows = await db.select().from(automations).orderBy(desc(automations.lastRun));
       const mapped: CockpitAutomation[] = rows.map(r => ({
         id: r.id,
@@ -328,7 +441,7 @@ export interface CockpitFile {
 
 export async function getFiles(): Promise<DataResult<CockpitFile[]>> {
   try {
-    if (await isDatabaseAvailable()) {
+    if (await isDrizzleAvailable()) {
       const rows = await db.select().from(filesTable).orderBy(desc(filesTable.createdAt));
       const mapped: CockpitFile[] = rows.map((r: typeof rows[number]) => ({
         id: r.id,
@@ -359,7 +472,7 @@ export async function toggleAutomation(id: string, action: 'enable' | 'disable' 
 
 export async function getMessages(): Promise<DataResult<CockpitMessage[]>> {
   try {
-    if (await isDatabaseAvailable()) {
+    if (await isDrizzleAvailable()) {
       const rows = await db.select().from(messages).orderBy(desc(messages.createdAt)).limit(20);
       const waRows = await db.select().from(whatsappMessages).orderBy(desc(whatsappMessages.createdAt)).limit(20);
       

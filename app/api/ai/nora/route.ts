@@ -138,6 +138,48 @@ Output format MUST be valid JSON:
 
     let aiSuccess = false;
 
+    // ── Primary path: Multi-agent orchestrator ─────────────────────────────
+    // Routes to specialist agents (email, whatsapp, meeting, contact, etc.)
+    // with real tool access. Falls back to direct AI if orchestrator fails.
+    try {
+      const { processMessage, persistConversation } = await import('@/lib/agents/orchestrator');
+      const result = await processMessage({
+        message: prompt,
+        liveContext: context || undefined,
+        sessionId: `nora-chat-${Date.now()}`,
+      });
+
+      if (result.reply) {
+        noraResponse = {
+          reply: result.reply,
+          memoriesToStore: [],
+          tasksToCreate: [],
+        };
+
+        // Extract any pending approvals for the UI
+        if (result.pendingApprovals?.length) {
+          (noraResponse as Record<string, unknown>).pendingApprovals = result.pendingApprovals;
+        }
+
+        // Include tool trace for transparency
+        if (result.toolTrace?.length) {
+          (noraResponse as Record<string, unknown>).toolTrace = result.toolTrace;
+        }
+
+        // Include which agent handled the request
+        (noraResponse as Record<string, unknown>).agentId = result.agentId;
+
+        aiSuccess = true;
+
+        // Persist via orchestrator's own persistence (handles vector memory)
+        persistConversation(`nora-chat`, prompt, result).catch(e =>
+          console.error('[nora-route] orchestrator persist failed:', (e as Error).message)
+        );
+      }
+    } catch (orchErr) {
+      console.warn('[nora-route] orchestrator failed, falling back to direct AI:', (orchErr as Error).message);
+    }
+
     // Try OpenAI first (if key is valid sk- prefix)
     if (!aiSuccess && openaiKey && !openaiKey.includes('mock')) {
       try {

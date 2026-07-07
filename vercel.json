@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/scheduled-messages",
+      "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/zoom-sync",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}

@@ -34,12 +34,15 @@ export async function GET() {
     // Aggregate capability availability
     const capabilities = {
       whatsapp: gateway.hasCapability('whatsapp:send'),
-      email: gateway.hasCapability('email:send'),
+      email_send: gateway.hasCapability('email:send'),
+      email_read: gateway.hasCapability('email:read'),
       ai: gateway.hasCapability('ai:chat'),
       stt: gateway.hasCapability('stt:transcribe'),
       tts: gateway.hasCapability('tts:synthesize'),
+      meeting_create: gateway.hasCapability('meeting:create'),
+      meeting_list: gateway.hasCapability('meeting:list'),
       calendar: !!process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_ID !== 'mock',
-      zoom: !!process.env.ZOOM_ACCOUNT_ID && !!process.env.ZOOM_CLIENT_ID,
+      zoom: gateway.hasCapability('meeting:create') || (!!process.env.ZOOM_ACCOUNT_ID && !!process.env.ZOOM_CLIENT_ID),
     }
 
     return NextResponse.json({

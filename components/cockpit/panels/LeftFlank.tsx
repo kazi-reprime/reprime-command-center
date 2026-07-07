@@ -50,10 +50,36 @@ export default function LeftFlank() {
     const fetchEmails = async () => {
       setLoadingEmails(true);
       try {
-        const res = await fetch('/api/gmail');
+        // Try real unified inbox first (returns full Gmail data)
+        let res = await fetch('/api/email/inbox?limit=20');
         if (res.ok) {
           const data = await res.json();
-          setEmails(data);
+          const emails = (data.emails || []).map((e: {
+            messageId: string;
+            from: string;
+            fromName: string;
+            subject: string;
+            snippet: string;
+            receivedAt: string;
+            unread: boolean;
+            important: boolean;
+          }) => ({
+            id: e.messageId,
+            from: e.fromName || e.from,
+            subject: e.subject,
+            snippet: e.snippet,
+            date: e.receivedAt,
+            unread: e.unread,
+            score: e.important ? 12 : (e.unread ? 5 : 0),
+          }));
+          setEmails(emails);
+        } else {
+          // Fallback to legacy /api/gmail
+          res = await fetch('/api/gmail');
+          if (res.ok) {
+            const data = await res.json();
+            setEmails(data);
+          }
         }
       } catch (e) {
         console.error('Error fetching emails:', e);

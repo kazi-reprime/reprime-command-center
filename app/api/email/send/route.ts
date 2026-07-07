@@ -105,16 +105,24 @@ export async function POST(request: NextRequest) {
 
   try {
     if (process.env.GOOGLE_REFRESH_TOKEN && process.env.GOOGLE_REFRESH_TOKEN !== 'mock') {
-      const { sendGmailMessage } = await import('@/lib/google');
-      // @ts-expect-error type inference constraint
-      const threadId = body.replyToId;
+      // Use unified inbox sender — supports threading headers, HTML, attachments
+      const { sendGmailMessage } = await import('@/lib/email/unified-inbox')
+      // @ts-expect-error type inference constraint — replyToId comes from frontend
+      const threadId: string | undefined = body.replyToId
+      // @ts-expect-error type inference constraint — inReplyTo comes from frontend
+      const inReplyTo: string | undefined = body.inReplyTo
+
       await sendGmailMessage({
-        to: to.join(','),
+        to: to.join(', '),
         subject,
         body: text || '',
         html,
+        cc: cc.length > 0 ? cc.join(', ') : undefined,
+        bcc: bcc.length > 0 ? bcc.join(', ') : undefined,
         threadId: threadId?.startsWith('email-') ? threadId.slice(6) : threadId,
-      });
+        inReplyTo,
+        account: body.account,
+      })
     } else {
       await sendEmail({
         to,

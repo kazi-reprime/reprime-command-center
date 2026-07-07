@@ -41,16 +41,59 @@ export default function HealthPage() {
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
 
+  const [gatewayProviders, setGatewayProviders] = useState<Array<{
+    id: string; name: string; state: string; latencyMs?: number;
+    capabilities: string[]; circuitBreaker: string; error?: string;
+  }>>([])
+  const [capabilities, setCapabilities] = useState<Record<string, boolean>>({})
+  const [gatewayOverall, setGatewayOverall] = useState<string>('unknown')
+
   const fetchHealth = useCallback(async (showToast = false) => {
     try {
-      const [healthRes, logsRes] = await Promise.all([
+      const [healthRes, logsRes, gatewayRes] = await Promise.all([
         fetch('/api/integrations/test'),
         fetch('/api/cockpit/logs'),
+        fetch('/api/gateway/health').catch(() => null),
       ])
       const healthData = await healthRes.json()
       const logsData = await logsRes.json()
       setHealth(healthData)
       setLogs(logsData.logs || [])
+
+      // Merge gateway health data
+      if (gatewayRes?.ok) {
+        const gw = await gatewayRes.json()
+        setGatewayProviders(gw.providers || [])
+        setCapabilities(gw.capabilities || {})
+        setGatewayOverall(gw.overall || 'unknown')
+
+        // Merge gateway providers into the integrations list
+        const gwIntegrations: IntegrationStatus[] = (gw.providers || []).map((p: {
+          id: string; name: string; state: string; error?: string; latencyMs?: number;
+        }) => ({
+          name: `${p.name} [Gateway]`,
+          status: p.state === 'healthy' ? 'connected' as const :
+                  p.state === 'not_configured' ? 'missing' as const : 'error' as const,
+          message: p.error || (p.latencyMs ? `${p.latencyMs}ms` : undefined),
+        }))
+        // Append gateway integrations that aren't duplicates
+        const existingNames = new Set((healthData.integrations || []).map((i: IntegrationStatus) => i.name.toLowerCase()))
+        const newIntegrations = gwIntegrations.filter((i: IntegrationStatus) =>
+          !existingNames.has(i.name.replace(' [Gateway]', '').toLowerCase())
+        )
+        if (newIntegrations.length > 0) {
+          const merged = [...(healthData.integrations || []), ...newIntegrations]
+          const connected = merged.filter((i: IntegrationStatus) => i.status === 'connected').length
+          const missing = merged.filter((i: IntegrationStatus) => i.status === 'missing').length
+          const errors = merged.filter((i: IntegrationStatus) => i.status === 'error').length
+          setHealth({
+            ...healthData,
+            integrations: merged,
+            summary: { connected, missing, errors, total: merged.length },
+          })
+        }
+      }
+
       if (showToast) addToast('Health check refreshed', 'success')
     } catch (err) {
       if (showToast) addToast('Failed to refresh health', 'error')
@@ -88,10 +131,48 @@ export default function HealthPage() {
           onClick={handleRefresh}
         />
       </div>
-      <p className="mt-0 mb-6 text-text-secondary text-sm">
+      <p className="mt-0 mb-4 text-text-secondary text-sm">
         {summary.connected} connected • {summary.missing} not configured • {summary.errors} errors
         {health?.checkedAt && ` • Last checked: ${new Date(health.checkedAt).toLocaleTimeString()}`}
       </p>
+
+      {/* P0 Capabilities Bar */}
+      {Object.keys(capabilities).length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {[
+            { key: 'whatsapp', label: 'WhatsApp', emoji: '💬' },
+            { key: 'email_send', label: 'Email Send', emoji: '📤' },
+            { key: 'email_read', label: 'Email Read', emoji: '📥' },
+            { key: 'ai', label: 'AI Chat', emoji: '🧠' },
+            { key: 'stt', label: 'Voice STT', emoji: '🎤' },
+            { key: 'tts', label: 'Voice TTS', emoji: '🔊' },
+            { key: 'meeting_create', label: 'Meetings', emoji: '📅' },
+            { key: 'zoom', label: 'Zoom', emoji: '🎥' },
+            { key: 'calendar', label: 'Calendar', emoji: '📆' },
+          ].map(cap => {
+            const active = capabilities[cap.key]
+            return (
+              <span
+                key={cap.key}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[0.65rem] font-semibold"
+                style={{
+                  background: active ? 'rgba(0,169,128,0.08)' : 'rgba(245,158,11,0.08)',
+                  color: active ? '#00A980' : '#9CA3AF',
+                  border: `1px solid ${active ? 'rgba(0,169,128,0.2)' : 'rgba(156,163,175,0.15)'}`,
+                }}
+              >
+                <span>{cap.emoji}</span>
+                {cap.label}
+                <span className="w-1.5 h-1.5 rounded-full" style={{ background: active ? '#00A980' : '#9CA3AF' }} />
+              </span>
+            )
+          })}
+          <span className="inline-flex items-center gap-1 px-2 py-1 text-[0.6rem] text-text-muted">
+            Gateway: {gatewayOverall === 'healthy' ? '🟢' : gatewayOverall === 'degraded' ? '🟡' : '🔴'} {gatewayOverall}
+            {gatewayProviders.length > 0 && ` • ${gatewayProviders.filter(p => p.state === 'healthy').length}/${gatewayProviders.length} providers`}
+          </span>
+        </div>
+      )}
 
       {/* Overall Status */}
       <div

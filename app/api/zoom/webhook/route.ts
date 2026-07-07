@@ -43,11 +43,34 @@ export async function POST(request: Request) {
     await service.from('zoom_events').insert({ event: body?.event || 'unknown', payload: body?.payload || {} })
   } catch (e) { console.error('[zoom-webhook] store', (e as Error).message) }
 
-  // 4) NEXT (needs Zoom API creds): recording.completed -> pull summary +
-  //    next-steps + transcript, copy the video to your Drive named by RP-serial,
-  //    append the index-sheet row, raise the NEW NEXT ACTION badge on the card.
-  //    meeting.ended -> participant check -> attended / no-show on the card.
-  return NextResponse.json({ ok: true, event: body?.event || null })
+  // 4) Process specific events through the intelligence pipeline
+  const eventType = body?.event || 'unknown'
+
+  if (eventType === 'meeting.ended') {
+    try {
+      const { processMeetingEnded } = await import('@/lib/zoom/webhook-processor')
+      await processMeetingEnded(body?.payload as Record<string, unknown>)
+      console.log('[zoom-webhook] meeting.ended processed')
+    } catch (e) { console.error('[zoom-webhook] meeting.ended processing failed', (e as Error).message) }
+  }
+
+  if (eventType === 'recording.completed') {
+    try {
+      const { processRecordingCompleted } = await import('@/lib/zoom/webhook-processor')
+      await processRecordingCompleted(body?.payload as Record<string, unknown>)
+      console.log('[zoom-webhook] recording.completed processed')
+    } catch (e) { console.error('[zoom-webhook] recording.completed processing failed', (e as Error).message) }
+  }
+
+  if (eventType === 'meeting.participant_joined' || eventType === 'meeting.participant_left') {
+    try {
+      const { processParticipantEvent } = await import('@/lib/zoom/webhook-processor')
+      const action = eventType.includes('joined') ? 'joined' : 'left'
+      await processParticipantEvent(action, body?.payload as Record<string, unknown>)
+    } catch (e) { console.error('[zoom-webhook] participant event failed', (e as Error).message) }
+  }
+
+  return NextResponse.json({ ok: true, event: eventType })
 }
 
 // GET = a simple liveness probe so the URL resolves before the secret is set.

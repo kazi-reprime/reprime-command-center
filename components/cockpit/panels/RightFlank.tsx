@@ -34,9 +34,19 @@ interface SpeechRecognition extends EventTarget {
   onend: () => void;
 }
 
+interface PendingApproval {
+  id: string;
+  action: string;
+  description: string;
+  agentId: string;
+  params?: Record<string, unknown>;
+}
+
 interface NoraMessage {
   sender: 'user' | 'nora';
   text: string;
+  agentId?: string;
+  pendingApprovals?: PendingApproval[];
 }
 
 export default function RightFlank() {
@@ -49,6 +59,7 @@ export default function RightFlank() {
   const [isListening, setIsListening] = useState(false);
   const [activeTab, setActiveTab] = useState<'tasks' | 'notes'>('tasks');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [pendingApprovals, setPendingApprovals] = useState<PendingApproval[]>([]);
   
   const { emails, events, threads, selectedThreadId } = useStore();
 
@@ -122,7 +133,12 @@ export default function RightFlank() {
 
       if (res.ok) {
         const data = await res.json();
-        setMessages((prev) => [...prev, { sender: 'nora', text: data.reply }]);
+        setMessages((prev) => [...prev, { sender: 'nora', text: data.reply, agentId: data.agentId }]);
+        
+        // Handle pending approvals from orchestrator
+        if (data.pendingApprovals?.length) {
+          setPendingApprovals(prev => [...prev, ...data.pendingApprovals]);
+        }
         
         // Play TTS audio
         try {
@@ -215,7 +231,7 @@ export default function RightFlank() {
               <div className={`text-[10px] font-black uppercase tracking-widest mb-2 flex justify-between items-center ${
                 msg.sender === 'nora' ? 'text-text-muted' : 'text-text-primary/60'
               }`}>
-                <span>{msg.sender === 'nora' ? 'Nora Intelligence' : 'Gideon Prime'}</span>
+                <span>{msg.sender === 'nora' ? (msg.agentId ? `Nora → ${msg.agentId}` : 'Nora Intelligence') : 'Gideon Prime'}</span>
                 {msg.sender === 'nora' && (
                   <div className="scale-75 origin-right">
                     <SpeakerButton text={msg.text} />
@@ -229,6 +245,57 @@ export default function RightFlank() {
             <div className="p-4 rounded-2xl bg-surface-raised/50 border border-border flex items-center gap-3">
               <Loader2 className="h-4 w-4 animate-spin text-accent" />
               <span className="text-xs font-bold text-text-muted uppercase tracking-widest">Synthesizing Data...</span>
+            </div>
+          )}
+          {/* Pending Approvals */}
+          {pendingApprovals.length > 0 && (
+            <div className="space-y-2">
+              {pendingApprovals.map((approval) => (
+                <div key={approval.id} className="p-3 rounded-xl border border-warning/30 bg-warning/5">
+                  <div className="text-[10px] font-black uppercase tracking-widest text-warning mb-1.5 flex items-center gap-1">
+                    <StickyNote className="h-3 w-3" />
+                    Pending Approval
+                  </div>
+                  <p className="text-xs text-text-secondary mb-2">{approval.description}</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          const res = await fetch('/api/nora/approve', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ actionId: approval.id, approved: true }),
+                          });
+                          if (res.ok) {
+                            setPendingApprovals(prev => prev.filter(a => a.id !== approval.id));
+                            setMessages(prev => [...prev, { sender: 'nora', text: `✅ Action approved and executed.` }]);
+                            addToast('Action approved', 'success');
+                          }
+                        } catch { addToast('Approval failed', 'error'); }
+                      }}
+                      className="px-3 py-1.5 bg-success/10 border border-success/30 text-success text-[10px] font-black uppercase rounded-lg hover:bg-success/20 transition-colors flex items-center gap-1"
+                    >
+                      <Check className="h-3 w-3" /> Approve
+                    </button>
+                    <button
+                      onClick={async () => {
+                        try {
+                          await fetch('/api/nora/approve', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ actionId: approval.id, approved: false }),
+                          });
+                          setPendingApprovals(prev => prev.filter(a => a.id !== approval.id));
+                          addToast('Action rejected', 'info');
+                        } catch { addToast('Rejection failed', 'error'); }
+                      }}
+                      className="px-3 py-1.5 bg-error/10 border border-error/30 text-error text-[10px] font-black uppercase rounded-lg hover:bg-error/20 transition-colors"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
           <div ref={messagesEndRef} />

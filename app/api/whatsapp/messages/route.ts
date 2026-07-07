@@ -429,19 +429,98 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     const msg = (err as Error).message ?? ''
     const isQuota = msg.includes('403')
-    await service
-      .from('whatsapp_messages')
-      .update({ status: isQuota ? 'QuotaExceeded' : 'Failed' })
-      .eq('id', inserted.id)
-    return NextResponse.json(
-      {
-        error: isQuota ? 'timelines_quota_exceeded' : 'timelines_send_failed',
-        message: isQuota
-          ? 'Timelines API monthly quota exceeded — resets May 1. Message saved; retry tomorrow.'
-          : msg,
-      },
-      { status: isQuota ? 429 : 502 }
-    )
+
+    // ── Fallback: Try Meta Cloud API when Timelines fails ──────────────
+    const metaToken = process.env.META_WA_ACCESS_TOKEN
+    const metaPhoneId = process.env.META_WA_PHONE_NUMBER_ID
+    if (metaToken && metaPhoneId && !metaToken.includes('mock')) {
+      console.log('[whatsapp/messages] Timelines failed, trying Meta Cloud API fallback...')
+      try {
+        const metaTo = recipientPhone!.replace(/^\+/, '')
+        const metaRes = await fetch(
+          `https://graph.facebook.com/v21.0/${metaPhoneId}/messages`,
+          {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${metaToken}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              messaging_product: 'whatsapp',
+              to: metaTo,
+              type: 'text',
+              text: { body: wireText },
+            }),
+          },
+        )
+        if (metaRes.ok) {
+          const metaData = (await metaRes.json()) as { messages?: Array<{ id: string }> }
+          const metaMsgId = metaData.messages?.[0]?.id || 'meta-sent'
+          await service
+            .from('whatsapp_messages')
+            .update({ timelines_uid: `meta:${metaMsgId}`, status: 'Sent' })
+            .eq('id', inserted.id)
+          console.log('[whatsapp/messages] Meta Cloud API fallback succeeded:', metaMsgId)
+
+          // Continue with normal flow using a synthetic sent object
+          sent = {
+            uid: `meta:${metaMsgId}`,
+            text: wireText,
+            from_me: true,
+            status: 'Sent',
+            timestamp: null,
+          } as unknown as TimelinesMessage
+          // Don't return — fall through to normal success path
+        } else {
+          const metaErrText = await metaRes.text()
+          console.error('[whatsapp/messages] Meta fallback also failed:', metaErrText.slice(0, 200))
+          // Fall through to original error response
+          await service
+            .from('whatsapp_messages')
+            .update({ status: isQuota ? 'QuotaExceeded' : 'Failed' })
+            .eq('id', inserted.id)
+          return NextResponse.json(
+            {
+              error: 'all_providers_failed',
+              message: `Timelines: ${msg.slice(0, 100)}. Meta: ${metaErrText.slice(0, 100)}`,
+              providers_tried: ['timelines', 'meta-cloud'],
+            },
+            { status: 502 },
+          )
+        }
+      } catch (metaErr) {
+        console.error('[whatsapp/messages] Meta fallback exception:', (metaErr as Error).message)
+        await service
+          .from('whatsapp_messages')
+          .update({ status: isQuota ? 'QuotaExceeded' : 'Failed' })
+          .eq('id', inserted.id)
+        return NextResponse.json(
+          {
+            error: isQuota ? 'timelines_quota_exceeded' : 'all_providers_failed',
+            message: isQuota
+              ? 'Timelines quota exceeded. Meta fallback also failed.'
+              : `Both providers failed. Timelines: ${msg.slice(0, 100)}`,
+            providers_tried: ['timelines', 'meta-cloud'],
+          },
+          { status: isQuota ? 429 : 502 },
+        )
+      }
+    } else {
+      // No Meta fallback available
+      await service
+        .from('whatsapp_messages')
+        .update({ status: isQuota ? 'QuotaExceeded' : 'Failed' })
+        .eq('id', inserted.id)
+      return NextResponse.json(
+        {
+          error: isQuota ? 'timelines_quota_exceeded' : 'timelines_send_failed',
+          message: isQuota
+            ? 'Timelines API monthly quota exceeded — resets May 1. Message saved; retry tomorrow.'
+            : msg,
+        },
+        { status: isQuota ? 429 : 502 },
+      )
+    }
   }
 
   const sentAtIso = sent.timestamp

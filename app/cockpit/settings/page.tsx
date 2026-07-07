@@ -52,9 +52,29 @@ export default function SettingsPage() {
 
   const fetchIntegrations = useCallback(async () => {
     try {
-      const res = await fetch('/api/integrations/test')
+      const [res, gwRes] = await Promise.all([
+        fetch('/api/integrations/test'),
+        fetch('/api/gateway/health').catch(() => null),
+      ])
       const data = await res.json()
-      setIntegrations(data.integrations || [])
+      let allIntegrations: IntegrationStatus[] = data.integrations || []
+
+      // Merge gateway providers
+      if (gwRes?.ok) {
+        const gw = await gwRes.json()
+        const existingNames = new Set(allIntegrations.map((i: IntegrationStatus) => i.name.toLowerCase()))
+        const gwExtra: IntegrationStatus[] = (gw.providers || [])
+          .filter((p: { name: string }) => !existingNames.has(p.name.toLowerCase()))
+          .map((p: { name: string; state: string; error?: string }) => ({
+            name: p.name,
+            status: p.state === 'healthy' ? 'connected' as const :
+                    p.state === 'not_configured' ? 'missing' as const : 'error' as const,
+            message: p.error,
+          }))
+        allIntegrations = [...allIntegrations, ...gwExtra]
+      }
+
+      setIntegrations(allIntegrations)
     } catch {
       addToast('Failed to check integration status', 'error')
     } finally {

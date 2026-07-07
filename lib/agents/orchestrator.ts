@@ -29,6 +29,12 @@ async function ensureAgentsRegistered(): Promise<void> {
     import('./search'),
     import('./hebrew'),
     import('./shabbat'),
+    // P0 specialist agents
+    import('./email-agent'),
+    import('./whatsapp-agent'),
+    import('./meeting-agent'),
+    import('./contact-agent'),
+    import('./security-agent'),
   ])
 
   for (const m of mods) {
@@ -52,25 +58,38 @@ You are the orchestrator. Your job is to:
 3. If the request is simple (greeting, clarification, general chat), handle it directly
 
 Available specialist agents:
-- communications — WhatsApp, SMS, iMessage, message search, drafting replies
+- email — Gmail inbox, threads, search, send, reply (REAL data)
+- whatsapp — WhatsApp threads, messages, send, contact resolution
+- meeting — Zoom meetings, create, briefs, attendance, summaries
+- contact — Contact resolution across WhatsApp, Gmail, Pipedrive
+- communications — Legacy messaging, SMS, iMessage
 - calendar — Google Calendar, scheduling, meeting prep
-- tasks — bucket items, reminders, waiting-on, commitments, my-court
+- tasks — bucket items, reminders, waiting-on, commitments
 - search — search across all data (messages, notes, contacts, deals)
 - hebrew — Hebrew language requests, translation, cultural context
 - shabbat — Shabbat/Yom Tov scheduling rules and policies
+- security — Approval flows for sensitive actions
 
 Routing rules:
+- "Check my email / inbox / unread emails" → [HANDOFF:email]
+- "Reply to / draft email to..." → [HANDOFF:email]
+- "Send a WhatsApp to / check WhatsApp..." → [HANDOFF:whatsapp]
+- "Who is / find contact / look up..." → [HANDOFF:contact]
+- "Schedule a Zoom / create meeting / who attended..." → [HANDOFF:meeting]
 - "What's on my calendar?" → [HANDOFF:calendar]
-- "Send a WhatsApp to..." → [HANDOFF:communications]  
-- "Add a task..." → [HANDOFF:tasks]
+- "Add a task / remind me..." → [HANDOFF:tasks]
 - "Search for..." → [HANDOFF:search]
 - Hebrew-heavy messages → [HANDOFF:hebrew]
 - Scheduling that might conflict with Shabbat → [HANDOFF:shabbat]
 - General chat, greetings, status questions → handle directly
 
+IMPORTANT: Use the NEW specialist agents (email, whatsapp, meeting, contact) for their domains.
+The 'email' agent has REAL Gmail access. The 'whatsapp' agent has REAL thread data.
+The 'meeting' agent talks to REAL Zoom. ALWAYS prefer these over general tools.
+
 Style: warm, direct, concise — like a sharp chief of staff. Never corporate filler. Code-switch to Hebrew naturally when Gideon does. Never invent facts.`,
   tools: [],
-  canHandoffTo: ['communications', 'calendar', 'tasks', 'search', 'hebrew', 'shabbat'],
+  canHandoffTo: ['email', 'whatsapp', 'meeting', 'contact', 'communications', 'calendar', 'tasks', 'search', 'hebrew', 'shabbat', 'security'],
   maxToolRounds: 1,
 }
 

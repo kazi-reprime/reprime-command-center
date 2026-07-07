@@ -34,6 +34,20 @@ export type GatewayCapability =
   | 'meeting:create'
   | 'meeting:join'
   | 'meeting:transcript'
+  | 'meeting:list'
+  | 'meeting:participants'
+  | 'meeting:recordings'
+  | 'meeting:summary'
+  | 'email:read'
+  | 'email:thread'
+  | 'email:search'
+  | 'email:attachments'
+  | 'zoom:sync'
+  | 'zoom:create'
+  | 'zoom:update'
+  | 'zoom:delete'
+  | 'zoom:participants'
+  | 'zoom:recordings'
   | 'memory:store'
   | 'memory:recall'
   | 'browser:navigate'
@@ -287,10 +301,12 @@ export interface TTSPayload {
   model?: string
   language?: string
   speed?: number
+  format?: string
 }
 
 export interface TTSResponse {
   audio: ArrayBuffer
+  audioUrl?: string
   format: string
   durationMs?: number
 }
@@ -305,3 +321,109 @@ export interface SearchResponse {
   results: { title: string; url: string; snippet: string; score?: number }[]
   query: string
 }
+
+// ── Zoom / Meeting Payloads ────────────────────────────────────────────────────
+
+export interface CreateMeetingPayload {
+  topic: string
+  startTime: string
+  duration: number
+  timezone?: string
+  agenda?: string
+  attendees?: string[]
+}
+
+export interface CreateMeetingResponse {
+  meetingId: number | string
+  joinUrl: string
+  startUrl?: string
+  password?: string
+}
+
+export interface ListMeetingsPayload {
+  userId?: string
+  type?: 'upcoming' | 'past' | 'all'
+}
+
+export interface MeetingInfo {
+  id: number | string
+  topic: string
+  startTime: string
+  duration: number
+  joinUrl: string
+  status?: string
+  participants?: number
+}
+
+export interface ListMeetingsResponse {
+  meetings: MeetingInfo[]
+}
+
+export interface MeetingParticipantsPayload {
+  meetingId: string | number
+}
+
+export interface MeetingParticipantsResponse {
+  participants: { name: string; email?: string; duration?: number; joinTime?: string }[]
+  total: number
+}
+
+// ── Email Read / Inbox Payloads ────────────────────────────────────────────────
+
+export interface FetchEmailsPayload {
+  account?: string
+  maxResults?: number
+  query?: string
+  labelIds?: string[]
+  /** Only messages after this date */
+  after?: string
+}
+
+export interface EmailThreadInfo {
+  threadId: string
+  messageId: string
+  from: string
+  fromName: string
+  to: string
+  subject: string
+  snippet: string
+  body?: string
+  htmlBody?: string
+  receivedAt: string
+  unread: boolean
+  important: boolean
+  hasAttachments: boolean
+  hasCalendarInvite: boolean
+  labels: string[]
+  account: string
+}
+
+export interface FetchEmailsResponse {
+  emails: EmailThreadInfo[]
+  total: number
+  account: string
+}
+
+export interface EmailThreadPayload {
+  threadId: string
+  account?: string
+}
+
+export interface EmailThreadResponse {
+  threadId: string
+  subject: string
+  messages: EmailThreadInfo[]
+}
+
+export interface EmailReplyPayload {
+  threadId: string
+  inReplyTo: string
+  to: string
+  subject: string
+  body: string
+  html?: string
+  cc?: string
+  bcc?: string
+  account?: string
+}
+

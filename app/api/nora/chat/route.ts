@@ -139,6 +139,82 @@ const NORA_TOOLS: Anthropic.Messages.Tool[] = [
       required: [],
     },
   },
+  {
+    name: 'read_email_inbox',
+    description:
+      'Read real emails from Gmail inbox with full body text. Returns sender, subject, snippet, date, and unread status from the actual inbox.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        limit: {
+          type: 'number',
+          description: 'Max emails to return (default 10, max 20).',
+        },
+        query: {
+          type: 'string',
+          description: 'Optional Gmail search query (e.g. "from:david", "is:unread").',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'send_whatsapp',
+    description:
+      'Send a WhatsApp message to a contact. Requires phone number and message text. Uses WhatsApp 305 line by default.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        phone: {
+          type: 'string',
+          description: 'Recipient phone number in E.164 format (e.g. +1305...).',
+        },
+        message: {
+          type: 'string',
+          description: 'Message text to send.',
+        },
+        channel: {
+          type: 'string',
+          description: 'WhatsApp line to send from: "305" or "718". Default "305".',
+        },
+      },
+      required: ['phone', 'message'],
+    },
+  },
+  {
+    name: 'list_zoom_meetings',
+    description:
+      'List upcoming Zoom meetings. Returns meeting title, start time, join URL, and attendees.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        include_past: {
+          type: 'boolean',
+          description: 'Include past meetings (default false).',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'read_whatsapp_messages',
+    description:
+      'Read recent messages from a specific WhatsApp thread. Pass the thread ID from search_whatsapp.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        thread_id: {
+          type: 'string',
+          description: 'WhatsApp thread ID (UUID from search_whatsapp results).',
+        },
+        limit: {
+          type: 'number',
+          description: 'Max messages to return (default 20).',
+        },
+      },
+      required: ['thread_id'],
+    },
+  },
 ]
 
 // ---------------------------------------------------------------------------
@@ -274,6 +350,105 @@ async function executeTool(
         return JSON.stringify(counts)
       }
 
+      // ── Read real Gmail inbox ─────────────────────────────────────────
+      case 'read_email_inbox': {
+        try {
+          const { fetchInbox } = await import('@/lib/email/unified-inbox')
+          const limit = Math.min(Number(toolInput.limit) || 10, 20)
+          const query = String(toolInput.query || '')
+          const inboxEmails = await fetchInbox({ maxResults: limit, query: query || undefined })
+          const emails = inboxEmails.map((e: { fromName: string; from: string; subject: string; snippet: string; receivedAt: string; unread: boolean; important: boolean; messageId: string }) => ({
+            from: e.fromName || e.from,
+            subject: e.subject,
+            snippet: e.snippet,
+            date: e.receivedAt,
+            unread: e.unread,
+            important: e.important,
+            messageId: e.messageId,
+          }))
+          return JSON.stringify({ count: emails.length, emails })
+        } catch (err) {
+          return JSON.stringify({ error: `Email inbox read failed: ${(err as Error).message}` })
+        }
+      }
+
+      // ── Send WhatsApp message ─────────────────────────────────────────
+      case 'send_whatsapp': {
+        const phone = String(toolInput.phone || '').trim()
+        const message = String(toolInput.message || '').trim()
+        if (!phone || !message) return JSON.stringify({ error: 'phone and message are required' })
+        
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+        try {
+          const channelId = String(toolInput.channel || '305') === '718'
+            ? (process.env.TIMELINES_CHANNEL_718 || '+17183551444')
+            : (process.env.TIMELINES_CHANNEL_305 || '+13057784861')
+          const res = await fetch(`${baseUrl}/api/cockpit/whatsapp/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone, message, channelId }),
+          })
+          const data = await res.json()
+          if (data.success) {
+            return JSON.stringify({ success: true, message: `WhatsApp sent to ${phone} via ${data.provider || 'whatsapp'}`, phone })
+          }
+          return JSON.stringify({ error: data.error || 'Send failed' })
+        } catch (err) {
+          return JSON.stringify({ error: `WhatsApp send failed: ${(err as Error).message}` })
+        }
+      }
+
+      // ── List Zoom meetings ────────────────────────────────────────────
+      case 'list_zoom_meetings': {
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+          (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
+        try {
+          const includePast = toolInput.include_past === true ? '&include_past=true' : ''
+          const res = await fetch(`${baseUrl}/api/zoom/meetings?limit=10${includePast}`, {
+            cache: 'no-store',
+          })
+          if (!res.ok) return JSON.stringify({ error: `Zoom API returned ${res.status}` })
+          const data = await res.json()
+          return JSON.stringify({
+            count: data.meetings?.length || 0,
+            meetings: (data.meetings || []).map((m: Record<string, unknown>) => ({
+              id: m.id,
+              topic: m.topic,
+              start_time: m.start_time,
+              duration: m.duration,
+              join_url: m.join_url,
+              status: m.status,
+            })),
+          })
+        } catch (err) {
+          return JSON.stringify({ error: `Zoom meetings fetch failed: ${(err as Error).message}` })
+        }
+      }
+
+      // ── Read WhatsApp messages ────────────────────────────────────────
+      case 'read_whatsapp_messages': {
+        const threadId = String(toolInput.thread_id || '').trim()
+        if (!threadId) return JSON.stringify({ error: 'thread_id is required' })
+        const limit = Math.min(Number(toolInput.limit) || 20, 50)
+        const { data, error } = await service
+          .from('whatsapp_messages')
+          .select('body, direction, from_name, sent_at, status, media_type')
+          .eq('thread_id', threadId)
+          .order('sent_at', { ascending: false })
+          .limit(limit)
+        if (error) return JSON.stringify({ error: error.message })
+        const messages = (data ?? []).reverse().map((m: Record<string, unknown>) => ({
+          body: m.body,
+          direction: m.direction,
+          from: m.from_name,
+          time: m.sent_at,
+          status: m.status,
+          hasMedia: !!m.media_type,
+        }))
+        return JSON.stringify({ count: messages.length, messages })
+      }
+
       default:
         return JSON.stringify({ error: `Unknown tool: ${toolName}` })
     }
@@ -390,7 +565,39 @@ export async function POST(request: NextRequest) {
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    return NextResponse.json({ error: 'ANTHROPIC_API_KEY missing' }, { status: 500 })
+    // No Anthropic key — skip to Groq/OpenAI fallback
+    console.warn('[nora/chat] ANTHROPIC_API_KEY not set, trying fallback providers')
+    const groqKey = process.env.GROQ_API_KEY
+    const openaiKey = process.env.OPENAI_API_KEY
+    const fallbackKey = groqKey || (openaiKey?.startsWith('sk-') ? openaiKey : null)
+    
+    if (!fallbackKey) {
+      return NextResponse.json({ error: 'No AI provider configured (need ANTHROPIC_API_KEY, GROQ_API_KEY, or OPENAI_API_KEY)' }, { status: 500 })
+    }
+
+    try {
+      const isGroq = !!groqKey
+      const endpoint = isGroq ? 'https://api.groq.com/openai/v1/chat/completions' : 'https://api.openai.com/v1/chat/completions'
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${fallbackKey}` },
+        body: JSON.stringify({
+          model: isGroq ? 'llama-3.1-8b-instant' : 'gpt-4o-mini',
+          messages: [
+            { role: 'system', content: NORA_SYSTEM },
+            ...sanitizeHistory(body.history).map(t => ({ role: t.role, content: t.content })),
+            { role: 'user', content: message },
+          ],
+        }),
+      })
+      if (res.ok) {
+        const json = await res.json()
+        const reply = json.choices?.[0]?.message?.content || ''
+        return NextResponse.json({ reply, language: HEBREW_RE.test(reply) ? 'he' : 'en', provider: isGroq ? 'groq' : 'openai' })
+      }
+    } catch {}
+    
+    return NextResponse.json({ error: 'All fallback providers failed' }, { status: 500 })
   }
 
   const history = sanitizeHistory(body.history)
@@ -494,8 +701,54 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json({ reply, language })
   } catch (err) {
+    console.error('[nora/chat] Anthropic failed:', (err as Error).message)
+    
+    // ── Ultimate Fallback: Groq or OpenAI (no tool-use, plain chat) ──
+    const groqKey = process.env.GROQ_API_KEY
+    const openaiKey = process.env.OPENAI_API_KEY
+    const fallbackKey = groqKey || (openaiKey?.startsWith('sk-') ? openaiKey : null)
+    const isGroq = !!groqKey
+    
+    if (fallbackKey) {
+      try {
+        const endpoint = isGroq
+          ? 'https://api.groq.com/openai/v1/chat/completions'
+          : 'https://api.openai.com/v1/chat/completions'
+        const fallbackModel = isGroq ? 'llama-3.1-8b-instant' : 'gpt-4o-mini'
+        
+        const fallbackRes = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${fallbackKey}`,
+          },
+          body: JSON.stringify({
+            model: fallbackModel,
+            messages: [
+              { role: 'system', content: system },
+              ...history.map(t => ({ role: t.role, content: t.content })),
+              { role: 'user', content: message },
+            ],
+          }),
+        })
+
+        if (fallbackRes.ok) {
+          const json = await fallbackRes.json()
+          const fallbackReply = json.choices?.[0]?.message?.content || ''
+          const language: 'en' | 'he' = HEBREW_RE.test(fallbackReply) ? 'he' : 'en'
+          return NextResponse.json({
+            reply: fallbackReply,
+            language,
+            provider: isGroq ? 'groq' : 'openai',
+          })
+        }
+      } catch (fallbackErr) {
+        console.error('[nora/chat] Fallback also failed:', (fallbackErr as Error).message)
+      }
+    }
+
     return NextResponse.json(
-      { error: 'anthropic_failed', message: (err as Error).message },
+      { error: 'all_providers_failed', message: (err as Error).message },
       { status: 500 }
     )
   }

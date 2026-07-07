@@ -125,14 +125,37 @@ export default function CommsPanel() {
     fetchThreads();
     
     // Fetch adapter health
-    fetch('/api/center/health')
+    fetch('/api/gateway/health')
       .then(r => r.json())
       .then(data => setAdapterHealth(data))
       .catch(err => console.error('Failed to fetch adapter health:', err));
 
-    // Poll for updates every 60 seconds
-    const interval = setInterval(fetchThreads, 60000);
-    return () => clearInterval(interval);
+    // Subscribe to real-time message inserts for instant updates
+    const channel = supabaseClient
+      .channel('comms-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'whatsapp_messages' },
+        () => {
+          // New message arrived — refresh threads
+          fetchThreads();
+        },
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'whatsapp_threads' },
+        () => {
+          fetchThreads();
+        },
+      )
+      .subscribe();
+
+    // Fallback poll every 2 minutes (in case realtime disconnects)
+    const interval = setInterval(fetchThreads, 120000);
+    return () => {
+      clearInterval(interval);
+      supabaseClient.removeChannel(channel);
+    };
   }, [fetchThreads]);
 
   // 2. Fetch Messages for Selected Thread

@@ -25,6 +25,17 @@ import type {
   TTSResponse,
   SearchPayload,
   SearchResponse,
+  CreateMeetingPayload,
+  CreateMeetingResponse,
+  ListMeetingsPayload,
+  ListMeetingsResponse,
+  MeetingParticipantsPayload,
+  MeetingParticipantsResponse,
+  FetchEmailsPayload,
+  FetchEmailsResponse,
+  EmailThreadPayload,
+  EmailThreadResponse,
+  EmailReplyPayload,
   GatewayHealthReport,
   ProviderAdapter,
 } from './types'
@@ -66,6 +77,31 @@ export const gateway = {
     })
   },
 
+  async fetchEmails(payload: FetchEmailsPayload): Promise<GatewayResponse<FetchEmailsResponse>> {
+    return executeRequest<FetchEmailsPayload, FetchEmailsResponse>({
+      capability: 'email:read',
+      payload,
+      metadata: { account: payload.account, maxResults: payload.maxResults },
+    })
+  },
+
+  async getEmailThread(payload: EmailThreadPayload): Promise<GatewayResponse<EmailThreadResponse>> {
+    return executeRequest<EmailThreadPayload, EmailThreadResponse>({
+      capability: 'email:thread',
+      payload,
+      metadata: { threadId: payload.threadId },
+    })
+  },
+
+  async replyToEmail(payload: EmailReplyPayload): Promise<GatewayResponse> {
+    return executeRequest({
+      capability: 'email:send',
+      payload,
+      idempotencyKey: `email-reply:${payload.threadId}:${Date.now()}`,
+      metadata: { threadId: payload.threadId, to: payload.to },
+    })
+  },
+
   // ── AI / LLM ───────────────────────────────────────────────────────────────
   async generateText(payload: AICompletionPayload): Promise<GatewayResponse<AICompletionResponse>> {
     return executeRequest<AICompletionPayload, AICompletionResponse>({
@@ -102,6 +138,32 @@ export const gateway = {
     })
   },
 
+  // ── Zoom / Meetings ────────────────────────────────────────────────────────
+  async createMeeting(payload: CreateMeetingPayload): Promise<GatewayResponse<CreateMeetingResponse>> {
+    return executeRequest<CreateMeetingPayload, CreateMeetingResponse>({
+      capability: 'meeting:create',
+      payload,
+      idempotencyKey: `meeting:${payload.topic}:${payload.startTime}`,
+      metadata: { topic: payload.topic },
+    })
+  },
+
+  async listMeetings(payload: ListMeetingsPayload = {}): Promise<GatewayResponse<ListMeetingsResponse>> {
+    return executeRequest<ListMeetingsPayload, ListMeetingsResponse>({
+      capability: 'meeting:list',
+      payload,
+      metadata: { type: payload.type },
+    })
+  },
+
+  async getMeetingParticipants(payload: MeetingParticipantsPayload): Promise<GatewayResponse<MeetingParticipantsResponse>> {
+    return executeRequest<MeetingParticipantsPayload, MeetingParticipantsResponse>({
+      capability: 'meeting:participants',
+      payload,
+      metadata: { meetingId: payload.meetingId },
+    })
+  },
+
   // ── Health & Status ────────────────────────────────────────────────────────
   getHealth(): GatewayHealthReport {
     return getHealthReport()
@@ -125,50 +187,52 @@ export async function initializeGateway(): Promise<void> {
   console.log('[gateway] initializing providers...')
 
   // Dynamic imports to avoid loading unconfigured providers
-  try {
-    const { timelinesWhatsAppProvider } = await import('./providers/whatsapp/timelines-adapter')
-    gateway.register(timelinesWhatsAppProvider)
-  } catch (e) { console.warn('[gateway] timelines adapter load failed:', (e as Error).message) }
+  const loaders: Array<[string, () => Promise<{ default?: unknown; [k: string]: unknown }>]> = [
+    // WhatsApp
+    ['timelines-wa', () => import('./providers/whatsapp/timelines-adapter')],
+    ['meta-wa', () => import('./providers/whatsapp/meta-cloud-adapter')],
+    // Email
+    ['gmail', () => import('./providers/email/gmail-adapter')],
+    ['sendgrid', () => import('./providers/email/sendgrid-adapter')],
+    // AI — Primary
+    ['anthropic', () => import('./providers/ai/anthropic-adapter')],
+    ['openai', () => import('./providers/ai/openai-adapter')],
+    // AI — Secondary
+    ['gemini', () => import('./providers/ai/gemini-adapter')],
+    ['groq', () => import('./providers/ai/groq-adapter')],
+    ['openrouter', () => import('./providers/ai/openrouter-adapter')],
+    // STT
+    ['openai-stt', () => import('./providers/stt/openai-whisper-adapter')],
+    ['groq-whisper', () => import('./providers/stt/groq-whisper-adapter')],
+    ['deepgram', () => import('./providers/stt/deepgram-adapter')],
+    // TTS
+    ['elevenlabs', () => import('./providers/tts/elevenlabs-adapter')],
+    ['openai-tts', () => import('./providers/tts/openai-tts-adapter')],
+    // Zoom
+    ['zoom', () => import('./providers/zoom/zoom-adapter')],
+  ]
 
-  try {
-    const { metaWhatsAppProvider } = await import('./providers/whatsapp/meta-cloud-adapter')
-    gateway.register(metaWhatsAppProvider)
-  } catch (e) { console.warn('[gateway] meta wa adapter load failed:', (e as Error).message) }
+  const results = await Promise.allSettled(
+    loaders.map(async ([name, loader]) => {
+      try {
+        const mod = await loader()
+        // Find the exported provider (convention: <name>Provider)
+        const providerKey = Object.keys(mod).find(
+          k => k.endsWith('Provider') && typeof (mod as Record<string, unknown>)[k] === 'object',
+        )
+        if (providerKey) {
+          gateway.register((mod as Record<string, ProviderAdapter>)[providerKey])
+        }
+      } catch (e) {
+        console.warn(`[gateway] ${name} adapter load failed:`, (e as Error).message)
+      }
+    }),
+  )
 
-  try {
-    const { gmailProvider } = await import('./providers/email/gmail-adapter')
-    gateway.register(gmailProvider)
-  } catch (e) { console.warn('[gateway] gmail adapter load failed:', (e as Error).message) }
-
-  try {
-    const { sendgridProvider } = await import('./providers/email/sendgrid-adapter')
-    gateway.register(sendgridProvider)
-  } catch (e) { console.warn('[gateway] sendgrid adapter load failed:', (e as Error).message) }
-
-  try {
-    const { anthropicProvider } = await import('./providers/ai/anthropic-adapter')
-    gateway.register(anthropicProvider)
-  } catch (e) { console.warn('[gateway] anthropic adapter load failed:', (e as Error).message) }
-
-  try {
-    const { openaiProvider } = await import('./providers/ai/openai-adapter')
-    gateway.register(openaiProvider)
-  } catch (e) { console.warn('[gateway] openai adapter load failed:', (e as Error).message) }
-
-  try {
-    const { openaiSTTProvider } = await import('./providers/stt/openai-whisper-adapter')
-    gateway.register(openaiSTTProvider)
-  } catch (e) { console.warn('[gateway] openai stt adapter load failed:', (e as Error).message) }
-
-  try {
-    const { elevenLabsTTSProvider } = await import('./providers/tts/elevenlabs-adapter')
-    gateway.register(elevenLabsTTSProvider)
-  } catch (e) { console.warn('[gateway] elevenlabs adapter load failed:', (e as Error).message) }
-
-  try {
-    const { openaiTTSProvider } = await import('./providers/tts/openai-tts-adapter')
-    gateway.register(openaiTTSProvider)
-  } catch (e) { console.warn('[gateway] openai tts adapter load failed:', (e as Error).message) }
+  const failures = results.filter(r => r.status === 'rejected').length
+  if (failures > 0) {
+    console.warn(`[gateway] ${failures} adapter(s) failed to load`)
+  }
 
   const health = getHealthReport()
   console.log(
@@ -193,4 +257,14 @@ export type {
   STTResponse,
   TTSPayload,
   TTSResponse,
+  CreateMeetingPayload,
+  CreateMeetingResponse,
+  ListMeetingsPayload,
+  ListMeetingsResponse,
+  FetchEmailsPayload,
+  FetchEmailsResponse,
+  EmailThreadPayload,
+  EmailThreadResponse,
+  EmailReplyPayload,
 } from './types'
+

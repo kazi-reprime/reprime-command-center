@@ -104,16 +104,29 @@ export async function POST(request: NextRequest) {
   const replyTo = resolveReplyFrom(body.account)
 
   try {
-    await sendEmail({
-      to,
-      cc: cc.length > 0 ? cc : undefined,
-      bcc: bcc.length > 0 ? bcc : undefined,
-      from,
-      replyTo,
-      subject,
-      text: text || undefined,
-      html,
-    })
+    if (process.env.GOOGLE_REFRESH_TOKEN && process.env.GOOGLE_REFRESH_TOKEN !== 'mock') {
+      const { sendGmailMessage } = await import('@/lib/google');
+      // @ts-expect-error type inference constraint
+      const threadId = body.replyToId;
+      await sendGmailMessage({
+        to: to.join(','),
+        subject,
+        body: text || '',
+        html,
+        threadId: threadId?.startsWith('email-') ? threadId.slice(6) : threadId,
+      });
+    } else {
+      await sendEmail({
+        to,
+        cc: cc.length > 0 ? cc : undefined,
+        bcc: bcc.length > 0 ? bcc : undefined,
+        from,
+        replyTo,
+        subject,
+        text: text || undefined,
+        html,
+      })
+    }
   } catch (err) {
     return NextResponse.json(
       { error: 'send_failed', message: (err as Error).message },

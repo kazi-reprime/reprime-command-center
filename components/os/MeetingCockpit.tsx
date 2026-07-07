@@ -88,10 +88,10 @@ export default function MeetingCockpit() {
           <div className="flex flex-wrap gap-2">
             {attendees.map(a => (
               <div key={a.name} className={`px-2 py-1 rounded border text-xs font-mono flex items-center gap-2 ${
-                a.present ? 'border-emerald-900/50 bg-emerald-900/10 text-emerald-400' : 'border-border bg-surface text-text-muted'
+                a.present ? 'border-emerald-900/50 bg-emerald-900/10 text-success' : 'border-border bg-surface text-text-muted'
               }`}>
-                <div className={`w-1.5 h-1.5 rounded-full ${a.present ? 'bg-success' : 'bg-zinc-600'}`}></div>
-                {a.name} <span className="text-zinc-600">({a.role})</span>
+                <div className={`w-1.5 h-1.5 rounded-full ${a.present ? 'bg-success' : 'bg-border-strong'}`}></div>
+                {a.name} <span className="text-text-muted">({a.role})</span>
               </div>
             ))}
           </div>
@@ -120,7 +120,7 @@ export default function MeetingCockpit() {
         <div className="border border-border rounded-lg bg-surface p-4 flex-1 flex flex-col min-h-[250px]">
           <h3 className="text-[10px] uppercase font-mono text-text-muted mb-3 flex justify-between items-center">
             Live Notes
-            <button className="text-success hover:text-emerald-400 flex items-center gap-1">
+            <button className="text-success hover:text-success flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-success rounded-full animate-ping"></span>
               Start Transcription
             </button>

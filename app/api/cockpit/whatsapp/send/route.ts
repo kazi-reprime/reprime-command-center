@@ -22,8 +22,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Use the Timelines.ai API to send message
-    const channel = channelId || process.env.TIMELINES_CHANNEL_305;
-    const res = await fetch('https://api.timelines.ai/api/messages/send', {
+    let channel = channelId || process.env.TIMELINES_CHANNEL_305 || '+13057784861';
+    // Timelines API expects the phone number (e.g. +13057784861), not the JID
+    if (channel.includes('@')) {
+      channel = '+' + channel.split('@')[0];
+    }
+    if (!channel.startsWith('+')) {
+      channel = '+' + channel;
+    }
+    const res = await fetch('https://app.timelines.ai/integrations/api/messages', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -32,7 +39,7 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify({
         phone: phone.replace(/[^+\d]/g, ''),
         text: message,
-        channel_id: channel ? parseInt(channel) : undefined,
+        whatsapp_account_phone: channel,
       }),
     });
 

@@ -70,7 +70,7 @@ export default function DealsDashboard() {
             <div key={deal.id} className="border border-border rounded-lg bg-surface p-4 hover:border-border-strong transition-colors cursor-pointer group">
               <div className="flex justify-between items-start mb-3">
                 <div>
-                  <h3 className="font-semibold text-lg text-text-primary group-hover:text-emerald-400 transition-colors">
+                  <h3 className="font-semibold text-lg text-text-primary group-hover:text-success transition-colors">
                     {deal.name}
                   </h3>
                   <p className="text-xs text-text-muted font-mono mt-1">{deal.address} &bull; {deal.assetType}</p>
@@ -84,16 +84,16 @@ export default function DealsDashboard() {
 
               <div className="grid grid-cols-3 gap-2 mt-4">
                 <div className="bg-surface rounded p-2 border border-border">
-                  <p className="text-[10px] text-zinc-600 font-mono uppercase">Purchase</p>
+                  <p className="text-[10px] text-text-muted font-mono uppercase">Purchase</p>
                   <p className="text-sm font-medium">{formatCurrency(deal.purchasePrice)}</p>
                 </div>
                 <div className="bg-surface rounded p-2 border border-border">
-                  <p className="text-[10px] text-zinc-600 font-mono uppercase">Loan</p>
+                  <p className="text-[10px] text-text-muted font-mono uppercase">Loan</p>
                   <p className="text-sm font-medium">{formatCurrency(deal.loanAmount)}</p>
                 </div>
                 <div className="bg-surface rounded p-2 border border-border">
-                  <p className="text-[10px] text-zinc-600 font-mono uppercase">Equity</p>
-                  <p className="text-sm font-medium text-emerald-400">{formatCurrency(deal.equityNeeded)}</p>
+                  <p className="text-[10px] text-text-muted font-mono uppercase">Equity</p>
+                  <p className="text-sm font-medium text-success">{formatCurrency(deal.equityNeeded)}</p>
                 </div>
               </div>
 

@@ -83,11 +83,11 @@ export default function DecisionLog() {
               
               <div className="mt-4 pt-4 border-t border-border grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-[10px] text-zinc-600 font-mono uppercase mb-1">Reason</p>
+                  <p className="text-[10px] text-text-muted font-mono uppercase mb-1">Reason</p>
                   <p className="text-xs text-text-secondary">{d.reason}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-zinc-600 font-mono uppercase mb-1">Decided By</p>
+                  <p className="text-[10px] text-text-muted font-mono uppercase mb-1">Decided By</p>
                   <p className="text-xs text-text-secondary">{d.decided_by} &bull; {new Date(d.created_at).toLocaleDateString()}</p>
                 </div>
               </div>

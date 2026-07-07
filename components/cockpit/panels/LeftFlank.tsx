@@ -82,7 +82,7 @@ export default function LeftFlank() {
   }, [setEmails, setEvents]);
 
   return (
-    <div className="w-[420px] flex flex-col gap-6 h-[calc(100vh-8rem)]" style={{ fontFamily: 'inherit' }}>
+    <div className="w-full max-w-[420px] shrink-0 flex flex-col gap-6 min-h-[600px] lg:h-[calc(100vh-8rem)]" style={{ fontFamily: 'inherit' }}>
       {/* 0. APEX Priority Panel */}
       <ApexCard />
 

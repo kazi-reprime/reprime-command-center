@@ -15,9 +15,9 @@ replacements = {
     r'text-\[\#0E3470\]': 'text-accent-foreground',
     r'border-\[\#FFCC33\]': 'border-accent',
     r'focus:border-\[\#FFCC33\]': 'focus:border-accent',
-    r'border-\[\#FFCC33\]/([0-9]+)': 'border-accent/\g<1>',
-    r'bg-\[\#FFCC33\]/([0-9]+)': 'bg-accent/\g<1>',
-    r'bg-\[\#09224d\]/([0-9]+)': 'bg-surface-hover/\g<1>',
+    r'border-\[\#FFCC33\]/([0-9]+)': r'border-accent/\g<1>',
+    r'bg-\[\#FFCC33\]/([0-9]+)': r'bg-accent/\g<1>',
+    r'bg-\[\#09224d\]/([0-9]+)': r'bg-surface-hover/\g<1>',
     
     # other colors spotted
     r'bg-\[\#153B75\]': 'bg-surface',

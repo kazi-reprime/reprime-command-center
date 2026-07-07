@@ -317,7 +317,7 @@ export default function CommsPanel() {
   };
 
   return (
-    <div className="flex-1 flex bg-surface border border-accent/20 rounded-xl overflow-hidden h-[calc(100vh-6rem)]">
+    <div className="flex-1 flex bg-surface border border-accent/20 rounded-xl overflow-hidden min-h-[600px] lg:h-[calc(100vh-6rem)]">
       {/* 1. Left side: Thread directory */}
       <div className="w-80 border-r border-accent/20 flex flex-col">
         {/* Search & Tabs */}

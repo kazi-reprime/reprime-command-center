@@ -47,7 +47,7 @@ export default function SpamShield() {
     <div className="flex flex-col h-full bg-surface text-text-primary border-r border-border overflow-y-auto">
       <div className="sticky top-0 bg-surface/90 backdrop-blur-md border-b border-border p-4 z-10">
         <h2 className="text-xs font-mono text-text-muted uppercase tracking-widest flex items-center gap-2">
-          <span className="w-2 h-2 bg-zinc-600 rounded-full"></span>
+          <span className="w-2 h-2 bg-border-strong rounded-full"></span>
           Noise Killer / Spam Shield
         </h2>
         <p className="text-sm text-text-secondary mt-1">
@@ -67,7 +67,7 @@ export default function SpamShield() {
                   {item.classification.replace('_', ' ')}
                 </span>
               </div>
-              <span className="text-xs text-zinc-600 font-mono">{item.date}</span>
+              <span className="text-xs text-text-muted font-mono">{item.date}</span>
             </div>
             
             <h3 className={`font-semibold ${item.classification === 'verification_code' ? 'text-text-primary' : 'text-text-muted line-through'}`}>

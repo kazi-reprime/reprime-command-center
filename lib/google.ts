@@ -227,7 +227,63 @@ export async function getCalendarAgendas(): Promise<CalendarEvent[]> {
   }
 }
 
-// Simulation datasets REMOVED — errors now propagate to callers.
-// If you see "Gmail API failed" or "Calendar API failed" in logs,
-// check GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN.
-// Use scripts/get-gmail-token.mjs to obtain a valid refresh token.
+/**
+ * Send an email via the Gmail API, so it appears in the Sent folder.
+ */
+export async function sendGmailMessage(params: {
+  to: string;
+  subject: string;
+  body: string;
+  html?: string;
+  threadId?: string;
+}): Promise<unknown> {
+  try {
+    const accessToken = await getGoogleAccessToken();
+
+    // Construct raw email according to RFC 2822
+    const lines = [];
+    lines.push(`To: ${params.to}`);
+    lines.push(`Subject: =?utf-8?B?${Buffer.from(params.subject).toString('base64')}?=`);
+    lines.push(`MIME-Version: 1.0`);
+    
+    if (params.html) {
+      lines.push(`Content-Type: text/html; charset=utf-8`);
+      lines.push('');
+      lines.push(params.html);
+    } else {
+      lines.push(`Content-Type: text/plain; charset=utf-8`);
+      lines.push('');
+      lines.push(params.body);
+    }
+
+    const messageString = lines.join('\r\n');
+    const encodedMessage = Buffer.from(messageString).toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+
+    const body: { raw: string; threadId?: string } = { raw: encodedMessage };
+    if (params.threadId) {
+      body.threadId = params.threadId;
+    }
+
+    const sendRes = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send', {
+      method: 'POST',
+      headers: { 
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!sendRes.ok) {
+      const errText = await sendRes.text();
+      throw new Error(`Gmail Send API returned ${sendRes.status}: ${errText}`);
+    }
+
+    return await sendRes.json();
+  } catch (err) {
+    console.error('[sendGmailMessage] Failed:', err);
+    throw err;
+  }
+}

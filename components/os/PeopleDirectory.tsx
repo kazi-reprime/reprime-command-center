@@ -76,7 +76,7 @@ export default function PeopleDirectory() {
               <span className="text-[10px] px-1.5 py-0.5 rounded font-mono uppercase bg-surface-raised text-text-secondary">
                 {p.relationship}
               </span>
-              <span className="text-xs text-zinc-600 font-mono">{p.lastContact}</span>
+              <span className="text-xs text-text-muted font-mono">{p.lastContact}</span>
             </div>
           </div>
         ))}

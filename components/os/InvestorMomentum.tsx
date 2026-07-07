@@ -91,11 +91,11 @@ export default function InvestorMomentum() {
 
             <div className="grid grid-cols-2 gap-2 mt-4">
               <div className="bg-surface rounded p-2 border border-border flex justify-between items-center">
-                <span className="text-[10px] text-zinc-600 font-mono uppercase">Capacity</span>
+                <span className="text-[10px] text-text-muted font-mono uppercase">Capacity</span>
                 <span className="text-sm font-medium">{formatCurrency(inv.capitalCapacity)}</span>
               </div>
               <div className="bg-surface rounded p-2 border border-border flex justify-between items-center">
-                <span className="text-[10px] text-zinc-600 font-mono uppercase">Target</span>
+                <span className="text-[10px] text-text-muted font-mono uppercase">Target</span>
                 <span className="text-sm font-medium">{inv.preferredDealType}</span>
               </div>
             </div>

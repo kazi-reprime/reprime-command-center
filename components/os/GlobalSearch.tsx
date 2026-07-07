@@ -60,7 +60,7 @@ export default function GlobalSearch() {
           <span className="text-text-muted mr-3">🔍</span>
           <input
             type="text"
-            className="flex-1 bg-transparent border-none text-text-primary focus:outline-none font-mono text-sm placeholder:text-zinc-600"
+            className="flex-1 bg-transparent border-none text-text-primary focus:outline-none font-mono text-sm placeholder:text-text-muted"
             placeholder="Search memory, deals, messages, or ask Nora..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -74,7 +74,7 @@ export default function GlobalSearch() {
             <div className="p-4 text-center text-text-muted text-xs font-mono">Searching memory matrix...</div>
           ) : results.length > 0 ? (
             <div className="flex flex-col gap-1">
-              <div className="px-3 py-1 text-[10px] uppercase font-mono text-zinc-600 mb-1">Semantic Results</div>
+              <div className="px-3 py-1 text-[10px] uppercase font-mono text-text-muted mb-1">Semantic Results</div>
               {results.map(r => (
                 <div key={r.id} className="p-3 rounded hover:bg-surface cursor-pointer flex gap-3 group transition-colors">
                   <div className="mt-0.5">
@@ -82,7 +82,7 @@ export default function GlobalSearch() {
                   </div>
                   <div>
                     <p className="text-sm text-text-secondary">...{r.snippet}...</p>
-                    <p className="text-xs text-zinc-600 font-mono mt-1">{new Date(r.date).toLocaleDateString()} &bull; Match: {Math.round(r.score * 100)}%</p>
+                    <p className="text-xs text-text-muted font-mono mt-1">{new Date(r.date).toLocaleDateString()} &bull; Match: {Math.round(r.score * 100)}%</p>
                   </div>
                 </div>
               ))}
@@ -91,11 +91,11 @@ export default function GlobalSearch() {
             <div className="p-4 text-center text-text-muted text-xs font-mono">No relevant memories found.</div>
           ) : (
             <div className="p-4">
-              <div className="text-[10px] uppercase font-mono text-zinc-600 mb-2">Suggested Actions</div>
+              <div className="text-[10px] uppercase font-mono text-text-muted mb-2">Suggested Actions</div>
               <div className="flex flex-col gap-1">
                 {['Create a new deal', 'Summarize today', 'Launch capital campaign', 'View overdue payments'].map(action => (
                   <button key={action} className="text-left px-3 py-2 text-sm text-text-secondary hover:text-text-primary hover:bg-surface rounded transition-colors flex items-center gap-2">
-                    <span className="text-zinc-600">&rarr;</span> {action}
+                    <span className="text-text-muted">&rarr;</span> {action}
                   </button>
                 ))}
               </div>

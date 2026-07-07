@@ -22,17 +22,17 @@ export default function CampaignLauncher() {
       <div className="p-4 flex flex-col gap-6">
         {/* Step Progress */}
         <div className="flex justify-between items-center px-4 font-mono text-xs">
-          <div className={`flex flex-col items-center gap-2 ${step >= 1 ? 'text-emerald-400' : 'text-zinc-600'}`}>
+          <div className={`flex flex-col items-center gap-2 ${step >= 1 ? 'text-success' : 'text-text-muted'}`}>
             <div className={`w-6 h-6 rounded-full flex items-center justify-center border ${step >= 1 ? 'border-emerald-400 bg-emerald-400/10' : 'border-border-strong bg-surface'}`}>1</div>
             Audience
           </div>
           <div className={`flex-1 h-px mx-4 ${step >= 2 ? 'bg-emerald-400/50' : 'bg-surface-raised'}`}></div>
-          <div className={`flex flex-col items-center gap-2 ${step >= 2 ? 'text-emerald-400' : 'text-zinc-600'}`}>
+          <div className={`flex flex-col items-center gap-2 ${step >= 2 ? 'text-success' : 'text-text-muted'}`}>
             <div className={`w-6 h-6 rounded-full flex items-center justify-center border ${step >= 2 ? 'border-emerald-400 bg-emerald-400/10' : 'border-border-strong bg-surface'}`}>2</div>
             Message
           </div>
           <div className={`flex-1 h-px mx-4 ${step >= 3 ? 'bg-emerald-400/50' : 'bg-surface-raised'}`}></div>
-          <div className={`flex flex-col items-center gap-2 ${step >= 3 ? 'text-emerald-400' : 'text-zinc-600'}`}>
+          <div className={`flex flex-col items-center gap-2 ${step >= 3 ? 'text-success' : 'text-text-muted'}`}>
             <div className={`w-6 h-6 rounded-full flex items-center justify-center border ${step >= 3 ? 'border-emerald-400 bg-emerald-400/10' : 'border-border-strong bg-surface'}`}>3</div>
             Launch
           </div>

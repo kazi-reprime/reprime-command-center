@@ -84,12 +84,16 @@ export default function NoraDeskColumn() {
     }
   }, [historyQ.data, noraMessages.length, setNoraMessages])
 
-  const asksQ = useQuery<{ asks: Array<{ title?: string; question?: string; due_at?: string }> }>({
+  const asksQ = useQuery<{ 
+    asks: Array<{ title?: string; question?: string; due_at?: string }>
+    overdue?: Array<Record<string, unknown>>
+    awaiting?: Array<Record<string, unknown>>
+  }>({
     queryKey: ['secretary-asks'],
     queryFn: async () => {
       const res = await fetch('/api/secretary/asks', { cache: 'no-store' })
       if (!res.ok) return { asks: [] }
-      return res.json() as Promise<{ asks: Array<{ title?: string; question?: string; due_at?: string }> }>
+      return res.json()
     },
     refetchInterval: REFETCH_MS,
     staleTime: REFETCH_MS,

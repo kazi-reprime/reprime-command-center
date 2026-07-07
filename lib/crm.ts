@@ -82,6 +82,7 @@ export async function resolveContact(rawPhone: string): Promise<CRMContact | nul
     '+12345678903': { name: 'Adir Yonasi', email: 'adir@reprime.com', orgName: 'RePrime Capital', dealStatus: 'Tech Lead' },
     '+12345678904': { name: 'Yaron Sitbon', email: 'yaron@reprime.com', orgName: 'RePrime Capital', dealStatus: 'Underwriter' },
     '+12345678905': { name: 'Chaim Abrahams', email: 'chaim@reprime.com', orgName: 'RePrime Capital', dealStatus: 'Legal Counsel' },
+    '+12345678906': { name: 'Kazi Musharraf', email: 'kazi@reprime.com', orgName: 'RePrime Capital', dealStatus: 'AI Engineer' },
   };
 
   const matched = mockRoster[normalized];

@@ -147,7 +147,7 @@ export interface ZoomAttendance {
 
 // Our own side joining a no-show meeting must NOT count as attendance. Anyone
 // whose name/email matches the RePrime team is excluded from guestCount.
-const REPRIME_TEAM = /reprime\.com|gideon|gratsiani|tahisa|shirel|chaim|\bnora\b|\bsteve\b|philipp/i
+const REPRIME_TEAM = /reprime\.com|gideon|gratsiani|tahisa|shirel|chaim|\bnora\b|\bsteve\b|philipp|\bkazi\b|musharraf/i
 
 interface ZoomParticipant {
   // duration is in SECONDS on /report and /metrics feeds; /past_meetings omits it

@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react'
 /**
  * Identity registry — Wave 1 / Track F
  *
- * Roster lock 2026-05-05: Gideon + 5 team members (Shirel, Steve, Adir, Yaron,
- * Chaim). Amelia and Dovber are OFF the roster — see `_ops-context/team-roster.md`.
+ * Roster lock 2026-05-05: Gideon + 6 team members (Shirel, Steve, Adir, Yaron,
+ * Chaim, Kazi). Amelia and Dovber are OFF the roster — see `_ops-context/team-roster.md`.
  *
  * v1 send-as policy: ONLY Gideon (`g@reprime.com`) may act as a send-as
  * identity. The other five appear in the picker as "view-as" rows with a
@@ -61,6 +61,12 @@ export const IDENTITIES: readonly Identity[] = [
     email: 'chaim@reprime.com',
     displayName: 'Chaim Abrahams',
     role: 'Co-Founder',
+    sendAsAllowed: false,
+  },
+  {
+    email: 'kazi@reprime.com',
+    displayName: 'Kazi Musharraf',
+    role: 'AI Engineer',
     sendAsAllowed: false,
   },
 ] as const

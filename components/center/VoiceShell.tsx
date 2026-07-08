@@ -288,16 +288,27 @@ export default function VoiceShell() {
   const recordingRef = useRef(false)
   const sentTimerRef = useRef<number | null>(null)
   const currentAudioRef = useRef<HTMLAudioElement | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     const handleStop = () => {
+      // 1. Abort any pending fetch (AI request or TTS)
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort()
+        abortControllerRef.current = null
+      }
+
+      // 2. Kill current audio
       if (currentAudioRef.current) {
         currentAudioRef.current.pause()
         currentAudioRef.current.src = ''
         currentAudioRef.current = null
-        setNoraStatus('idle')
-        window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
       }
+
+      // 3. Reset states
+      setState('idle')
+      setNoraStatus('idle')
+      window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
     }
     window.addEventListener('nora:stop-speaking', handleStop)
     return () => window.removeEventListener('nora:stop-speaking', handleStop)
@@ -378,24 +389,41 @@ export default function VoiceShell() {
         )
         return { ok: true, msg: `Email to ${p.params.name}` }
       }
-      case 'briefing': {
-        window.dispatchEvent(new CustomEvent('center:open-briefing'))
-        return { ok: true, msg: 'Briefing' }
-      }
+      case 'briefing':
+        window.dispatchEvent(new Event('center:open-briefing'))
+        return { ok: true, msg: 'Opening morning briefing...' }
+
+      case 'stop':
+        window.dispatchEvent(new Event('nora:stop-speaking'))
+        return { ok: true, msg: 'Stopping...' }
+
       case 'unknown':
       default: {
         const userMessage = p.raw || ''
         try {
+          // If already busy, kill previous
+          if (abortControllerRef.current) abortControllerRef.current.abort()
+          const ctrl = new AbortController()
+          abortControllerRef.current = ctrl
+
           window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'thinking' } }))
+          setNoraStatus('thinking')
           const res = await fetch('/api/nora/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: userMessage }),
+            signal: ctrl.signal,
           })
-          if (!res.ok) return { ok: false, msg: 'Nora couldn\'t respond' }
+          if (!res.ok) {
+            setNoraStatus('idle')
+            return { ok: false, msg: 'Nora couldn\'t respond' }
+          }
           const data = await res.json() as { reply?: string; message?: string }
           const reply = data.reply || data.message || ''
-          if (!reply) return { ok: false, msg: 'No response from Nora' }
+          if (!reply) {
+            setNoraStatus('idle')
+            return { ok: false, msg: 'No response from Nora' }
+          }
 
           fetch('/api/notes', {
             method: 'POST',
@@ -414,6 +442,7 @@ export default function VoiceShell() {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ text: reply }),
+              signal: ctrl.signal,
             })
             if (ttsRes.ok) {
               const audioBlob = await ttsRes.blob()
@@ -438,9 +467,12 @@ export default function VoiceShell() {
           window.dispatchEvent(new CustomEvent('nora:reply', { detail: { text: reply } }))
           return { ok: true, msg: reply.slice(0, 100) }
         } catch (err) {
+          if ((err as Error).name === 'AbortError') return { ok: true, msg: 'Stopped' }
           setNoraStatus('idle')
           window.dispatchEvent(new CustomEvent('nora:status', { detail: { status: 'idle' } }))
           return { ok: false, msg: 'Error: ' + (err as Error).message }
+        } finally {
+          abortControllerRef.current = null
         }
       }
     }
@@ -603,30 +635,25 @@ export default function VoiceShell() {
   }, [handleDispatchIntent])
 
   useEffect(() => {
-    const onDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'V' || e.key === 'v')) {
-        e.preventDefault()
-        if (recordingRef.current) void stopRecording()
-        else void startRecording()
-        return
-      }
-      if (e.code === 'Space' && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
-        if (isFieldFocused()) return
-        e.preventDefault()
-        void startRecording()
-      }
+    const onStart = () => {
+      void startRecording()
     }
-    const onUp = (e: KeyboardEvent) => {
-      if (e.code === 'Space' && recordingRef.current) {
-        e.preventDefault()
-        void stopRecording()
-      }
+    const onStop = () => {
+      stopRecording()
     }
-    window.addEventListener('keydown', onDown)
-    window.addEventListener('keyup', onUp)
+    const onInterrupted = () => {
+      // Handled by handleStop in another useEffect, but good to have here too
+      stopRecording()
+    }
+
+    window.addEventListener('nora:start-recording', onStart)
+    window.addEventListener('nora:stop-recording', onStop)
+    window.addEventListener('nora:stop-speaking', onInterrupted)
+
     return () => {
-      window.removeEventListener('keydown', onDown)
-      window.removeEventListener('keyup', onUp)
+      window.removeEventListener('nora:start-recording', onStart)
+      window.removeEventListener('nora:stop-recording', onStop)
+      window.removeEventListener('nora:stop-speaking', onInterrupted)
     }
   }, [startRecording, stopRecording])
 
@@ -723,19 +750,29 @@ export default function VoiceShell() {
 
       {/* ── Controls ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        {isSpeaking && (
+        {(noraStatus === 'speaking' || noraStatus === 'thinking') && (
           <button
             onClick={() => window.dispatchEvent(new Event('nora:stop-speaking'))}
             style={{
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.3)',
-              borderRadius: 99, padding: '8px 16px',
-              color: '#ef4444', fontSize: 10, fontWeight: 900,
-              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-              textTransform: 'uppercase', letterSpacing: '0.1em'
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              borderRadius: 99, padding: '8px 20px',
+              color: '#ef4444', fontSize: 11, fontWeight: 900,
+              cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 10,
+              textTransform: 'uppercase', letterSpacing: '0.12em',
+              boxShadow: '0 0 15px rgba(239, 68, 68, 0.2)',
+              transition: 'all 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.25)'
+              e.currentTarget.style.transform = 'scale(1.05)'
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)'
+              e.currentTarget.style.transform = 'scale(1)'
             }}
           >
-            <span style={{ fontSize: 14 }}>■</span> Stop Nora
+            <span style={{ fontSize: 16 }}>⏹</span> STOP NORA
           </button>
         )}
         

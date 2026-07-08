@@ -19,6 +19,10 @@ export default function GlobalNoraManager() {
         target.tagName === 'TEXTAREA' ||
         target.isContentEditable
       ) {
+        // Special case: Escape should still stop Nora even if focused in a field
+        if (e.key === 'Escape') {
+          window.dispatchEvent(new Event('nora:stop-speaking'))
+        }
         return
       }
 
@@ -36,12 +40,28 @@ export default function GlobalNoraManager() {
         
         // Also trigger existing listeners on /center
         window.dispatchEvent(new Event('center:focus-nora'))
-        window.dispatchEvent(new Event('nora:toggle-voice'))
+
+        // New unified event for VoiceShell to start recording
+        window.dispatchEvent(new Event('nora:start-recording'))
+      }
+
+      if (e.key === 'Escape') {
+        window.dispatchEvent(new Event('nora:stop-speaking'))
+      }
+    }
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === ' ' || e.code === 'Space') {
+        window.dispatchEvent(new Event('nora:stop-recording'))
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
   }, [noraStatus])
 
   return null

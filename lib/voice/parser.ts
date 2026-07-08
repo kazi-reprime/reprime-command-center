@@ -26,6 +26,7 @@ export type ParsedIntent =
       raw: string
     }
   | { intent: 'briefing'; params: Record<string, never>; raw: string }
+  | { intent: 'stop'; params: Record<string, never>; raw: string }
   | { intent: 'unknown'; params: Record<string, never>; raw: string }
 
 export type WindowTarget =
@@ -53,6 +54,11 @@ function unitToMinutes(unit: string, n: number): number {
 export function parseCommand(raw: string): ParsedIntent {
   const text = raw.trim()
   if (!text) return { intent: 'unknown', params: {}, raw }
+
+  // stop / nora stop
+  if (/^(?:nora\s+)?stop\b/i.test(text)) {
+    return { intent: 'stop', params: {}, raw }
+  }
 
   // brief me
   if (/^brief\s*me\b/i.test(text)) {

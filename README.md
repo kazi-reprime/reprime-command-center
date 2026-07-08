@@ -24,10 +24,10 @@ A full-stack Next.js command center that combines CRM, communications, AI agents
 
 The Command Center is a **production-grade AI Business Operating System** with 4 P0 systems running end-to-end with real data:
 
-| System | Status | Providers |
-|--------|--------|-----------|
-| **Nora AI** | ✅ Live | Integrated 2-Pillar Dashboard + Multi-Agent Orchestrator (11 agents) |
-| **Voice Shell** | ✅ Live | Spacebar Shortcut + Live Waveform + ElevenLabs TTS |
+| System | Status | Providers | Controls |
+|--------|--------|-----------|----------|
+| **Nora AI** | ✅ Live | Integrated 2-Pillar Dashboard + Multi-Agent Orchestrator (11 agents) | **Spacebar** to talk, **Escape** to stop |
+| **Voice Shell** | ✅ Live | Spacebar Shortcut + Live Waveform + ElevenLabs TTS | **Hold Space** to record |
 | **WhatsApp** | ✅ Live | Timelines.ai (primary) → Meta Cloud API (fallback) |
 | **Email** | ✅ Live | Gmail API → SendGrid (fallback) |
 

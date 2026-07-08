@@ -2,6 +2,18 @@
 
 All notable changes to the RePrime Command Center v0.3
 
+## [0.3.5] — 2026-07-08
+
+### 🤖 Nora Reliability & Control (MAJOR)
+
+- **Universal Escape Stop** — Pressing `Escape` anywhere on the site now immediately kills Nora's current speech, thinking, or action.
+- **Abortable AI Requests** — Integrated `AbortController` in the voice pipeline to instantly terminate pending AI responses when Nora is interrupted, preventing "ghost" replies.
+- **Global Voice Trigger** — Unified spacebar listener in `GlobalNoraManager` ensures Nora can be summoned from any page (`/cockpit`, `/center`, etc.) with zero latency.
+- **Verbal Stop Intent** — Nora now understands "Nora, stop" or "Stop" as a direct command to silence herself.
+- **"All-Seeing" Identity** — Updated system prompt to reflect Nora's expanded authority as the primary manager of Gideon's business universe (Emails, WhatsApp, CRM).
+- **Enhanced Stop UI** — The "Stop Nora" button is now visible during the "thinking" phase, providing immediate manual override before she even starts speaking.
+- **Multi-Reply Fix** — Architectural fix to prevent overlapping voice sessions and duplicate audio responses.
+
 ## [0.3.0] — 2026-07-08
 
 ### 🤖 Nora-First Dashboard Overhaul (NEW)

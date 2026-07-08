@@ -1,8 +1,16 @@
 # Changelog
 
-All notable changes to the RePrime Command Center v0.3
+All notable changes to the RePrime Command Center v0.4
 
-## [0.3.5] — 2026-07-08
+## [0.4.0] — 2026-07-08
+
+### 🚀 Nora "All-Seeing" Full System Control (MAJOR)
+
+- **AI-Driven Navigation** — Nora can now navigate the Command Center UI via voice. Gideon can say "Show me the pipeline" and the dashboard switches modules instantly.
+- **Enhanced Contact Intelligence** — New fuzzy resolution engine allows Nora to understand context like "the guy from the Soho deal."
+- **Multi-Channel Automation** — Specialist agents now coordinate across WhatsApp, Gmail, and Pipedrive for unified task handling.
+- **Chief of Staff Authority** — Updated orchestrator logic gives Nora full executive control over all business modules.
+- **Global Event Bus** — Integrated a global event system for AI-to-UI communication.
 
 ### 🤖 Nora Reliability & Control (MAJOR)
 

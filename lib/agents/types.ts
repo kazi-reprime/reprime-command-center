@@ -73,6 +73,10 @@ export interface AgentResult {
   language: 'en' | 'he'
   agentId: string
   handoff?: HandoffRequest
+  navigation?: {
+    path: string
+    reason?: string
+  }
   toolTrace: ToolTraceEntry[]
   /** Actions that need user approval before execution */
   pendingApprovals?: PendingApproval[]

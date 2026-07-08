@@ -146,6 +146,12 @@ export function useNora() {
           setPendingApprovals(data.pendingApprovals)
         }
 
+        // Handle navigation if requested
+        if (data.navigation?.path) {
+          console.log(`[nora] navigating to: ${data.navigation.path} (reason: ${data.navigation.reason})`)
+          window.dispatchEvent(new CustomEvent('nora:navigate', { detail: { path: data.navigation.path } }))
+        }
+
         // Add assistant message
         const assistantMsg: NoraMessage = {
           sender: 'nora',

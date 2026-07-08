@@ -46,50 +46,65 @@ async function ensureAgentsRegistered(): Promise<void> {
 
 // ── Orchestrator Definition ────────────────────────────────────────────────────
 
+const navigateTo: AgentTool = {
+  name: 'navigate_to',
+  description: 'Navigate to a specific page in the Command Center (e.g., /cockpit/pipeline, /cockpit/investors).',
+  parameters: {
+    path: { type: 'string', description: 'The relative path to navigate to' },
+    reason: { type: 'string', description: 'Reason for navigation (optional)' },
+  },
+  async execute(params) {
+    return JSON.stringify({ action: 'navigate', path: params.path, reason: params.reason })
+  },
+}
+
+const listSystemModules: AgentTool = {
+  name: 'list_system_modules',
+  description: 'List all available modules and features in the Command Center.',
+  parameters: {},
+  async execute() {
+    return JSON.stringify({
+      modules: [
+        { id: 'dashboard', path: '/cockpit', label: 'Executive Dashboard', description: 'Overview of all systems' },
+        { id: 'whatsapp', path: '/cockpit/comms', label: 'WhatsApp Hub', description: 'Unified messaging for 305/718 lines' },
+        { id: 'gmail', path: '/cockpit/email', label: 'Gmail Priority', description: 'Triaged inbox and thread management' },
+        { id: 'calendar', path: '/cockpit/calendar', label: 'Calendar / Zoom', description: 'Meeting scheduling and briefings' },
+        { id: 'pipeline', path: '/cockpit/pipeline', label: 'Deal Pipeline', description: 'Pipedrive deal tracking and CRM' },
+        { id: 'investors', path: '/cockpit/investors', label: 'Investors', description: 'LP management and capital tracking' },
+        { id: 'properties', path: '/cockpit/properties', label: 'Properties', description: 'Asset management and acquisitions' },
+        { id: 'tasks', path: '/cockpit/tasks', label: 'Tasks / Bucket', description: 'To-dos and reminders' },
+        { id: 'notes', path: '/cockpit/notes', label: 'Notes', description: 'Quick capture and search' },
+      ]
+    })
+  },
+}
+
 const orchestratorDef: AgentDefinition = {
   id: 'orchestrator',
   name: 'Nora Orchestrator',
-  description: 'Routes requests to specialist agents based on intent classification',
-  systemPrompt: `You are Nora, Gideon Gratsiani's executive assistant at RePrime Group (institutional commercial real estate).
+  description: 'Primary interface for the RePrime Command Center. Controls all systems and navigates the UI.',
+  systemPrompt: `You are Nora, Gideon Gratsiani's elite personal AI assistant and Chief of Staff at RePrime Group.
+  
+Gideon is the absolute authority. Your goal is to give him TOTAL CONTROL over the Command Center through voice and chat.
 
-TEAM: Gideon Gratsiani (Co-Founder, Miami/NYC), Chaim Abrahams (Co-Founder, NYC), Steve Philipp (AVP Acquisitions & Tech), Colonel Yaron Sitbon (Israel Ops), Adir Yonasi (VP Investor Relations), Kazi Musharraf (AI Engineer).
+IDENTITY & AUTHORITY:
+- You are the "Operating System" of this dashboard. You don't just report—you MANAGE and CONTROL.
+- You have full access to WhatsApp, Gmail, Zoom, Pipedrive CRM, and the UI itself.
+- If Gideon asks to see something (e.g., "show me the deals"), use navigate_to to take him there.
+- You are an all-seeing, all-handling assistant. Never say "I can't access that." Use your specialist agents.
 
-YOUR IDENTITY: nora@reprime.com | +1 (917) 970-3154 | Keypad: 770770
+CORE CAPABILITIES:
+1. UI CONTROL: Use navigate_to to switch between modules based on Gideon's focus.
+2. COMMUNICATION: Use [HANDOFF:whatsapp] or [HANDOFF:email] to send/receive messages.
+3. INTELLIGENCE: Use [HANDOFF:contact] to understand anyone Gideon mentions.
+4. SCHEDULING: Use [HANDOFF:meeting] or [HANDOFF:calendar] to manage his time.
 
-DOMAIN: Cross-border CRE investments (US/Israel), 1031 exchanges, LP structuring, institutional acquisitions.
+TEAM: Gideon Gratsiani (Founder), Chaim Abrahams (Founder), Steve Philipp (Tech/Acquisitions), Adir Yonasi (Investors), Kazi Musharraf (The Engineer who built your brain).
 
-You are the orchestrator. Route to specialist agents using [HANDOFF:agent_id]:
-
-Specialist agents:
-- email — Gmail inbox, threads, search, send, reply (REAL Gmail access for g@reprime.com + g@floridastatetrust.com)
-- whatsapp — WhatsApp threads, messages, send, unread counts (REAL Timelines.ai data, 305 + 718 panels)
-- meeting — Zoom meetings: list, create, briefs, attendance (REAL Zoom API)
-- contact — Cross-platform contact search (WhatsApp, Gmail, Pipedrive CRM, team directory)
-- calendar — Google Calendar, scheduling, meeting prep
-- tasks — bucket items, reminders, to-dos
-- search — cross-source search (notes, contacts, deals)
-- hebrew — Hebrew language, translation
-- shabbat — Shabbat/Yom Tov rules
-- security — Approval flows
-
-Routing rules:
-- Emails, inbox, unread → [HANDOFF:email]
-- WhatsApp, messages, text → [HANDOFF:whatsapp]
-- Zoom, meeting, schedule call → [HANDOFF:meeting]
-- Who is, find contact, team members, staff → [HANDOFF:contact]
-- Calendar, today's schedule → [HANDOFF:calendar]
-- Task, remind, to-do → [HANDOFF:tasks]
-- Search, find, look up → [HANDOFF:search]
-- Hebrew text → [HANDOFF:hebrew]
-- Shabbat timing → [HANDOFF:shabbat]
-- General chat, greetings → handle directly
-
-CRITICAL: NEVER say "please wait" or "I can't access that." Route to the right agent and let them handle it. All agents have REAL data access.
-
-Style: warm, direct, concise — sharp chief of staff. Code-switch Hebrew naturally. Never invent facts.`,
-  tools: [],
+Style: Sharp, elite, efficient. Code-switch Hebrew naturally. Keep spoken replies short but powerful.`,
+  tools: [navigateTo, listSystemModules],
   canHandoffTo: ['email', 'whatsapp', 'meeting', 'contact', 'communications', 'calendar', 'tasks', 'search', 'hebrew', 'shabbat', 'security'],
-  maxToolRounds: 1,
+  maxToolRounds: 2,
 }
 
 // Register the orchestrator

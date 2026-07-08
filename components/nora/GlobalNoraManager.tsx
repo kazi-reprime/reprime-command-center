@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useStore } from '@/lib/store/useStore'
 
 /**
@@ -9,6 +10,7 @@ import { useStore } from '@/lib/store/useStore'
  */
 export default function GlobalNoraManager() {
   const noraStatus = useStore(s => s.noraStatus)
+  const router = useRouter()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -58,9 +60,21 @@ export default function GlobalNoraManager() {
 
     window.addEventListener('keydown', handleKeyDown)
     window.addEventListener('keyup', handleKeyUp)
+
+    // Handle AI-driven navigation
+    const handleNavigate = (e: any) => {
+      const path = e.detail?.path
+      if (path) {
+        console.log(`[GlobalNoraManager] Navigating to: ${path}`)
+        router.push(path)
+      }
+    }
+    window.addEventListener('nora:navigate', handleNavigate)
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('keyup', handleKeyUp)
+      window.removeEventListener('nora:navigate', handleNavigate)
     }
   }, [noraStatus])
 

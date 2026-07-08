@@ -1,10 +1,17 @@
-# RePrime Command Center v0.3
+# RePrime Command Center v0.4
 
-**AI Business Operating System for RePrime Group**
-
-A full-stack Next.js command center that combines CRM, communications, AI agents, analytics, automations, and business operations into one unified platform. Built for Gideon (CEO) and the RePrime team to run their commercial real estate business from a single interface.
+The ultimate executive cockpit for Gideon Gratsiani. A voice-controlled operating system for high-stakes commercial real estate.
 
 🌐 **Live**: [reprime-command-center.vercel.app](https://reprime-command-center.vercel.app)
+
+## 🤖 Nora: The Voice-Controlled OS
+
+Nora is no longer just an assistant; she is the primary interface for the RePrime Group.
+
+- **"All-Seeing" Control**: Nora manages WhatsApp, Gmail, Pipedrive, Zoom, and the UI itself.
+- **Voice Navigation**: Press **Spacebar** to talk. Say "Go to [Module]" to navigate instantly.
+- **Intelligent Automation**: Nora understands context—"Send a message to the guy from the Miami deal"—and resolves contacts across all platforms.
+- **Universal Kill Switch**: Press **Escape** at any time to immediately stop Nora.
 
 ---
 

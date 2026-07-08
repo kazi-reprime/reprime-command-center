@@ -187,6 +187,46 @@ const searchPipedrive: AgentTool = {
   },
 }
 
+const resolveRecipient: AgentTool = {
+  name: 'resolve_recipient',
+  description: 'Fuzzy search for a recipient based on name, deal title, or relationship. Use this when Gideon says "send this to the guy from [Deal]" or "find the contact for [Company]".',
+  parameters: {
+    query: { type: 'string', description: 'Fuzzy query (e.g., "guy from Soho deal", "investor at Blackstone")' },
+  },
+  async execute(params) {
+    const query = String(params.query || '').trim()
+    const supabase = createServiceClient()
+    
+    // 1. Search deals first if query mentioned a deal
+    const { data: deals } = await supabase
+      .from('deals')
+      .select('id, title')
+      .ilike('title', `%${query.replace(/(guy from|deal|about)/gi, '').trim()}%`)
+      .limit(3)
+
+    let relatedContacts: any[] = []
+    if (deals?.length) {
+      const { data: contacts } = await supabase
+        .from('deal_contacts')
+        .select('contact_name, contact_phone, role')
+        .in('deal_id', deals.map(d => d.id))
+      relatedContacts = contacts || []
+    }
+
+    // 2. Search general contacts
+    const { data: general } = await supabase
+      .from('contacts')
+      .select('name, email, phone, company')
+      .or(`name.ilike.%${query}%,company.ilike.%${query}%`)
+      .limit(5)
+
+    return JSON.stringify({
+      suggested: relatedContacts.length > 0 ? relatedContacts : general,
+      context: deals?.length ? `Found relevant deals: ${deals.map(d => d.title).join(', ')}` : 'Searched general contacts'
+    })
+  },
+}
+
 const contactAgent: AgentDefinition = {
   id: 'contact',
   name: 'Contact Agent',
@@ -195,6 +235,7 @@ const contactAgent: AgentDefinition = {
 
 Your tools:
 - find_contact: Search for contacts by name, phone, or email across all sources
+- resolve_recipient: Fuzzy search for people based on deal or context (USE THIS for "the guy from...")
 - get_contact_context: Get full context about a contact (deals, investor status, interactions)
 - list_team: List all RePrime team members with roles, locations, contacts
 - search_pipedrive: Search Pipedrive CRM for deals, persons, organizations
@@ -203,9 +244,9 @@ When resolving contacts:
 1. Search across ALL sources — WhatsApp, email, CRM, investors, team
 2. Cross-reference to build a complete profile
 3. Report investor status and deal involvement when found
-4. Include last interaction timestamps
-5. Distinguish staff from external contacts`,
-  tools: [findContact, getContactContext, listTeam, searchPipedrive],
+4. Distinguish staff from external contacts
+5. If Gideon is vague ("that guy"), use resolve_recipient to check deal associations.`,
+  tools: [findContact, resolveRecipient, getContactContext, listTeam, searchPipedrive],
   canHandoffTo: ['orchestrator', 'communications', 'whatsapp', 'email'],
   maxToolRounds: 3,
 }

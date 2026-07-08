@@ -35,6 +35,8 @@ async function ensureAgentsRegistered(): Promise<void> {
     import('./meeting-agent'),
     import('./contact-agent'),
     import('./security-agent'),
+    import('./pipeline-agent'),
+    import('./analytics-agent'),
   ])
 
   for (const m of mods) {
@@ -98,12 +100,14 @@ CORE CAPABILITIES:
 2. COMMUNICATION: Use [HANDOFF:whatsapp] or [HANDOFF:email] to send/receive messages.
 3. INTELLIGENCE: Use [HANDOFF:contact] to understand anyone Gideon mentions.
 4. SCHEDULING: Use [HANDOFF:meeting] or [HANDOFF:calendar] to manage his time.
+5. PIPELINE: Use [HANDOFF:pipeline] to manage deals, status, and stages.
+6. ANALYTICS: Use [HANDOFF:analytics] for high-level business performance.
 
 TEAM: Gideon Gratsiani (Founder), Chaim Abrahams (Founder), Steve Philipp (Tech/Acquisitions), Adir Yonasi (Investors), Kazi Musharraf (The Engineer who built your brain).
 
 Style: Sharp, elite, efficient. Code-switch Hebrew naturally. Keep spoken replies short but powerful.`,
   tools: [navigateTo, listSystemModules],
-  canHandoffTo: ['email', 'whatsapp', 'meeting', 'contact', 'communications', 'calendar', 'tasks', 'search', 'hebrew', 'shabbat', 'security'],
+  canHandoffTo: ['email', 'whatsapp', 'meeting', 'contact', 'communications', 'calendar', 'tasks', 'search', 'hebrew', 'shabbat', 'security', 'pipeline', 'analytics'],
   maxToolRounds: 2,
 }
 

@@ -85,6 +85,48 @@ const completeTask: AgentTool = {
   },
 }
 
+const listNotes: AgentTool = {
+  name: 'list_notes',
+  description: "List Gideon's recent notes.",
+  parameters: {
+    limit: { type: 'number', description: 'Max notes (default 10)' },
+  },
+  async execute(params) {
+    const limit = Math.min(Number(params.limit) || 10, 30)
+    const supabase = createServiceClient()
+    const { data, error } = await supabase
+      .from('notes')
+      .select('id, title, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (error) return JSON.stringify({ error: error.message })
+    return JSON.stringify({ count: data?.length ?? 0, notes: data ?? [] })
+  },
+}
+
+const readNote: AgentTool = {
+  name: 'read_note',
+  description: 'Read the full content of a note by its ID.',
+  parameters: {
+    id: { type: 'string', description: 'Note ID' },
+  },
+  async execute(params) {
+    const id = String(params.id)
+    if (!id) return JSON.stringify({ error: 'id required' })
+
+    const supabase = createServiceClient()
+    const { data, error } = await supabase
+      .from('notes')
+      .select('id, title, body, created_at')
+      .eq('id', id)
+      .single()
+
+    if (error) return JSON.stringify({ error: error.message })
+    return JSON.stringify(data)
+  },
+}
+
 const createNote: AgentTool = {
   name: 'create_note',
   description: "Create a note in Gideon's notes.",
@@ -119,14 +161,17 @@ Your tools:
 - create_task: Add a new task to the bucket
 - list_tasks: Show open/all tasks
 - complete_task: Mark a task done
-- create_note: Save a note
+- create_note: Save a new note
+- list_notes: See recent notes
+- read_note: Read the content of a specific note
 
 Rules:
 1. When Gideon says "add/remember/remind/note/task", use the right tool
 2. Assign sensible priorities (1=urgent, 3=normal, 5=low)
 3. Confirm back what was created
-4. For "what's on my plate", list open tasks sorted by priority`,
-  tools: [createTask, listTasks, completeTask, createNote],
+4. For "what's on my plate", list open tasks sorted by priority
+5. When searching for information Gideon "remembered", use list_notes and read_note.`,
+  tools: [createTask, listTasks, completeTask, createNote, listNotes, readNote],
   canHandoffTo: ['orchestrator'],
   maxToolRounds: 3,
 }
